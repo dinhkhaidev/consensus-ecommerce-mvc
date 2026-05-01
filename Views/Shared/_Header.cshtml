@@ -1,0 +1,40 @@
+<nav class="navbar navbar-expand-lg bg-white shadow-sm px-4 py-3 navbar-custom">
+    <div class="container-fluid px-0">
+        <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+            <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+                <span style="letter-spacing: .12rem;">Furnish</span>
+                <span>Shop</span>
+            </span>
+        </a>
+        <div class="mx-auto d-lg-block d-none">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="Product" asp-action="Index">Products</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="Category" asp-action="Index">Categories</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="Supplier" asp-action="Index">Suppliers</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-area="" asp-controller="Cart" asp-action="Index">Cart</a>
+                </li>
+            </ul>
+        </div>
+        <div class="d-flex align-items-center gap-4">
+            <span class="d-flex align-items-center gap-2 fw-bold">
+                <i class="bi bi-telephone"></i>
+                <span>+901234576</span>
+            </span>
+            <a data-bs-toggle="offcanvas" href="#offcanvasMenu" role="button" aria-controls="offcanvasMenu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5"/>
+                </svg>
+            </a>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,58 @@
+@model IEnumerable<WebActionResults.Models.Category>
+
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<div class="page-hero d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title mb-1">Category Management</h1>
+        <p class="text-secondary mb-0">Organize product groups for better tracking.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary btn-lg">+ Add Category</a>
+</div>
+
+<div class="panel-card">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
+                    <th class="text-center">Products</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-secondary">No categories found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.CategoryID</td>
+                        <td class="fw-semibold">@item.CategoryName</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill text-bg-light border">@item.Products.Count</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a asp-action="Details" asp-route-id="@item.CategoryID" class="btn btn-outline-info">Details</a>
+                                <a asp-action="Edit" asp-route-id="@item.CategoryID" class="btn btn-outline-primary">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@item.CategoryID" class="btn btn-outline-danger">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

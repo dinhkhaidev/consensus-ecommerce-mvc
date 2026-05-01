@@ -1,0 +1,32 @@
+@model WebActionResults.Models.Category
+
+@{
+    ViewData["Title"] = "Category Details";
+}
+
+<div class="page-hero d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title mb-1">Category Details</h1>
+        <p class="text-secondary mb-0">Overview of category and linked products.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.CategoryID" class="btn btn-primary">Edit</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+<div class="panel-card">
+    <dl class="row mb-0">
+        <dt class="col-sm-3">ID</dt>
+        <dd class="col-sm-9">@Model.CategoryID</dd>
+
+        <dt class="col-sm-3">Category Name</dt>
+        <dd class="col-sm-9 fw-semibold">@Model.CategoryName</dd>
+
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@(string.IsNullOrWhiteSpace(Model.Description) ? "-" : Model.Description)</dd>
+
+        <dt class="col-sm-3">Products</dt>
+        <dd class="col-sm-9">@Model.Products.Count</dd>
+    </dl>
+</div>

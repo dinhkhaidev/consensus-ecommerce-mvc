@@ -1,0 +1,58 @@
+@model IEnumerable<WebActionResults.Models.Supplier>
+
+@{
+    ViewData["Title"] = "Suppliers";
+}
+
+<div class="page-hero d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title mb-1">Supplier Management</h1>
+        <p class="text-secondary mb-0">Manage supplier contacts and product coverage.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary btn-lg">+ Add Supplier</a>
+</div>
+
+<div class="panel-card">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Company Name</th>
+                    <th>Phone</th>
+                    <th class="text-center">Products</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-secondary">No suppliers found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.SupplierID</td>
+                        <td class="fw-semibold">@item.CompanyName</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Phone) ? "-" : item.Phone)</td>
+                        <td class="text-center">
+                            <span class="badge rounded-pill text-bg-light border">@item.Products.Count</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a asp-action="Details" asp-route-id="@item.SupplierID" class="btn btn-outline-info">Details</a>
+                                <a asp-action="Edit" asp-route-id="@item.SupplierID" class="btn btn-outline-primary">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@item.SupplierID" class="btn btn-outline-danger">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

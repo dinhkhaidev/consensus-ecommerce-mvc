@@ -1,0 +1,20 @@
+﻿@model IEnumerable<WebActionResults.Models.Product>
+@{
+    ViewData["Title"] = "Demo Products";
+}
+
+<h1>Demo Products</h1>
+
+@if (!Model.Any())
+{
+    <p>No products found.</p>
+}
+else
+{
+    <ul>
+        @foreach (var item in Model)
+        {
+            <li>@item.ProductID - @item.ProductName</li>
+        }
+    </ul>
+}

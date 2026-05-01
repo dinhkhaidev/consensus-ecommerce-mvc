@@ -1,0 +1,23 @@
+<div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
+    <div class="offcanvas-header px-4">
+        <a class="navbar-brand" asp-controller="Home" asp-action="Index">
+            <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+                <span style="letter-spacing: .12rem;">Furnish</span>
+                <span>Shop</span>
+            </span>
+        </a>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="navbar-custom">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Index">Products</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Category" asp-action="Index">Categories</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Supplier" asp-action="Index">Suppliers</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Cart" asp-action="Index">Cart</a></li>
+                <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Register">Register</a></li>
+            </ul>
+        </div>
+    </div>
+</div>

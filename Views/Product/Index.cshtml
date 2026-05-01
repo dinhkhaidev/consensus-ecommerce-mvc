@@ -1,0 +1,84 @@
+@model IEnumerable<WebActionResults.Models.Product>
+
+@{
+    ViewData["Title"] = "Products";
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+}
+
+<div class="page-hero d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title mb-1">Product Management</h1>
+        <p class="text-secondary mb-0">Track products, categories, suppliers and price updates.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary btn-lg">+ Add Product</a>
+</div>
+
+@if (ViewData["SelectedCategoryName"] is string selectedCategoryName && !string.IsNullOrWhiteSpace(selectedCategoryName))
+{
+    <div class="alert alert-info d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2" role="alert">
+        <span>Showing products in category: <strong>@selectedCategoryName</strong></span>
+        <a asp-action="Index" class="btn btn-sm btn-outline-info">Clear filter</a>
+    </div>
+}
+
+<div class="panel-card">
+    <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Supplier</th>
+                    <th class="text-end">Price</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-secondary">No products found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ProductID</td>
+                        <td class="fw-semibold">@item.ProductName</td>
+                        <td>@item.Category.CategoryName</td>
+                        <td>@item.Supplier.CompanyName</td>
+                        <td class="text-end">@item.UnitPrice.ToString("N0")</td>
+                        <td>
+                            @if (item.Discontinued)
+                            {
+                                <span class="badge text-bg-secondary">Discontinued</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-success">Active</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+                                <form asp-controller="Cart" asp-action="Add" method="post" class="d-inline">
+                                    <input type="hidden" name="productId" value="@item.ProductID" />
+                                    <input type="hidden" name="quantity" value="1" />
+                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Add to cart</button>
+                                </form>
+                                <a asp-action="Details" asp-route-id="@item.ProductID" class="btn btn-outline-info">Details</a>
+                                <a asp-action="Edit" asp-route-id="@item.ProductID" class="btn btn-outline-primary">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@item.ProductID" class="btn btn-outline-danger">Delete</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

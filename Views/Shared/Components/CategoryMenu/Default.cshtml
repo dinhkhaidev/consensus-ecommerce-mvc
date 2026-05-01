@@ -1,0 +1,36 @@
+@model IReadOnlyList<WebActionResults.ViewComponents.CategoryMenuItemViewModel>
+
+@{
+    var hasSelectedCategory = Model.Any(c => c.IsSelected);
+}
+
+@if (Model.Count == 0)
+{
+    <li>
+        <span class="dropdown-item-text text-secondary">No categories</span>
+    </li>
+}
+else
+{
+    <li>
+        <a class="dropdown-item @(hasSelectedCategory ? string.Empty : "active")"
+           asp-controller="Product"
+           asp-action="Index">
+            All Products
+        </a>
+    </li>
+    <li><hr class="dropdown-divider" /></li>
+
+    foreach (var category in Model)
+    {
+        <li>
+            <a class="dropdown-item d-flex justify-content-between align-items-center @(category.IsSelected ? "active" : string.Empty)"
+               asp-controller="Product"
+               asp-action="Index"
+               asp-route-categoryId="@category.CategoryId">
+                <span>@category.CategoryName</span>
+                <span class="badge rounded-pill text-bg-secondary ms-2">@category.ProductCount</span>
+            </a>
+        </li>
+    }
+}

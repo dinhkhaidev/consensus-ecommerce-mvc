@@ -1,0 +1,12 @@
+﻿/* Keep only minimal layout-scoped rules to avoid overriding global theme styles. */
+
+a.navbar-brand {
+  white-space: nowrap;
+}
+
+.footer {
+  position: static;
+  bottom: auto;
+  white-space: normal;
+  line-height: 1.5;
+}

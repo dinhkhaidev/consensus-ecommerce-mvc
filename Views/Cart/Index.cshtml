@@ -1,0 +1,77 @@
+@model List<WebActionResults.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Shopping Cart";
+    var grandTotal = Model.Sum(item => item.Total);
+}
+
+<div class="page-hero d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+        <h1 class="page-title mb-1">Shopping Cart</h1>
+        <p class="text-secondary mb-0">Items you have added for checkout.</p>
+    </div>
+    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">Continue Shopping</a>
+</div>
+
+<div class="panel-card">
+    @if (!Model.Any())
+    {
+        <div class="text-center py-5">
+            <h5 class="mb-2">Your cart is empty.</h5>
+            <p class="text-secondary mb-3">Browse products and add items to start building your cart.</p>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">Browse Products</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-modern align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Product</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Quantity</th>
+                        <th class="text-end">Line Total</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.ProductId</td>
+                        <td class="fw-semibold">@item.ProductName</td>
+                        <td class="text-end">@item.UnitPrice.ToString("N0")</td>
+                        <td class="text-end">
+                            <form asp-action="Update" method="post" class="d-inline-flex gap-2 justify-content-end">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <input type="number" name="quantity" value="@item.Quantity" min="0" class="form-control form-control-sm text-end" style="width: 90px;" />
+                                <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
+                            </form>
+                        </td>
+                        <td class="text-end fw-semibold">@item.Total.ToString("N0")</td>
+                        <td class="text-end">
+                            <form asp-action="Remove" method="post" class="d-inline">
+                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end fw-semibold">Grand Total</td>
+                        <td class="text-end fw-bold">@grandTotal.ToString("N0")</td>
+                        <td class="text-end">
+                            <form asp-action="Clear" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger">Clear Cart</button>
+                            </form>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    }
+</div>

@@ -1,0 +1,31 @@
+<footer class="bg-dark pt-8 footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 col-md-4 col-12">
+                <a class="navbar-brand" href="#">
+                    <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
+                        <span style="letter-spacing: .12rem;">Furnish</span>
+                        <span>Shop</span>
+                    </span>
+                </a>
+            </div>
+            <div class="col-lg-8 col-md-6 mb-4 d-flex justify-content-start justify-content-md-end gy-4">
+                <ul class="list-unstyled lh-lg d-flex flex-column flex-md-row gap-4">
+                    <li><a asp-controller="Home" asp-action="Index" class="ft-links text-decoration-none">Home</a></li>
+                    <li><a asp-controller="Product" asp-action="Index" class="ft-links text-decoration-none">Products</a></li>
+                    <li><a asp-controller="Category" asp-action="Index" class="ft-links text-decoration-none">Categories</a></li>
+                    <li><a asp-controller="Supplier" asp-action="Index" class="ft-links text-decoration-none">Suppliers</a></li>
+                </ul>
+            </div>
+        </div>
+        <hr class="bg-secondary">
+        <div class="row pb-3">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0">&copy; 2025 WebActionResults. All rights reserved.</p>
+            </div>
+            <div class="col-md-6 text-center text-md-end">
+                <a asp-controller="Home" asp-action="Privacy" class="ft-links text-decoration-none me-3">Privacy Policy</a>
+            </div>
+        </div>
+    </div>
+</footer>

@@ -1,0 +1,37 @@
+@model WebActionResults.Models.Product
+
+@{
+    ViewData["Title"] = "Delete Product";
+}
+
+<div class="page-hero d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title mb-1 text-danger">Delete Product</h1>
+        <p class="text-secondary mb-0">Please confirm this action.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<div class="panel-card">
+    <p class="mb-3">You are deleting the following product:</p>
+
+    <dl class="row mb-0">
+        <dt class="col-sm-3">Product</dt>
+        <dd class="col-sm-9 fw-semibold">@Model.ProductName</dd>
+
+        <dt class="col-sm-3">Category</dt>
+        <dd class="col-sm-9">@Model.Category.CategoryName</dd>
+
+        <dt class="col-sm-3">Supplier</dt>
+        <dd class="col-sm-9">@Model.Supplier.CompanyName</dd>
+
+        <dt class="col-sm-3">Price</dt>
+        <dd class="col-sm-9">@Model.UnitPrice.ToString("N0")</dd>
+    </dl>
+
+    <form asp-action="Delete" method="post" class="mt-4 d-flex gap-2">
+        <input type="hidden" asp-for="ProductID" />
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>

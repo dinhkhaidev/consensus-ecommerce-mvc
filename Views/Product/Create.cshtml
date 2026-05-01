@@ -1,0 +1,26 @@
+@model WebActionResults.Models.Product
+
+@{
+    ViewData["Title"] = "Add Product";
+
+    var formViewData = new ViewDataDictionary(ViewData)
+    {
+        ["FormAction"] = "Create",
+        ["SubmitText"] = "Save",
+        ["ShowProductId"] = false
+    };
+}
+
+<div class="page-hero d-flex justify-content-between align-items-center">
+    <div>
+        <h1 class="page-title mb-1">Add Product</h1>
+        <p class="text-secondary mb-0">Create a new product record.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+</div>
+
+<partial name="_ProductForm" model="Model" view-data="formViewData" />
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
