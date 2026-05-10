@@ -1,77 +1,323 @@
-@model List<WebActionResults.Models.CartItem>
-
+@model WebActionResults.ViewModels.CartViewModel
 @{
-    ViewData["Title"] = "Shopping Cart";
-    var grandTotal = Model.Sum(item => item.Total);
+    ViewData["Title"] = localizer.Get("ShoppingCart") + " - Furnish";
 }
 
-<div class="page-hero d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-    <div>
-        <h1 class="page-title mb-1">Shopping Cart</h1>
-        <p class="text-secondary mb-0">Items you have added for checkout.</p>
+<!-- Breadcrumb -->
+<section class="py-3 bg-light">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">@localizer.Get("Home")</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index" class="text-decoration-none">@localizer.Get("Shop")</a></li>
+                <li class="breadcrumb-item active">@localizer.Get("Cart")</li>
+            </ol>
+        </nav>
     </div>
-    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">Continue Shopping</a>
+</section>
+
+<section class="py-lg-8 py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="bi bi-cart3 me-2"></i>@localizer.Get("ShoppingCart")
+            </h1>
+            <p class="text-muted lead">@(Model.Items.Any() ? $"{Model.Items.Sum(x => x.Quantity)} {localizer.Get("UnitsAvailable")}" : localizer.Get("YourCartIsEmpty"))</p>
+        </div>
+
+        @if (!Model.Items.Any())
+        {
+            <div class="row justify-content-center">
+                <div class="col-lg-6 text-center">
+                    <div class="card border-0 shadow-sm py-5">
+                        <div class="card-body">
+                            <i class="bi bi-cart-x text-muted" style="font-size: 6rem;"></i>
+                            <h4 class="mt-4 mb-3">@localizer.Get("YourCartIsEmpty")</h4>
+                            <p class="text-muted mb-4">@localizer.Get("StartShopping")</p>
+                            <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg">
+                                <i class="bi bi-bag me-2"></i>@localizer.Get("StartShopping")
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Cart Items -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <div class="row align-items-center text-uppercase text-xs fw-bold">
+                                <div class="col-md-5">@localizer.Get("Product")</div>
+                                <div class="col-md-2 text-center">@localizer.Get("Price")</div>
+                                <div class="col-md-2 text-center">@localizer.Get("Quantity")</div>
+                                <div class="col-md-2 text-end">@localizer.Get("Total")</div>
+                                <div class="col-md-1"></div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            @foreach (var item in Model.Items)
+                            {
+                                <div class="cart-item border-bottom py-3 px-3">
+                                    <div class="row align-items-center g-3">
+                                        <!-- Product -->
+                                        <div class="col-md-5">
+                                            <div class="d-flex align-items-center gap-3">
+                                                @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                                {
+                                                    <img src="@item.ImageUrl" alt="@item.ProductName"
+                                                         class="rounded" style="width: 80px; height: 80px; object-fit: cover;">
+                                                }
+                                                else
+                                                {
+                                                    <div class="bg-light rounded d-flex align-items-center justify-content-center"
+                                                         style="width: 80px; height: 80px;">
+                                                        <i class="bi bi-image text-secondary"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
+                                                       class="text-decoration-none fw-semibold text-dark">@item.ProductName</a>
+                                                    @if (!string.IsNullOrEmpty(item.VariantName))
+                                                    {
+                                                        <p class="text-muted small mb-0">@item.VariantName</p>
+                                                    }
+                                                    <p class="text-muted small mb-0">
+                                                        <a href="javascript:void(0)" onclick="showProductDetail(@item.ProductId)"
+                                                           class="text-decoration-none">@localizer.Get("ViewDetails")</a>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Price -->
+                                        <div class="col-md-2 text-center">
+                                            <span class="fw-semibold">@item.UnitPrice.ToString("N0") VND</span>
+                                            @if (item.PriceAdjustment != 0)
+                                            {
+                                                <br><small class="text-success">+@item.PriceAdjustment.ToString("N0") @localizer.Get("Variant")</small>
+                                            }
+                                            @if (!string.IsNullOrEmpty(item.PriceBreakdown))
+                                            {
+                                                <br><small class="text-muted small" title="@item.PriceBreakdown">@localizer.Get("PriceBreakdown")</small>
+                                            }
+                                        </div>
+
+                                        <!-- Quantity -->
+                                        <div class="col-md-2 text-center">
+                                            <form asp-action="Update" method="post" class="d-inline">
+                                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                                <input type="hidden" name="variantId" value="@(item.VariantId ?? 0)" />
+                                                <div class="input-group input-group-sm mx-auto" style="width: 110px;">
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            onclick="updateQuantity(this, @item.ProductId, @(item.VariantId ?? 0), -1)">
+                                                        <i class="bi bi-dash"></i>
+                                                    </button>
+                                                    <input type="number" name="quantity" value="@item.Quantity" min="1" max="99"
+                                                           class="form-control text-center" readonly>
+                                                    <button type="button" class="btn btn-outline-secondary"
+                                                            onclick="updateQuantity(this, @item.ProductId, @(item.VariantId ?? 0), 1)">
+                                                        <i class="bi bi-plus"></i>
+                                                    </button>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <!-- Total -->
+                                        <div class="col-md-2 text-end">
+                                            <span class="fw-bold text-primary">@item.Total.ToString("N0") VND</span>
+                                        </div>
+
+                                        <!-- Remove -->
+                                        <div class="col-md-1 text-end">
+                                            <form asp-action="Remove" method="post" class="d-inline">
+                                                <input type="hidden" name="productId" value="@item.ProductId" />
+                                                <input type="hidden" name="variantId" value="@(item.VariantId ?? 0)" />
+                                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                                        onclick="return confirm('Remove @item.ProductName from cart?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer bg-white py-3">
+                            <div class="d-flex justify-content-between">
+                                <form asp-action="Clear" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                                            onclick="return confirm('Clear all items from cart?')">
+                                        <i class="bi bi-trash me-1"></i>@localizer.Get("ClearCart")
+                                    </button>
+                                </form>
+                                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-bag me-1"></i>@localizer.Get("ContinueShopping")
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm" style="position: sticky; top: 90px; z-index: 990;">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>@localizer.Get("OrderSummary")</h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Coupon -->
+                            @if (!string.IsNullOrEmpty(Model.CouponError))
+                            {
+                                <div class="alert alert-danger py-2 mb-3">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>@Model.CouponError
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.AppliedCouponCode))
+                            {
+                                <div class="alert alert-success py-2 mb-3 d-flex justify-content-between align-items-center">
+                                    <span><i class="bi bi-tag me-1"></i>@Model.AppliedCouponCode</span>
+                                    <form asp-action="RemoveCoupon" method="post">
+                                        <button type="submit" class="btn btn-sm p-0 text-success"><i class="bi bi-x"></i></button>
+                                    </form>
+                                </div>
+                            }
+                            else
+                            {
+                                <form asp-action="ApplyCoupon" method="post" class="mb-4">
+                                    <label class="form-label small fw-semibold">@localizer.Get("HaveCoupon")</label>
+                                    <div class="input-group">
+                                        <input type="text" name="couponCode" class="form-control"
+                                               placeholder="@localizer.Get("HaveCoupon")">
+                                        <button type="submit" class="btn btn-outline-primary">@localizer.Get("ApplyCoupon")</button>
+                                    </div>
+                                </form>
+                            }
+
+                            <!-- Summary -->
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">@localizer.Get("Subtotal")</span>
+                                <span>@Model.SubTotal.ToString("N0") VND</span>
+                            </div>
+                            @{
+                                var variantAdjustment = Model.Items.Where(i => i.PriceAdjustment != 0).Sum(i => i.PriceAdjustment * i.Quantity);
+                            }
+                            @if (variantAdjustment != 0)
+                            {
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>@localizer.Get("VariantAdjustments")</span>
+                                    <span>+@variantAdjustment.ToString("N0") VND</span>
+                                </div>
+                            }
+                            @if (Model.DiscountAmount > 0)
+                            {
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>@localizer.Get("Discount")</span>
+                                    <span>-@Model.DiscountAmount.ToString("N0") VND</span>
+                                </div>
+                            }
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">@localizer.Get("Shipping")</span>
+                                <span>@Model.ShippingFee.ToString("N0") VND</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
+                                <span>@localizer.Get("Total")</span>
+                                <span class="text-primary">@Model.Total.ToString("N0") VND</span>
+                            </div>
+
+                            <!-- Checkout Button -->
+                            <div class="d-grid gap-2">
+                                @if (Context.Session.GetInt32("USER_ID").HasValue)
+                                {
+                                    <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-credit-card me-2"></i>@localizer.Get("ProceedToCheckout")
+                                    </a>
+                                }
+                                else
+                                {
+                                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-box-arrow-in-right me-2"></i>@localizer.Get("LoginToCheckout")
+                                    </a>
+                                }
+                                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">
+                                    <i class="bi bi-bag me-2"></i>@localizer.Get("ContinueShopping")
+                                </a>
+                            </div>
+
+                            <!-- Trust Badges -->
+                            <div class="row g-3 mt-4 text-center">
+                                <div class="col-4">
+                                    <i class="bi bi-shield-lock text-success fs-4"></i>
+                                    <p class="small mb-0 text-muted">@localizer.Get("SecureCheckout")</p>
+                                </div>
+                                <div class="col-4">
+                                    <i class="bi bi-truck text-primary fs-4"></i>
+                                    <p class="small mb-0 text-muted">@localizer.Get("FastDelivery")</p>
+                                </div>
+                                <div class="col-4">
+                                    <i class="bi bi-arrow-repeat text-warning fs-4"></i>
+                                    <p class="small mb-0 text-muted">@localizer.Get("EasyReturns")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+<!-- Product Detail Modal -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-labelledby="productDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productDetailModalLabel">@localizer.Get("ProductDetails")</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="productDetailContent">
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<div class="panel-card">
-    @if (!Model.Any())
-    {
-        <div class="text-center py-5">
-            <h5 class="mb-2">Your cart is empty.</h5>
-            <p class="text-secondary mb-3">Browse products and add items to start building your cart.</p>
-            <a asp-controller="Product" asp-action="Index" class="btn btn-primary">Browse Products</a>
-        </div>
+<style>
+    .cart-item:hover {
+        background-color: rgba(0,0,0,0.02);
     }
-    else
-    {
-        <div class="table-responsive">
-            <table class="table table-modern align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Product</th>
-                        <th class="text-end">Unit Price</th>
-                        <th class="text-end">Quantity</th>
-                        <th class="text-end">Line Total</th>
-                        <th class="text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach (var item in Model)
-                {
-                    <tr>
-                        <td>@item.ProductId</td>
-                        <td class="fw-semibold">@item.ProductName</td>
-                        <td class="text-end">@item.UnitPrice.ToString("N0")</td>
-                        <td class="text-end">
-                            <form asp-action="Update" method="post" class="d-inline-flex gap-2 justify-content-end">
-                                <input type="hidden" name="productId" value="@item.ProductId" />
-                                <input type="number" name="quantity" value="@item.Quantity" min="0" class="form-control form-control-sm text-end" style="width: 90px;" />
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Update</button>
-                            </form>
-                        </td>
-                        <td class="text-end fw-semibold">@item.Total.ToString("N0")</td>
-                        <td class="text-end">
-                            <form asp-action="Remove" method="post" class="d-inline">
-                                <input type="hidden" name="productId" value="@item.ProductId" />
-                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-                <tfoot>
-                    <tr>
-                        <td colspan="4" class="text-end fw-semibold">Grand Total</td>
-                        <td class="text-end fw-bold">@grandTotal.ToString("N0")</td>
-                        <td class="text-end">
-                            <form asp-action="Clear" method="post" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger">Clear Cart</button>
-                            </form>
-                        </td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
+
+    .input-group-sm .btn {
+        padding: 0.25rem 0.5rem;
     }
-</div>
+
+    .sticky-top {
+        z-index: 100;
+    }
+</style>
+
+@section Scripts {
+<script>
+    window.showProductDetail = function(productId) {
+        const modal = new bootstrap.Modal(document.getElementById('productDetailModal'));
+        document.getElementById('productDetailContent').innerHTML = '<div class="text-center py-5"><div class="spinner-border" role="status"></div></div>';
+        modal.show();
+
+        fetch('/Product/DetailsPartial/' + productId)
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('productDetailContent').innerHTML = html;
+            })
+            .catch(err => {
+                document.getElementById('productDetailContent').innerHTML = '<div class="text-center text-danger">Failed to load product details.</div>';
+            });
+    };
+</script>
+}

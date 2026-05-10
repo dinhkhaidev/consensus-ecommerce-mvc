@@ -1,166 +1,68 @@
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using WebActionResults.Data.Services;
+using WebActionResults.ViewModels;
 using WebActionResults.Models;
 
 namespace WebActionResults.Controllers;
 
 public class CategoryController : Controller
 {
-    private readonly ShopDbContext _context;
+    private readonly ICatalogService _catalogService;
 
-    public CategoryController(ShopDbContext context)
+    public CategoryController(ICatalogService catalogService)
     {
-        _context = context;
+        _catalogService = catalogService;
     }
 
     public async Task<IActionResult> Index()
     {
-        var categories = await _context.Categories
-            .AsNoTracking()
-            .Include(c => c.Products)
-            .OrderBy(c => c.CategoryName)
-            .ToListAsync();
+        var categories = await _catalogService.GetCategoriesWithProductsAsync();
+        var viewModels = categories.Select(c => new CategoryViewModel
+        {
+            CategoryId = c.Id,
+            CategoryName = c.CategoryName,
+            Description = null, // Description column doesn't exist in dtb.sql
+            ProductCount = c.Products?.Count ?? 0
+        }).ToList();
 
-        return View(categories);
+        return View(viewModels);
     }
 
-    public async Task<IActionResult> Details(int? id)
+    public async Task<IActionResult> Details(int id, int page = 1, int pageSize = 12)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 12;
 
-        var category = await _context.Categories
-            .AsNoTracking()
-            .Include(c => c.Products)
-            .FirstOrDefaultAsync(c => c.CategoryID == id);
-
+        var category = await _catalogService.GetCategoryByIdAsync(id);
         if (category == null)
-        {
             return NotFound();
-        }
 
-        return View(category);
-    }
+        var (products, totalCount) = await _catalogService.GetProductsByCategoryPaginatedAsync(id, page, pageSize);
 
-    public IActionResult Create()
-    {
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("CategoryID,CategoryName,Description")] Category category)
-    {
-        if (!ModelState.IsValid)
+        var viewModel = new CategoryViewModel
         {
-            return View(category);
-        }
+            CategoryId = category.Id,
+            CategoryName = category.CategoryName,
+            Description = null, // Description column doesn't exist in dtb.sql
+            ProductCount = totalCount
+        };
 
-        _context.Add(category);
-        await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Da them danh muc thanh cong.";
-        return RedirectToAction(nameof(Index));
-    }
-
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null)
+        ViewBag.Products = products.Select(p => new ProductListViewModel
         {
-            return NotFound();
-        }
+            ProductId = p.Id,
+            ProductName = p.ProductName,
+            UnitPrice = p.UnitPrice,
+            CategoryName = p.Category?.CategoryName,
+            MainImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl,
+            HasVariants = p.Variants?.Any() ?? false
+        }).ToList();
 
-        var category = await _context.Categories.FindAsync(id);
-        if (category == null)
-        {
-            return NotFound();
-        }
+        ViewData["CurrentPage"] = page;
+        ViewData["PageSize"] = pageSize;
+        ViewData["TotalCount"] = totalCount;
+        ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
 
-        return View(category);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("CategoryID,CategoryName,Description")] Category category)
-    {
-        if (id != category.CategoryID)
-        {
-            return NotFound();
-        }
-
-        if (!ModelState.IsValid)
-        {
-            return View(category);
-        }
-
-        try
-        {
-            _context.Update(category);
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Da cap nhat danh muc thanh cong.";
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await CategoryExistsAsync(category.CategoryID))
-            {
-                return NotFound();
-            }
-
-            throw;
-        }
-
-        return RedirectToAction(nameof(Index));
-    }
-
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var category = await _context.Categories
-            .AsNoTracking()
-            .Include(c => c.Products)
-            .FirstOrDefaultAsync(c => c.CategoryID == id);
-
-        if (category == null)
-        {
-            return NotFound();
-        }
-
-        return View(category);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        var category = await _context.Categories
-            .Include(c => c.Products)
-            .FirstOrDefaultAsync(c => c.CategoryID == id);
-
-        if (category == null)
-        {
-            TempData["ErrorMessage"] = "Khong tim thay danh muc can xoa.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        if (category.Products.Any())
-        {
-            TempData["ErrorMessage"] = "Khong the xoa danh muc dang duoc gan cho san pham.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        _context.Categories.Remove(category);
-        await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Da xoa danh muc thanh cong.";
-        return RedirectToAction(nameof(Index));
-    }
-
-    private async Task<bool> CategoryExistsAsync(int id)
-    {
-        return await _context.Categories.AnyAsync(e => e.CategoryID == id);
+        return View(viewModel);
     }
 }

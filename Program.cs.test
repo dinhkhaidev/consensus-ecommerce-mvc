@@ -1,0 +1,5 @@
+// Quick check to see what Reviews look like in the DB
+using var client = new HttpClient();
+client.BaseAddress = new Uri("http://localhost:5085");
+// This won't work, let me just check the data differently
+Console.WriteLine("Need to check DB directly");

@@ -1,23 +1,144 @@
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
-    <div class="offcanvas-header px-4">
-        <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-            <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
-                <span style="letter-spacing: .12rem;">Furnish</span>
-                <span>Shop</span>
-            </span>
+    <div class="offcanvas-header bg-white py-3 px-4 border-bottom">
+        <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+            <i class="bi bi-house-door-fill text-primary fs-4 me-2"></i>
+            <div class="d-flex flex-column lh-sm">
+                <span class="fw-bold text-uppercase text-xs" style="letter-spacing: .15rem;">Furnish</span>
+                <span class="text-muted small" style="font-size: 0.65rem;">@localizer.Get("AppName")</span>
+            </div>
         </a>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
-    <div class="offcanvas-body">
-        <div class="navbar-custom">
+    <div class="offcanvas-body px-4">
+        <!-- Search -->
+        <form method="get" asp-controller="Product" asp-action="Index" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="@localizer.Get("SearchPlaceholder")" />
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+        </form>
+
+        <!-- Main Nav -->
+        <div class="navbar-custom mb-4">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
-                <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Index">Products</a></li>
-                <li class="nav-item"><a class="nav-link" asp-controller="Category" asp-action="Index">Categories</a></li>
-                <li class="nav-item"><a class="nav-link" asp-controller="Supplier" asp-action="Index">Suppliers</a></li>
-                <li class="nav-item"><a class="nav-link" asp-controller="Cart" asp-action="Index">Cart</a></li>
-                <li class="nav-item"><a class="nav-link" asp-controller="Account" asp-action="Register">Register</a></li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value == "/" ? "active bg-primary text-white" : "")"
+                       asp-controller="Home" asp-action="Index">
+                        <i class="bi bi-house me-2"></i>@localizer.Get("Home")
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Product") == true ? "active bg-primary text-white" : "")"
+                       asp-controller="Product" asp-action="Index">
+                        <i class="bi bi-bag me-2"></i>@localizer.Get("Shop")
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Category") == true ? "active bg-primary text-white" : "")"
+                       asp-controller="Category" asp-action="Index">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>@localizer.Get("Categories")
+                    </a>
+                </li>
+                @if (Context.Session.GetInt32("USER_ID").HasValue)
+                {
+                    <li class="nav-item mb-2">
+                        <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Order") == true ? "active bg-primary text-white" : "")"
+                           asp-controller="Order" asp-action="Index">
+                            <i class="bi bi-box-seam me-2"></i>@localizer.Get("MyOrders")
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Wishlist") == true ? "active bg-primary text-white" : "")"
+                           asp-controller="Wishlist" asp-action="Index">
+                            <i class="bi bi-heart me-2"></i>@localizer.Get("Wishlist")
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Cart") == true ? "active bg-primary text-white" : "")"
+                           asp-controller="Cart" asp-action="Index">
+                            <i class="bi bi-cart3 me-2"></i>@localizer.Get("Cart")
+                        </a>
+                    </li>
+                }
             </ul>
+        </div>
+
+        <hr class="my-3">
+
+        <!-- User Section -->
+        @if (Context.Session.GetInt32("USER_ID").HasValue)
+        {
+            <div class="mb-4">
+                <div class="d-flex align-items-center gap-3 mb-3 p-3 bg-light rounded">
+                    <i class="bi bi-person-circle fs-4 text-primary"></i>
+                    <div>
+                        <strong>@Context.Session.GetString("USER_NAME")</strong>
+                        <small class="d-block text-muted">@localizer.Get("WelcomeBack")</small>
+                    </div>
+                </div>
+                <a asp-controller="Account" asp-action="Profile" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-person me-2"></i>@localizer.Get("Profile")
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post">
+                    <button type="submit" class="btn btn-outline-danger w-100">
+                        <i class="bi bi-box-arrow-right me-2"></i>@localizer.Get("Logout")
+                    </button>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="d-grid gap-2">
+                <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>@localizer.Get("Login")
+                </a>
+                <a asp-controller="Account" asp-action="Register" class="btn btn-primary">
+                    <i class="bi bi-person-plus me-2"></i>@localizer.Get("Register")
+                </a>
+            </div>
+        }
+
+        <!-- Mobile Features -->
+        <div class="mt-4 pt-4 border-top">
+            <div class="row g-3 text-center">
+                <div class="col-4">
+                    <div class="p-2">
+                        <i class="bi bi-truck text-primary fs-4"></i>
+                        <p class="small mb-0 text-muted">@localizer.Get("FastDelivery")</p>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2">
+                        <i class="bi bi-shield-check text-success fs-4"></i>
+                        <p class="small mb-0 text-muted">@localizer.Get("SecureCheckout")</p>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="p-2">
+                        <i class="bi bi-arrow-repeat text-warning fs-4"></i>
+                        <p class="small mb-0 text-muted">@localizer.Get("EasyReturns")</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+    .nav-link {
+        color: #333;
+        transition: all 0.2s;
+    }
+
+    .nav-link:hover {
+        background-color: rgba(212, 127, 49, 0.1);
+        color: #d47f31;
+    }
+
+    .nav-link.active {
+        background-color: #d47f31;
+        color: white;
+    }
+</style>

@@ -1,55 +1,76 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Furnish - Premium Furniture Store";
+    var featuredProducts = ViewData["FeaturedProducts"] as List<Product>;
+    var categories = ViewData["Categories"] as List<Category>;
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+}
+@{
+    var siteTitle = settings.GetValueOrDefault("SiteTitle", "Furnish - Premium Furniture Store");
+    var siteDescription = settings.GetValueOrDefault("SiteDescription", "");
+    var heroTitle = settings.GetValueOrDefault("HeroTitle", "20% OFF");
+    var heroSubtitle = settings.GetValueOrDefault("HeroSubtitle", "Comfy Sofa Home-Office");
+    var heroDescription = settings.GetValueOrDefault("HeroDescription", "Premium comfort for your modern workspace");
+    var feature1Title = settings.GetValueOrDefault("Feature1Title", "Free Shipping");
+    var feature1Desc = settings.GetValueOrDefault("Feature1Desc", "On orders over 500,000 VND");
+    var feature2Title = settings.GetValueOrDefault("Feature2Title", "Secure Payment");
+    var feature2Desc = settings.GetValueOrDefault("Feature2Desc", "100% secure checkout");
+    var feature3Title = settings.GetValueOrDefault("Feature3Title", "Easy Returns");
+    var feature3Desc = settings.GetValueOrDefault("Feature3Desc", "30-day return policy");
+    var feature4Title = settings.GetValueOrDefault("Feature4Title", "24/7 Support");
+    var feature4Desc = settings.GetValueOrDefault("Feature4Desc", "Dedicated customer care");
+    var newsletterTitle = settings.GetValueOrDefault("NewsletterTitle", "Subscribe to Our Newsletter");
+    var newsletterDesc = settings.GetValueOrDefault("NewsletterDesc", "Get exclusive deals, new arrivals, and design inspiration delivered to your inbox.");
+    var contactEmail = settings.GetValueOrDefault("ContactEmail", "info@furnish.com");
+    var contactPhone = settings.GetValueOrDefault("ContactPhone", "");
+    var address = settings.GetValueOrDefault("Address", "");
 }
 
-<div class="py-lg-8 pt-6">
+<!-- Hero Slider Section -->
+<section class="py-lg-8 pt-6">
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-xxl-8 col-12">
-                <div class="swiper-container swiper swiper-pagination-light" id="swiper-6"
+                <div class="swiper-container swiper swiper-pagination-light" id="heroSlider"
                     data-pagination-type="" data-speed="800" data-space-between="100" data-pagination="true"
-                    data-navigation="true" data-autoplay="true" data-effect="slide" data-autoplay-delay="3000"
+                    data-navigation="true" data-autoplay="true" data-effect="slide" data-autoplay-delay="5000"
                     data-breakpoints='{"480": {"slidesPerView": 2}, "768": {"slidesPerView": 1}, "1024": {"slidesPerView": 1}}'>
                     <div class="swiper-wrapper">
                         <div class="swiper-slide px-md-8">
                             <div class="position-relative text-center">
-                                <img src="~/assets/images/slider/slider-img-2.png" alt="" class="img-fluid my-5 my-lg-0">
+                                <img src="/assets/images/slider/slider-img-2.png" alt="" class="img-fluid my-5 my-lg-0">
                                 <div class="text-center position-absolute top-0 start-0 px-lg-11">
-                                    <h1 class="fs-1 fst-italic text-secondary">%20 Sell</h1>
-                                    <h2 class="display-4 lh-1">Comfy Sofa Home-Office</h2>
+                                    <h1 class="fs-1 fst-italic text-secondary">@heroTitle</h1>
+                                    <h2 class="display-4 lh-1">@heroSubtitle</h2>
                                 </div>
                                 <div class="position-absolute top-md-65 top-75 start-50 translate-middle-x mt-lg-9">
-                                    <p class="d-none d-lg-block">Comfortable and stylish sofa for your home office.</p>
-                                    <div class="fw-bold mb-4 d-none d-lg-block">$50</div>
-                                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary">View Details</a>
+                                    <p class="d-none d-lg-block mb-1">@heroDescription</p>
+                                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary">@localizer.Get("Shop")</a>
                                 </div>
                             </div>
                         </div>
                         <div class="swiper-slide px-md-8">
                             <div class="position-relative text-center">
-                                <img src="~/assets/images/slider/slider-img-1.png" alt="" class="img-fluid my-5 my-lg-0">
+                                <img src="/assets/images/slider/slider-img-1.png" alt="" class="img-fluid my-5 my-lg-0">
                                 <div class="text-center position-absolute top-0 start-0 px-lg-11">
-                                    <h1 class="fs-1 fst-italic text-secondary">%10 Sell</h1>
-                                    <h2 class="display-4 lh-1">Exchange your old furniture</h2>
+                                    <h1 class="fs-1 fst-italic text-success">@localizer.Get("NewArrivals")</h1>
+                                    <h2 class="display-4 lh-1">@localizer.Get("ExchangeOldFurniture")</h2>
                                 </div>
                                 <div class="position-absolute top-md-65 top-75 start-50 translate-middle-x mt-lg-9">
-                                    <p class="d-none d-lg-block">Save up to $50 for your home office.</p>
-                                    <div class="fw-bold mb-4 d-none d-lg-block">$45</div>
-                                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary">View Details</a>
+                                    <p class="d-none d-lg-block mb-1">@localizer.Get("SaveUpTo100")</p>
+                                    <a asp-controller="Product" asp-action="Index" class="btn btn-success">@localizer.Get("Explore")</a>
                                 </div>
                             </div>
                         </div>
                         <div class="swiper-slide px-md-8">
                             <div class="position-relative text-center">
-                                <img src="~/assets/images/slider/slider-img-3.png" alt="" class="img-fluid my-5 my-lg-0">
+                                <img src="/assets/images/slider/slider-img-3.png" alt="" class="img-fluid my-5 my-lg-0">
                                 <div class="text-center position-absolute top-0 start-0 px-lg-11">
-                                    <h1 class="fs-1 fst-italic text-secondary">%25 Sell</h1>
-                                    <h2 class="display-4 lh-1">Crafted royal comfort sofa</h2>
+                                    <h1 class="fs-1 fst-italic text-warning">@localizer.Get("PremiumCollection")</h1>
+                                    <h2 class="display-4 lh-1">@localizer.Get("RoyalComfortSofa")</h2>
                                 </div>
                                 <div class="position-absolute top-md-65 top-75 start-50 translate-middle-x mt-lg-9">
-                                    <p class="d-none d-lg-block">Experience the elegance of timeless craftsmanship with our Sofa.</p>
-                                    <div class="fw-bold mb-4 d-none d-lg-block">$89</div>
-                                    <a asp-controller="Product" asp-action="Index" class="btn btn-primary">View Details</a>
+                                    <p class="d-none d-lg-block mb-1">@localizer.Get("TimelessCraftsmanship")</p>
+                                    <a asp-controller="Product" asp-action="Index" class="btn btn-warning text-dark">@localizer.Get("ViewCollection")</a>
                                 </div>
                             </div>
                         </div>
@@ -62,90 +83,239 @@
             </div>
         </div>
     </div>
-</div>
+</section>
 
-<section class="py-lg-10 mx-3 mx-lg-0 bg-white">
+<!-- Categories Section -->
+<section class="py-lg-8 py-5" style="background: #faf9f7;">
     <div class="container">
-        <div class="row mb-md-8 mb-4">
-            <div class="col-lg-12 mb-8">
-                <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-md-between gap-4">
-                    <div class="col-sm-5">
-                        <h2 class="display-4">Our Favourite Collection</h2>
-                        <p class="mb-0 lead">We are inspired by the realities of life today, in which traditional divides between personal and professional space are more fluid.</p>
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-2">@localizer.Get("ShopbyCategory")</h2>
+                <p class="text-muted">@localizer.Get("FindPerfectFurniture")</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            @if (categories != null && categories.Any())
+            {
+                foreach (var category in categories.Take(6))
+                {
+                    var iconClass = "bi-folder text-primary";
+                    var iconBg = "rgba(0, 123, 255, 0.1)";
+
+                    if (category.CategoryName.Contains("Living", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iconClass = "bi-house-door text-primary";
+                    }
+                    else if (category.CategoryName.Contains("Office", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iconClass = "bi-laptop text-primary";
+                    }
+                    else if (category.CategoryName.Contains("Bed", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iconClass = "bi-moon text-primary";
+                    }
+                    else if (category.CategoryName.Contains("Dining", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iconClass = "bi-cup-hot text-primary";
+                    }
+                    else if (category.CategoryName.Contains("Decor", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iconClass = "bi-flower1 text-primary";
+                    }
+                    else if (category.CategoryName.Contains("Outdoor", StringComparison.OrdinalIgnoreCase))
+                    {
+                        iconClass = "bi-sun text-primary";
+                    }
+
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id" class="text-decoration-none">
+                            <div class="card category-card h-100 border-0 shadow-sm text-center hover-lift">
+                                <div class="card-body d-flex flex-column justify-content-center align-items-center py-5">
+                                    <i class="bi @iconClass mb-3" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mb-2">@category.CategoryName</h5>
+                                    <p class="text-muted small mb-0">@category.ProductCount @localizer.Get("Products")</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Our Favourite Collection Section -->
+@if (featuredProducts != null && featuredProducts.Any())
+{
+    <section class="py-lg-10 mx-3 mx-lg-0 bg-white">
+        <div class="container">
+            <div class="row mb-md-8 mb-4">
+                <div class="col-lg-12 mb-8">
+                    <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-md-between gap-4">
+                        <div class="col-sm-5">
+                            <h2 class="display-4">@localizer.Get("OurFavouriteCollection")</h2>
+                            <p class="mb-0 lead">@localizer.Get("InspiredByLife")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <div class="swiper-container swiper" id="swiper-featured"
+                        data-pagination-type="bullets" data-speed="400" data-space-between="30"
+                        data-pagination="true" data-navigation="false" data-autoplay="false" data-effect="slide"
+                        data-autoplay-delay="3000"
+                        data-breakpoints='{"480": {"slidesPerView": 2}, "768": {"slidesPerView": 3}, "1024": {"slidesPerView": 3}}'>
+                        <div class="swiper-wrapper pb-10">
+                            @foreach (var product in featuredProducts)
+                            {
+                                var imgNum = (product.Id - 1) % 8 + 1;
+                                var imgUrl = $"/assets/images/product-img-{imgNum}.jpg";
+
+                                <div class="swiper-slide">
+                                    <div>
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
+                                            <img src="@imgUrl" alt="@product.ProductName" class="img-fluid" loading="lazy"
+                                                 onerror="this.src='/assets/images/product-img-1.jpg'">
+                                        </a>
+                                        <div class="text-center">
+                                            <h3 class="mt-3 h5">
+                                                <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                                   class="text-decoration-none text-dark">@product.ProductName</a>
+                                            </h3>
+                                            <div class="">
+                                                <span class="fw-semibold">@product.UnitPrice.ToString("N0") VND</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="swiper-pagination mb-3"></div>
+                        <div class="swiper-navigation position-absolute start-50 translate-middle-x bottom-0 mb-4 d-none d-lg-block">
+                            <div class="swiper-button-prev" id="slide1"></div>
+                            <div class="swiper-button-next" id="slide2"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-lg-12">
-                <div class="swiper-container swiper" id="swiper-3" data-pagination-type="bullets" data-speed="400"
-                    data-space-between="30" data-pagination="true" data-navigation="false" data-autoplay="false" data-effect="slides"
-                    data-autoplay-delay="3000"
-                    data-breakpoints='{"480": {"slidesPerView": 2}, "768": {"slidesPerView": 3}, "1024": {"slidesPerView": 3}}'>
-                    <div class="swiper-wrapper pb-10">
-                        <div class="swiper-slide">
-                            <div>
-                                <a href="#"><img src="~/assets/images/product-img-1.jpg" alt="" class="img-fluid"></a>
-                                <div class="text-center">
-                                    <h3 class="mt-3 h5"><a href="#">Modern Chair</a></h3>
-                                    <div>
-                                        <span class="fw-semibold text-decoration-line-through">$59.00</span>
-                                        <span>$29.00</span>
-                                    </div>
-                                </div>
-                            </div>
+        </div>
+    </section>
+}
+
+<!-- Promo Banner Section -->
+<section class="py-lg-11 py-6 position-relative"
+         style="background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('/assets/images/couch-with-cushions-glass-table.jpg') center/cover no-repeat;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center text-white">
+                <span class="badge bg-primary px-4 py-2 mb-3">@localizer.Get("LimitedTimeOffer")</span>
+                <h2 class="display-4 fw-bold mb-3">@localizer.Get("Get25PercentOff")</h2>
+                <p class="lead mb-4 opacity-75">@localizer.Get("TransformYourSpace")</p>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg px-5">@localizer.Get("ShopNow")</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="py-lg-8 py-5 bg-white">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <i class="bi bi-truck display-5 text-primary mb-3 d-block"></i>
+                    <h6 class="fw-bold mb-1">@localizer.Get("FreeShipping")</h6>
+                    <p class="text-muted small mb-0">@feature1Desc</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <i class="bi bi-shield-check display-5 text-success mb-3 d-block"></i>
+                    <h6 class="fw-bold mb-1">@localizer.Get("SecurePayment")</h6>
+                    <p class="text-muted small mb-0">@feature2Desc</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <i class="bi bi-arrow-repeat display-5 text-warning mb-3 d-block"></i>
+                    <h6 class="fw-bold mb-1">@localizer.Get("EasyReturns")</h6>
+                    <p class="text-muted small mb-0">@feature3Desc</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <i class="bi bi-headset display-5 text-danger mb-3 d-block"></i>
+                    <h6 class="fw-bold mb-1">@localizer.Get("Support247")</h6>
+                    <p class="text-muted small mb-0">@feature4Desc</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="py-lg-10 py-5" style="background: #faf9f7;">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-2">@localizer.Get("WhatOurCustomersSay")</h2>
+                <p class="text-muted">@localizer.Get("TrustedByThousands")</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm p-4">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
                         </div>
-                        <div class="swiper-slide">
-                            <div>
-                                <a href="#"><img src="~/assets/images/product-img-2.jpg" alt="" class="img-fluid"></a>
-                                <div class="text-center">
-                                    <h3 class="mt-3 h5"><a href="#">Floor Lamp</a></h3>
-                                    <div>
-                                        <span class="fw-semibold text-decoration-line-through">$95.00</span>
-                                        <span>$89.00</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="swiper-slide">
-                            <div>
-                                <a href="#"><img src="~/assets/images/product-img-5.jpg" alt="" class="img-fluid"></a>
-                                <div class="text-center">
-                                    <h3 class="mt-3 h5"><a href="#">High Back Boss Chair</a></h3>
-                                    <div>
-                                        <span class="fw-semibold text-decoration-line-through">$78.00</span>
-                                        <span>$68.00</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="swiper-slide">
-                            <div>
-                                <a href="#"><img src="~/assets/images/product-img-6.jpg" alt="" class="img-fluid"></a>
-                                <div class="text-center">
-                                    <h3 class="mt-3 h5"><a href="#">Fancy Metal Clock</a></h3>
-                                    <div>
-                                        <span class="fw-semibold text-decoration-line-through">$58.00</span>
-                                        <span>$38.00</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="swiper-slide">
-                            <div>
-                                <a href="#"><img src="~/assets/images/product-img-3.jpg" alt="" class="img-fluid"></a>
-                                <div class="text-center">
-                                    <h3 class="mt-3 h5"><a href="#">Comfort Chair</a></h3>
-                                    <div>
-                                        <span class="fw-semibold text-decoration-line-through">$38.00</span>
-                                        <span>$28.00</span>
-                                    </div>
-                                </div>
-                            </div>
+                        <p class="card-text fst-italic text-muted">"@localizer.Get("Testimonial1")"</p>
+                        <div class="mt-3">
+                            <img src="https://ui-avatars.com/api/?name=Nguyen+Van+A&background=007bff&color=fff&size=48" alt="Customer" class="rounded-circle mb-2 d-block mx-auto">
+                            <strong>Nguyen Van A</strong>
+                            <small class="text-muted d-block">Ho Chi Minh City</small>
                         </div>
                     </div>
-                    <div class="swiper-pagination mb-3"></div>
-                    <div class="swiper-navigation position-absolute start-50 translate-middle-x bottom-0 mb-4 d-none d-lg-block">
-                        <div class="swiper-button-prev" id="slide1"></div>
-                        <div class="swiper-button-next" id="slide2"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm p-4">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                        </div>
+                        <p class="card-text fst-italic text-muted">"@localizer.Get("Testimonial2")"</p>
+                        <div class="mt-3">
+                            <img src="https://ui-avatars.com/api/?name=Tran+Thi+B&background=28a745&color=fff&size=48" alt="Customer" class="rounded-circle mb-2 d-block mx-auto">
+                            <strong>Tran Thi B</strong>
+                            <small class="text-muted d-block">Hanoi</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm p-4">
+                    <div class="card-body text-center">
+                        <div class="text-warning mb-3">
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-fill"></i>
+                            <i class="bi bi-star-half"></i>
+                        </div>
+                        <p class="card-text fst-italic text-muted">"@localizer.Get("Testimonial3")"</p>
+                        <div class="mt-3">
+                            <img src="https://ui-avatars.com/api/?name=Le+Van+C&background=dc3545&color=fff&size=48" alt="Customer" class="rounded-circle mb-2 d-block mx-auto">
+                            <strong>Le Van C</strong>
+                            <small class="text-muted d-block">Da Nang</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -153,38 +323,123 @@
     </div>
 </section>
 
-<section style="background: url(~/assets/images/couch-with-cushions-glass-table.jpg)no-repeat; background-size: cover; background-position: center;" class="py-lg-11 py-6">
+<!-- Newsletter Section -->
+<section class="py-lg-8 py-5" style="background: #d47f31;">
     <div class="container">
-        <div class="row justify-content-center align-items-center">
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-lg rounded-0">
-                    <div class="card-body p-6">
-                        <div class="text-center">
-                            <p class="fst-italic">
-                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-                            </p>
-                            <div class="lh-1">
-                                <h4 class="fs-5 mb-1">John Deo</h4>
-                                <small class="text-sm">CEO, Company Name</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<section class="py-lg-10 py-5">
-    <div class="container">
-        <div class="row justify-content-center mx-lg-10">
-            <div class="col-lg-8 text-center">
-                <h2 class="mb-5">Subscribe to our Newsletter</h2>
-                <form class="d-flex justify-content-center gap-2 flex-column flex-sm-row">
-                    <input type="email" class="form-control w-lg-50 w-100" placeholder="Enter your email" required>
-                    <button type="submit" class="btn btn-primary">Subscribe</button>
+        <div class="row justify-content-center">
+            <div class="col-lg-6 text-center text-white">
+                <h2 class="display-6 fw-bold mb-3">@newsletterTitle</h2>
+                <p class="mb-4 opacity-75">@newsletterDesc</p>
+                <form class="d-flex gap-2 justify-content-center flex-column flex-sm-row">
+                    <input type="email" class="form-control form-control-lg" placeholder="@localizer.Get("EnterYourEmail")" required style="max-width: 400px;">
+                    <button type="submit" class="btn btn-dark btn-lg px-4">
+                        <i class="bi bi-send me-2"></i>@localizer.Get("Subscribe")
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </section>
+
+<style>
+    /* Swiper */
+    .swiper {
+        width: 100%;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .swiper-wrapper {
+        display: flex;
+        flex-direction: row;
+        box-sizing: border-box;
+    }
+
+    .swiper-slide {
+        flex-shrink: 0;
+        height: auto;
+        display: block;
+    }
+
+    .swiper-pagination-light .swiper-pagination-bullet {
+        border-color: #fff;
+        color: #fff;
+        width: 10px;
+        height: 10px;
+    }
+
+    [data-navigation="false"] .swiper-navigation {
+        display: none;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .swiper-button-prev svg, .swiper-button-next svg {
+        display: none;
+    }
+
+    .swiper-button-prev {
+        left: auto;
+        right: 0;
+        position: absolute;
+    }
+
+    .swiper-button-prev:after {
+        content: "\f12f";
+        font-family: "bootstrap-icons";
+        font-size: 40px;
+        color: #000;
+    }
+
+    .swiper-button-next {
+        left: 0;
+        right: auto;
+        position: absolute;
+    }
+
+    .swiper-button-next:after {
+        content: "\f138";
+        font-family: "bootstrap-icons";
+        font-size: 40px;
+        color: #000;
+    }
+
+    .swiper-pagination {
+        position: relative;
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .swiper-pagination-bullet {
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        border-radius: 50%;
+        background: #999;
+        opacity: 0.5;
+        margin: 0 4px;
+    }
+
+    .swiper-pagination-bullet-active {
+        background: #000;
+        opacity: 1;
+    }
+
+    .swiper-navigation {
+        display: block;
+    }
+
+    /* Category Cards */
+    .category-card {
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+    }
+</style>

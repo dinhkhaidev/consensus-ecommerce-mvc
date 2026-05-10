@@ -1,202 +1,303 @@
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
+using WebActionResults.Data.Services;
+using WebActionResults.Data.Entities;
+using WebActionResults.ViewModels;
 using WebActionResults.Models;
 
 namespace WebActionResults.Controllers;
 
 public class ProductController : Controller
 {
-    private readonly ShopDbContext _context;
+    private readonly ICatalogService _catalogService;
+    private readonly IUserService _userService;
 
-    public ProductController(ShopDbContext context)
+    public ProductController(ICatalogService catalogService, IUserService userService)
     {
-        _context = context;
+        _catalogService = catalogService;
+        _userService = userService;
     }
 
-    public async Task<IActionResult> Index(int? categoryId)
+    public async Task<IActionResult> Index(int? categoryId, string? search, int? minPrice, int? maxPrice, string? priceRange, int page = 1, int pageSize = 12)
     {
-        IQueryable<Product> productsQuery = _context.Products
-            .AsNoTracking()
-            .Include(p => p.Category)
-            .Include(p => p.Supplier);
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 12;
 
-        if (categoryId.HasValue)
+        // Parse price range presets into min/max values
+        int? filterMinPrice = minPrice;
+        int? filterMaxPrice = maxPrice;
+
+        if (!string.IsNullOrEmpty(priceRange))
         {
-            productsQuery = productsQuery.Where(p => p.CategoryID == categoryId.Value);
-
-            ViewData["SelectedCategoryName"] = await _context.Categories
-                .AsNoTracking()
-                .Where(c => c.CategoryID == categoryId.Value)
-                .Select(c => c.CategoryName)
-                .FirstOrDefaultAsync();
-        }
-
-        var products = await productsQuery
-            .OrderBy(p => p.ProductName)
-            .ToListAsync();
-
-        return View(products);
-    }
-
-    public async Task<IActionResult> Details(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var product = await _context.Products
-            .AsNoTracking()
-            .Include(p => p.Category)
-            .Include(p => p.Supplier)
-            .FirstOrDefaultAsync(p => p.ProductID == id);
-
-        if (product == null)
-        {
-            return NotFound();
-        }
-
-        return View(product);
-    }
-
-    public async Task<IActionResult> Create()
-    {
-        await PopulateSelectListsAsync();
-        return View();
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("ProductID,ProductName,SupplierID,CategoryID,QuantityPerUnit,UnitPrice,Discontinued")] Product product)
-    {
-        // Ignore validation for navigation properties that are not posted by the form.
-        ModelState.Remove(nameof(Product.Category));
-        ModelState.Remove(nameof(Product.Supplier));
-
-        if (!ModelState.IsValid)
-        {
-            await PopulateSelectListsAsync(product.CategoryID, product.SupplierID);
-            return View(product);
-        }
-
-        _context.Add(product);
-        await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Da them san pham thanh cong.";
-        return RedirectToAction(nameof(Index));
-    }
-
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var product = await _context.Products.FindAsync(id);
-        if (product == null)
-        {
-            return NotFound();
-        }
-
-        await PopulateSelectListsAsync(product.CategoryID, product.SupplierID);
-        return View(product);
-    }
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("ProductID,ProductName,SupplierID,CategoryID,QuantityPerUnit,UnitPrice,Discontinued")] Product product)
-    {
-        // Ignore validation for navigation properties that are not posted by the form.
-        ModelState.Remove(nameof(Product.Category));
-        ModelState.Remove(nameof(Product.Supplier));
-
-        if (id != product.ProductID)
-        {
-            return NotFound();
-        }
-
-        if (!ModelState.IsValid)
-        {
-            await PopulateSelectListsAsync(product.CategoryID, product.SupplierID);
-            return View(product);
-        }
-
-        try
-        {
-            _context.Update(product);
-            await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Da cap nhat san pham thanh cong.";
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!await ProductExistsAsync(product.ProductID))
+            switch (priceRange)
             {
-                return NotFound();
+                case "under-2000000":
+                    filterMaxPrice = 2000000;
+                    break;
+                case "2000000-5000000":
+                    filterMinPrice = 2000000;
+                    filterMaxPrice = 5000000;
+                    break;
+                case "5000000-10000000":
+                    filterMinPrice = 5000000;
+                    filterMaxPrice = 10000000;
+                    break;
+                case "above-10000000":
+                    filterMinPrice = 10000000;
+                    break;
             }
-
-            throw;
         }
 
-        return RedirectToAction(nameof(Index));
+        List<Product> products;
+        int totalCount = 0;
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            (products, totalCount) = await _catalogService.SearchProductsPaginatedAsync(search, page, pageSize);
+            ViewData["SearchTerm"] = search;
+        }
+        else if (categoryId.HasValue)
+        {
+            if (filterMinPrice.HasValue || filterMaxPrice.HasValue)
+            {
+                (products, totalCount) = await _catalogService.GetProductsByCategoryAndPriceRangeAsync(categoryId.Value, filterMinPrice, filterMaxPrice, page, pageSize);
+            }
+            else
+            {
+                (products, totalCount) = await _catalogService.GetProductsByCategoryPaginatedAsync(categoryId.Value, page, pageSize);
+            }
+            var category = await _catalogService.GetCategoryByIdAsync(categoryId.Value);
+            ViewData["SelectedCategoryName"] = category?.CategoryName;
+            ViewData["SelectedCategoryId"] = categoryId.Value;
+        }
+        else if (filterMinPrice.HasValue || filterMaxPrice.HasValue)
+        {
+            (products, totalCount) = await _catalogService.GetProductsByPriceRangeAsync(filterMinPrice, filterMaxPrice, page, pageSize);
+        }
+        else
+        {
+            (products, totalCount) = await _catalogService.GetProductsPaginatedAsync(page, pageSize);
+        }
+
+        var viewModels = products.Select(p => new ProductListViewModel
+        {
+            ProductId = p.Id,
+            ProductName = p.ProductName,
+            UnitPrice = p.UnitPrice,
+            CategoryName = p.Category?.CategoryName,
+            MainImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl,
+            HasVariants = p.Variants?.Any() ?? false,
+            MinPrice = p.Variants?.Any() == true ? p.Variants.Min(v => p.UnitPrice + (v.PriceAdjustment ?? 0)) : null
+        }).ToList();
+
+        var categories = await _catalogService.GetAllCategoriesAsync();
+        ViewBag.Categories = categories;
+
+        ViewData["CurrentPage"] = page;
+        ViewData["PageSize"] = pageSize;
+        ViewData["TotalCount"] = totalCount;
+        ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        return View(viewModels);
     }
 
-    public async Task<IActionResult> Delete(int? id)
+    public async Task<IActionResult> Details(int id)
     {
-        if (id == null)
-        {
-            return NotFound();
-        }
-
-        var product = await _context.Products
-            .AsNoTracking()
-            .Include(p => p.Category)
-            .Include(p => p.Supplier)
-            .FirstOrDefaultAsync(p => p.ProductID == id);
-
+        var product = await _catalogService.GetProductWithDetailsAsync(id);
         if (product == null)
-        {
             return NotFound();
+
+        var reviews = await _catalogService.GetProductReviewsAsync(id);
+
+        bool isInWishlist = false;
+        var userId = await _userService.GetCurrentUserIdAsync();
+        if (userId.HasValue)
+        {
+            var wishlistService = HttpContext.RequestServices.GetService<IWishlistService>();
+            if (wishlistService != null)
+                isInWishlist = await wishlistService.IsInWishlistAsync(userId.Value, id);
         }
 
-        return View(product);
+        var viewModel = new ProductDetailViewModel
+        {
+            ProductId = product.Id,
+            ProductName = product.ProductName,
+            Description = product.QuantityPerUnit,
+            UnitPrice = product.UnitPrice,
+            CategoryName = product.Category?.CategoryName,
+            SupplierName = null,
+            Variants = product.Variants?.Select(v => new ProductVariantViewModel
+            {
+                Id = v.Id,
+                Size = v.Size,
+                Color = v.Color,
+                SKU = v.SKU,
+                PriceAdjustment = v.PriceAdjustment ?? 0,
+                StockQuantity = v.StockQuantity,
+                Images = v.Images?.Select(i => new ProductImageViewModel
+                {
+                    Id = i.Id,
+                    ImageUrl = i.ImageUrl ?? "",
+                    AltText = i.AltText,
+                    IsMain = i.IsMain
+                }).ToList() ?? new List<ProductImageViewModel>()
+            }).ToList() ?? new List<ProductVariantViewModel>(),
+            Images = product.Images?.Select(i => new ProductImageViewModel
+            {
+                Id = i.Id,
+                ImageUrl = i.ImageUrl ?? "",
+                AltText = i.AltText,
+                IsMain = i.IsMain
+            }).ToList() ?? new List<ProductImageViewModel>(),
+            Reviews = reviews.Select(r => new ReviewViewModel
+            {
+                Id = r.Id,
+                UserName = r.User?.UserName ?? "Anonymous",
+                UserAvatar = null,
+                Comment = r.Comment,
+                Rating = r.Rating,
+                CreatedAt = r.CreatedAt
+            }).ToList(),
+            AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0,
+            ReviewCount = reviews.Count,
+            IsInWishlist = isInWishlist
+        };
+
+        return View(viewModel);
     }
 
-    [HttpPost, ActionName("Delete")]
+    [HttpGet]
+    public async Task<IActionResult> DetailsPartial(int id)
+    {
+        var product = await _catalogService.GetProductWithDetailsAsync(id);
+        if (product == null)
+            return NotFound();
+
+        var reviews = await _catalogService.GetProductReviewsAsync(id);
+
+        var viewModel = new ProductDetailViewModel
+        {
+            ProductId = product.Id,
+            ProductName = product.ProductName,
+            Description = product.QuantityPerUnit,
+            UnitPrice = product.UnitPrice,
+            CategoryName = product.Category?.CategoryName,
+            SupplierName = null,
+            Variants = product.Variants?.Select(v => new ProductVariantViewModel
+            {
+                Id = v.Id,
+                Size = v.Size,
+                Color = v.Color,
+                SKU = v.SKU,
+                PriceAdjustment = v.PriceAdjustment ?? 0,
+                StockQuantity = v.StockQuantity,
+                Images = v.Images?.Select(i => new ProductImageViewModel
+                {
+                    Id = i.Id,
+                    ImageUrl = i.ImageUrl ?? "",
+                    AltText = i.AltText,
+                    IsMain = i.IsMain
+                }).ToList() ?? new List<ProductImageViewModel>()
+            }).ToList() ?? new List<ProductVariantViewModel>(),
+            Images = product.Images?.Select(i => new ProductImageViewModel
+            {
+                Id = i.Id,
+                ImageUrl = i.ImageUrl ?? "",
+                AltText = i.AltText,
+                IsMain = i.IsMain
+            }).ToList() ?? new List<ProductImageViewModel>(),
+            Reviews = reviews.Select(r => new ReviewViewModel
+            {
+                Id = r.Id,
+                UserName = r.User?.UserName ?? "Anonymous",
+                UserAvatar = null,
+                Comment = r.Comment,
+                Rating = r.Rating,
+                CreatedAt = r.CreatedAt
+            }).ToList(),
+            AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0,
+            ReviewCount = reviews.Count,
+            IsInWishlist = false,
+            RelatedProducts = new List<ProductListViewModel>()
+        };
+
+        return PartialView("_DetailsPartial", viewModel);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Compare(int id)
+    {
+        var product = await _catalogService.GetProductWithDetailsAsync(id);
+        if (product == null)
+            return NotFound();
+
+        var viewModel = new ProductDetailViewModel
+        {
+            ProductId = product.Id,
+            ProductName = product.ProductName,
+            Description = product.QuantityPerUnit,
+            UnitPrice = product.UnitPrice,
+            CategoryName = product.Category?.CategoryName,
+            SupplierName = null,
+            Variants = product.Variants?.Select(v => new ProductVariantViewModel
+            {
+                Id = v.Id,
+                Size = v.Size,
+                Color = v.Color,
+                SKU = v.SKU,
+                PriceAdjustment = v.PriceAdjustment ?? 0,
+                StockQuantity = v.StockQuantity,
+                Images = v.Images?.Select(i => new ProductImageViewModel
+                {
+                    Id = i.Id,
+                    ImageUrl = i.ImageUrl ?? "",
+                    AltText = i.AltText,
+                    IsMain = i.IsMain
+                }).ToList() ?? new List<ProductImageViewModel>()
+            }).ToList() ?? new List<ProductVariantViewModel>(),
+            Images = product.Images?.Select(i => new ProductImageViewModel
+            {
+                Id = i.Id,
+                ImageUrl = i.ImageUrl ?? "",
+                AltText = i.AltText,
+                IsMain = i.IsMain
+            }).ToList() ?? new List<ProductImageViewModel>(),
+            Reviews = new List<ReviewViewModel>(),
+            AverageRating = 0,
+            ReviewCount = 0,
+            IsInWishlist = false,
+            RelatedProducts = new List<ProductListViewModel>()
+        };
+
+        return View("Details", viewModel);
+    }
+
+    [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
+    public async Task<IActionResult> AddReview(AddReviewViewModel model)
     {
-        var product = await _context.Products.FindAsync(id);
-        if (product == null)
+        if (!ModelState.IsValid || model.Rating < 1 || model.Rating > 5)
         {
-            TempData["ErrorMessage"] = "Khong tim thay san pham can xoa.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Details), new { id = model.ProductId });
         }
 
-        _context.Products.Remove(product);
-        await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Da xoa san pham thanh cong.";
-        return RedirectToAction(nameof(Index));
-    }
+        var userId = await _userService.GetCurrentUserIdAsync();
+        if (userId == null)
+            return RedirectToAction("Login", "Account");
 
-    private async Task PopulateSelectListsAsync(int? selectedCategoryId = null, int? selectedSupplierId = null)
-    {
-        var categories = await _context.Categories
-            .AsNoTracking()
-            .OrderBy(c => c.CategoryName)
-            .ToListAsync();
+        var review = new Review
+        {
+            ProductId = model.ProductId,
+            UserId = userId.Value,
+            Comment = model.Comment,
+            Rating = model.Rating,
+            IsApproved = false,
+            CreatedAt = DateTime.UtcNow
+        };
 
-        var suppliers = await _context.Suppliers
-            .AsNoTracking()
-            .OrderBy(s => s.CompanyName)
-            .ToListAsync();
+        await _catalogService.AddReviewAsync(review);
+        TempData["ToastSuccess"] = "Review submitted. It will be displayed after approval.";
 
-        ViewData["CategoryID"] = new SelectList(categories, "CategoryID", "CategoryName", selectedCategoryId);
-        ViewData["SupplierID"] = new SelectList(suppliers, "SupplierID", "CompanyName", selectedSupplierId);
-    }
-
-    private async Task<bool> ProductExistsAsync(int id)
-    {
-        return await _context.Products.AnyAsync(e => e.ProductID == id);
+        return RedirectToAction(nameof(Details), new { id = model.ProductId });
     }
 }

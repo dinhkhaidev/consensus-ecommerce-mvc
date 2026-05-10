@@ -1,0 +1,143 @@
+@model IEnumerable<WebActionResults.ViewModels.WishlistViewModel>
+@{
+    ViewData["Title"] = localizer.Get("Wishlist") + " - Furnish";
+}
+
+<!-- Breadcrumb -->
+<section class="py-3 bg-light">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">@localizer.Get("Home")</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Account" asp-action="Profile" class="text-decoration-none">@localizer.Get("Profile")</a></li>
+                <li class="breadcrumb-item active">@localizer.Get("Wishlist")</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<section class="py-lg-8 py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="bi bi-heart-fill text-danger me-2"></i>@localizer.Get("Wishlist")
+            </h1>
+            <p class="text-muted lead">@localizer.Get("Wishlist")</p>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="row justify-content-center">
+                <div class="col-lg-6 text-center">
+                    <div class="card border-0 shadow-sm py-5">
+                        <div class="card-body">
+                            <i class="bi bi-heart text-muted" style="font-size: 6rem;"></i>
+                            <h4 class="mt-4 mb-3">@localizer.Get("Wishlist")</h4>
+                            <p class="text-muted mb-4">@localizer.Get("StartShopping")</p>
+                            <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg">
+                                <i class="bi bi-bag me-2"></i>@localizer.Get("Products")
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var item in Model)
+                {
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="card product-card h-100 border-0 shadow-sm hover-lift">
+                            @if (!string.IsNullOrEmpty(item.MainImageUrl))
+                            {
+                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId" class="product-img-wrapper">
+                                    <img src="@item.MainImageUrl" class="card-img-top" alt="@item.ProductName"
+                                         style="height: 200px; object-fit: cover;">
+                                </a>
+                            }
+                            else
+                            {
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light"
+                                     style="height: 200px;">
+                                    <i class="bi bi-image text-secondary" style="font-size: 4rem;"></i>
+                                </div>
+                            }
+                            <div class="card-body text-center">
+                                <h5 class="card-title mb-2">
+                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
+                                       class="text-decoration-none text-dark product-name">@item.ProductName</a>
+                                </h5>
+                                <p class="fw-bold text-primary fs-5 mb-3">@item.UnitPrice.ToString("N0") VND</p>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-clock me-1"></i>@item.AddedAt.ToString("MMM dd, yyyy")
+                                </p>
+                            </div>
+                            <div class="card-footer bg-transparent border-top-0 pb-4">
+                                <div class="d-flex flex-column gap-2">
+                                    <form asp-controller="Cart" asp-action="Add" method="post">
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-cart-plus me-2"></i>@localizer.Get("AddToCart")
+                                        </button>
+                                    </form>
+                                    <form asp-controller="Wishlist" asp-action="Remove" method="post">
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <button type="submit" class="btn btn-outline-danger w-100">
+                                            <i class="bi bi-trash me-2"></i>@localizer.Get("RemoveCoupon")
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="text-center mt-5">
+                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-bag me-2"></i>@localizer.Get("ContinueShopping")
+                </a>
+            </div>
+        }
+    </div>
+</section>
+
+<style>
+    .product-card {
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.12) !important;
+    }
+
+    .product-img-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: block;
+    }
+
+    .product-img-wrapper img {
+        transition: transform 0.4s ease;
+    }
+
+    .product-img-wrapper:hover img {
+        transform: scale(1.05);
+    }
+
+    .product-name {
+        transition: color 0.2s ease;
+    }
+
+    .product-card:hover .product-name {
+        color: #d47f31 !important;
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-5px);
+    }
+</style>

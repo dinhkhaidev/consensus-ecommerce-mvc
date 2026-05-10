@@ -1,31 +1,107 @@
-<footer class="bg-dark pt-8 footer">
+@{
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var contactEmail = settings.GetValueOrDefault("ContactEmail", "info@furnish.com");
+    var contactPhone = settings.GetValueOrDefault("ContactPhone", "");
+    var address = settings.GetValueOrDefault("Address", "");
+    var footerCopyright = settings.GetValueOrDefault("FooterCopyright", "");
+}
+<footer class="footer py-lg-8 py-5" style="background: #1a1a1a;">
     <div class="container">
-        <div class="row">
-            <div class="col-lg-4 col-md-4 col-12">
-                <a class="navbar-brand" href="#">
-                    <span class="d-flex flex-column text-uppercase text-xs fw-bold lh-sm">
-                        <span style="letter-spacing: .12rem;">Furnish</span>
-                        <span>Shop</span>
-                    </span>
+        <div class="row align-items-center mb-7">
+            <div class="col-lg-4 mb-4 mb-lg-0">
+                <a asp-controller="Home" asp-action="Index" class="text-decoration-none d-inline-flex align-items-center gap-2">
+                    <div class="brand-icon">
+                        <i class="bi bi-house-door-fill" style="color: #d47f31;"></i>
+                    </div>
+                    <div class="d-flex flex-column lh-sm">
+                        <span class="fw-bold text-uppercase text-white" style="letter-spacing: .15rem; font-size: 0.85rem;">@localizer.Get("AppName")</span>
+                        <span class="text-muted small">Premium Furniture</span>
+                    </div>
                 </a>
             </div>
-            <div class="col-lg-8 col-md-6 mb-4 d-flex justify-content-start justify-content-md-end gy-4">
-                <ul class="list-unstyled lh-lg d-flex flex-column flex-md-row gap-4">
-                    <li><a asp-controller="Home" asp-action="Index" class="ft-links text-decoration-none">Home</a></li>
-                    <li><a asp-controller="Product" asp-action="Index" class="ft-links text-decoration-none">Products</a></li>
-                    <li><a asp-controller="Category" asp-action="Index" class="ft-links text-decoration-none">Categories</a></li>
-                    <li><a asp-controller="Supplier" asp-action="Index" class="ft-links text-decoration-none">Suppliers</a></li>
+            <div class="col-lg-8 d-flex justify-content-start justify-content-md-end">
+                <ul class="list-unstyled d-flex flex-column flex-md-row gap-4 mb-0">
+                    <li><a asp-controller="Home" asp-action="Index" class="ft-links text-decoration-none text-white-50">@localizer.Get("Home")</a></li>
+                    <li><a asp-controller="Product" asp-action="Index" class="ft-links text-decoration-none text-white-50">@localizer.Get("Products")</a></li>
+                    <li><a asp-controller="Category" asp-action="Index" class="ft-links text-decoration-none text-white-50">@localizer.Get("Categories")</a></li>
+                    <li><a asp-controller="Home" asp-action="About" class="ft-links text-decoration-none text-white-50">About Us</a></li>
+                    <li><a asp-controller="Home" asp-action="Contact" class="ft-links text-decoration-none text-white-50">@localizer.Get("Info")</a></li>
                 </ul>
             </div>
         </div>
-        <hr class="bg-secondary">
-        <div class="row pb-3">
-            <div class="col-md-6 text-center text-md-start">
-                <p class="mb-0">&copy; 2025 WebActionResults. All rights reserved.</p>
+
+        <div class="row align-items-center py-lg-8 border-top" style="border-color: #333 !important;">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="display-4 text-white mb-3">We Design all over the world</h2>
+                <div class="d-flex gap-3">
+                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
+                        <i class="bi bi-facebook"></i>
+                    </a>
+                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
+                        <i class="bi bi-twitter"></i>
+                    </a>
+                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                </div>
             </div>
-            <div class="col-md-6 text-center text-md-end">
-                <a asp-controller="Home" asp-action="Privacy" class="ft-links text-decoration-none me-3">Privacy Policy</a>
+            <div class="col-lg-6 d-flex justify-content-start justify-content-lg-end">
+                <div class="d-flex flex-column gap-3">
+                    <div>
+                        <span class="text-white-50 small">@localizer.Get("Email") Us</span>
+                        <span class="h5 text-white d-block">@contactEmail</span>
+                    </div>
+                    <a asp-controller="Home" asp-action="Contact" class="btn btn-outline-light btn-sm" style="width: fit-content;">@localizer.Get("Info")</a>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-4" style="border-color: #333;">
+
+        <div class="row align-items-center">
+            <div class="col-md-6 text-center text-md-start">
+                <p class="mb-0 small text-white-50">
+                    &copy; @DateTime.Now.Year @if (!string.IsNullOrEmpty(footerCopyright))
+                    {
+                        @Html.Raw(footerCopyright)
+                    }
+                    else
+                    {
+                        <strong class="text-white">@localizer.Get("AppName")</strong>
+                    }. All rights reserved.
+                </p>
+            </div>
+            <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
+                <a asp-controller="Home" asp-action="Privacy" class="ft-links text-decoration-none small text-white-50 me-3">Privacy Policy</a>
+                <a href="#" class="ft-links text-decoration-none small text-white-50">Terms of Service</a>
             </div>
         </div>
     </div>
 </footer>
+
+<style>
+    .ft-links {
+        transition: color 0.2s;
+    }
+
+    .ft-links:hover {
+        color: #d47f31 !important;
+    }
+
+    .brand-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(212, 127, 49, 0.15);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .brand-icon i {
+        font-size: 1.25rem;
+    }
+</style>
