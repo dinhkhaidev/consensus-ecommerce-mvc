@@ -17,7 +17,6 @@ public class SupplierController : Controller
     {
         var suppliers = await _context.Suppliers
             .AsNoTracking()
-            .Include(s => s.Products)
             .OrderBy(s => s.CompanyName)
             .ToListAsync();
 
@@ -33,8 +32,7 @@ public class SupplierController : Controller
 
         var supplier = await _context.Suppliers
             .AsNoTracking()
-            .Include(s => s.Products)
-            .FirstOrDefaultAsync(s => s.SupplierID == id);
+            .FirstOrDefaultAsync(s => s.Id == id);
 
         if (supplier == null)
         {
@@ -51,7 +49,7 @@ public class SupplierController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create([Bind("SupplierID,CompanyName,Phone")] Supplier supplier)
+    public async Task<IActionResult> Create([Bind("Id,CompanyName,Phone")] Supplier supplier)
     {
         if (!ModelState.IsValid)
         {
@@ -60,7 +58,7 @@ public class SupplierController : Controller
 
         _context.Add(supplier);
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Da them nha cung cap thanh cong.";
+        TempData["ToastSuccess"] = "Da them nha cung cap thanh cong.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -82,9 +80,9 @@ public class SupplierController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, [Bind("SupplierID,CompanyName,Phone")] Supplier supplier)
+    public async Task<IActionResult> Edit(int id, [Bind("Id,CompanyName,Phone")] Supplier supplier)
     {
-        if (id != supplier.SupplierID)
+        if (id != supplier.Id)
         {
             return NotFound();
         }
@@ -98,11 +96,11 @@ public class SupplierController : Controller
         {
             _context.Update(supplier);
             await _context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Da cap nhat nha cung cap thanh cong.";
+            TempData["ToastSuccess"] = "Da cap nhat nha cung cap thanh cong.";
         }
         catch (DbUpdateConcurrencyException)
         {
-            if (!await SupplierExistsAsync(supplier.SupplierID))
+            if (!await SupplierExistsAsync(supplier.Id))
             {
                 return NotFound();
             }
@@ -122,8 +120,7 @@ public class SupplierController : Controller
 
         var supplier = await _context.Suppliers
             .AsNoTracking()
-            .Include(s => s.Products)
-            .FirstOrDefaultAsync(s => s.SupplierID == id);
+            .FirstOrDefaultAsync(s => s.Id == id);
 
         if (supplier == null)
         {
@@ -138,29 +135,22 @@ public class SupplierController : Controller
     public async Task<IActionResult> DeleteConfirmed(int id)
     {
         var supplier = await _context.Suppliers
-            .Include(s => s.Products)
-            .FirstOrDefaultAsync(s => s.SupplierID == id);
+            .FirstOrDefaultAsync(s => s.Id == id);
 
         if (supplier == null)
         {
-            TempData["ErrorMessage"] = "Khong tim thay nha cung cap can xoa.";
-            return RedirectToAction(nameof(Index));
-        }
-
-        if (supplier.Products.Any())
-        {
-            TempData["ErrorMessage"] = "Khong the xoa nha cung cap dang duoc gan cho san pham.";
+            TempData["ToastError"] = "Khong tim thay nha cung cap can xoa.";
             return RedirectToAction(nameof(Index));
         }
 
         _context.Suppliers.Remove(supplier);
         await _context.SaveChangesAsync();
-        TempData["SuccessMessage"] = "Da xoa nha cung cap thanh cong.";
+        TempData["ToastSuccess"] = "Da xoa nha cung cap thanh cong.";
         return RedirectToAction(nameof(Index));
     }
 
     private async Task<bool> SupplierExistsAsync(int id)
     {
-        return await _context.Suppliers.AnyAsync(e => e.SupplierID == id);
+        return await _context.Suppliers.AnyAsync(e => e.Id == id);
     }
 }

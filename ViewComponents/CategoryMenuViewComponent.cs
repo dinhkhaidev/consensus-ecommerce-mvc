@@ -20,10 +20,10 @@ public class CategoryMenuViewComponent : ViewComponent
             .OrderBy(c => c.CategoryName)
             .Select(c => new CategoryMenuItemViewModel
             {
-                CategoryId = c.CategoryID,
+                CategoryId = c.Id,
                 CategoryName = c.CategoryName,
                 ProductCount = c.Products.Count,
-                IsSelected = selectedCategoryId.HasValue && selectedCategoryId.Value == c.CategoryID
+                IsSelected = selectedCategoryId.HasValue && selectedCategoryId.Value == c.Id
             })
             .ToListAsync();
 

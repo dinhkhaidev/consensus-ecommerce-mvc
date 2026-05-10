@@ -1,0 +1,308 @@
+@model WebActionResults.ViewModels.ProfileViewModel
+@{
+    ViewData["Title"] = localizer.Get("Profile") + " - Furnish";
+}
+
+<!-- Breadcrumb -->
+<section class="py-3 bg-light">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">@localizer.Get("Home")</a></li>
+                <li class="breadcrumb-item active">@localizer.Get("Profile")</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<section class="py-lg-8 py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="bi bi-person-circle me-2"></i>@localizer.Get("Profile")
+            </h1>
+            <p class="text-muted lead">@localizer.Get("Profile")</p>
+        </div>
+
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-4 mb-4">
+                <!-- Profile Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body text-center py-5">
+                        <div class="mb-3">
+                            <div class="profile-avatar mx-auto d-flex align-items-center justify-content-center rounded-circle"
+                                 style="width: 120px; height: 120px; background: linear-gradient(135deg, #d47f31 0%, #ff9f5a 100%);">
+                                <span class="text-white fs-1 fw-bold">@Model.FullName?.FirstOrDefault()</span>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-1">@Model.FullName</h4>
+                        <p class="text-muted mb-1">@@@Model.UserName</p>
+                        <p class="text-muted small mb-0">@Model.Email</p>
+                        @if (!string.IsNullOrEmpty(Model.PhoneNumber))
+                        {
+                            <p class="text-muted small"><i class="bi bi-phone me-1"></i>@Model.PhoneNumber</p>
+                        }
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-3">
+                        <h6 class="fw-bold text-uppercase text-xs text-muted mb-3">
+                            <i class="bi bi-gear me-1"></i>Quick Links
+                        </h6>
+                        <a asp-controller="Order" asp-action="Index" class="quick-link">
+                            <i class="bi bi-bag"></i> @localizer.Get("MyOrders")
+                            <span class="badge bg-primary rounded-pill ms-auto">New</span>
+                        </a>
+                        <a asp-controller="Wishlist" asp-action="Index" class="quick-link">
+                            <i class="bi bi-heart"></i> @localizer.Get("Wishlist")
+                        </a>
+                        <a asp-controller="Cart" asp-action="Index" class="quick-link">
+                            <i class="bi bi-cart3"></i> @localizer.Get("ShoppingCart")
+                        </a>
+                        <hr class="my-2">
+                        <form asp-controller="Account" asp-action="Logout" method="post">
+                            <button type="submit" class="quick-link text-danger w-100 border-0 bg-transparent">
+                                <i class="bi bi-box-arrow-right"></i> @localizer.Get("Logout")
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Profile Information -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>@localizer.Get("Profile")</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="enableEdit()">
+                            <i class="bi bi-pencil"></i> @localizer.Get("EditAddress")
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="UpdateProfile" method="post" id="profileForm">
+                            <input type="hidden" asp-for="Id" />
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="UserName" class="form-label fw-semibold text-muted small text-uppercase">
+                                        <i class="bi bi-person me-1"></i>@localizer.Get("Email")
+                                    </label>
+                                    <input asp-for="UserName" class="form-control" readonly />
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Email" class="form-label fw-semibold text-muted small text-uppercase">
+                                        <i class="bi bi-envelope me-1"></i>@localizer.Get("Email")
+                                    </label>
+                                    <input asp-for="Email" class="form-control" readonly />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="FullName" class="form-label fw-semibold text-muted small text-uppercase">
+                                    <i class="bi bi-card-text me-1"></i>@localizer.Get("FullName")
+                                </label>
+                                <input asp-for="FullName" class="form-control edit-enabled" disabled />
+                                <span asp-validation-for="FullName" class="text-danger"></span>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="PhoneNumber" class="form-label fw-semibold text-muted small text-uppercase">
+                                        <i class="bi bi-phone me-1"></i>@localizer.Get("Phone")
+                                    </label>
+                                    <input asp-for="PhoneNumber" class="form-control edit-enabled" disabled />
+                                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="Birthday" class="form-label fw-semibold text-muted small text-uppercase">
+                                        <i class="bi bi-calendar me-1"></i>Birthday
+                                    </label>
+                                    <input asp-for="Birthday" class="form-control edit-enabled" type="date" disabled />
+                                    <span asp-validation-for="Birthday" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="d-none" id="editActions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-lg me-2"></i>@localizer.Get("SaveAddress")
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary ms-2" onclick="cancelEdit()">
+                                    <i class="bi bi-x-lg me-2"></i>@localizer.Get("BackToCart")
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Addresses -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>@localizer.Get("ShippingAddress")</h5>
+                        <a asp-action="AddAddress" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus"></i> @localizer.Get("AddAddress")
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        @if (!Model.Addresses.Any())
+                        {
+                            <div class="text-center py-5">
+                                <i class="bi bi-map text-muted" style="font-size: 4rem;"></i>
+                                <h5 class="mt-3 mb-2">@localizer.Get("NoOrdersYet")</h5>
+                                <p class="text-muted mb-4">@localizer.Get("AddAddress")</p>
+                                <a asp-action="AddAddress" class="btn btn-primary">
+                                    <i class="bi bi-plus me-2"></i>@localizer.Get("AddAddress")
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="row g-4">
+                                @foreach (var address in Model.Addresses)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="card h-100 border @(address.IsDefault ? "border-primary border-2" : "")">
+                                            <div class="card-body">
+                                                @if (address.IsDefault)
+                                                {
+                                                    <span class="badge bg-primary mb-2">
+                                                        <i class="bi bi-star me-1"></i>Default
+                                                    </span>
+                                                }
+                                                <h6 class="fw-bold">
+                                                    <i class="bi bi-person me-1"></i>@address.FullName
+                                                </h6>
+                                                <p class="mb-1 text-muted">
+                                                    <i class="bi bi-phone me-1"></i>@address.Phone
+                                                </p>
+                                                <p class="mb-1 text-muted">
+                                                    <i class="bi bi-geo me-1"></i>@address.AddressLine
+                                                </p>
+                                                @if (!string.IsNullOrEmpty(address.Ward) || !string.IsNullOrEmpty(address.District) || !string.IsNullOrEmpty(address.City))
+                                                {
+                                                    <p class="text-muted small mb-0">
+                                                        <i class="bi bi-pin me-1"></i>@address.Ward, @address.District, @address.City
+                                                    </p>
+                                                }
+                                                <div class="mt-3 pt-2 border-top d-flex gap-2">
+                                                    <a asp-action="EditAddress" asp-route-id="@address.Id"
+                                                       class="btn btn-sm btn-outline-primary">
+                                                        <i class="bi bi-pencil"></i> @localizer.Get("EditAddress")
+                                                    </a>
+                                                    <form asp-action="DeleteAddress" method="post" class="d-inline"
+                                                          onsubmit="return confirm('Delete this address?');">
+                                                        <input type="hidden" name="id" value="@address.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                    @if (!address.IsDefault)
+                                                    {
+                                                        <form asp-action="SetDefaultAddress" method="post" class="d-inline ms-auto">
+                                                            <input type="hidden" name="id" value="@address.Id" />
+                                                            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                                                                <i class="bi bi-check-circle"></i> Set Default
+                                                            </button>
+                                                        </form>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Security Section -->
+                <div class="card border-0 shadow-sm mt-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>@localizer.Get("SecureCheckout")</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <h6 class="mb-0">@localizer.Get("Password")</h6>
+                                <small class="text-muted">Last changed: Never</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-key me-1"></i>@localizer.Get("Password")
+                            </button>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center py-2">
+                            <div>
+                                <h6 class="mb-0">Two-Factor Authentication</h6>
+                                <small class="text-muted">Add an extra layer of security</small>
+                            </div>
+                            <button class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-shield-plus me-1"></i>Enable
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function enableEdit() {
+            document.querySelectorAll('.edit-enabled').forEach(el => {
+                el.disabled = false;
+            });
+            document.getElementById('editActions').classList.remove('d-none');
+        }
+
+        function cancelEdit() {
+            location.reload();
+        }
+    </script>
+}
+
+<style>
+    .profile-avatar {
+        font-size: 3rem;
+    }
+
+    .quick-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        color: #333;
+        transition: all 0.2s;
+        margin-bottom: 0.25rem;
+    }
+
+    .quick-link:hover {
+        background-color: rgba(212, 127, 49, 0.1);
+        color: #d47f31;
+    }
+
+    .quick-link i {
+        font-size: 1.25rem;
+        width: 24px;
+    }
+
+    .card {
+        border-radius: 1rem;
+    }
+
+    .edit-enabled {
+        transition: all 0.2s;
+    }
+
+    .edit-enabled:focus {
+        border-color: #d47f31;
+        box-shadow: 0 0 0 0.2rem rgba(212, 127, 49, 0.25);
+    }
+</style>

@@ -1,0 +1,25 @@
+@{
+    var currentLang = ViewBag.CurrentLanguage ?? "en";
+}
+<div class="dropdown">
+    <a class="nav-link p-2 dropdown-toggle" href="#" data-bs-toggle="dropdown" title="Language">
+        <i class="bi bi-globe fs-5"></i>
+        <span class="d-none d-lg-inline ms-1">@currentLang.ToUpper()</span>
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2" style="min-width: 140px;">
+        <li>
+            <a class="dropdown-item py-2 @(currentLang == "en" ? "active" : "")"
+               asp-controller="Language" asp-action="Switch"
+               asp-route-lang="en" asp-route-returnUrl="@Context.Request.Path">
+                <i class="bi bi-check me-2 @(currentLang != "en" ? "invisible" : "")"></i>English
+            </a>
+        </li>
+        <li>
+            <a class="dropdown-item py-2 @(currentLang == "vi" ? "active" : "")"
+               asp-controller="Language" asp-action="Switch"
+               asp-route-lang="vi" asp-route-returnUrl="@Context.Request.Path">
+                <i class="bi bi-check me-2 @(currentLang != "vi" ? "invisible" : "")"></i>Tiếng Việt
+            </a>
+        </li>
+    </ul>
+</div>

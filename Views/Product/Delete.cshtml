@@ -22,15 +22,12 @@
         <dt class="col-sm-3">Category</dt>
         <dd class="col-sm-9">@Model.Category.CategoryName</dd>
 
-        <dt class="col-sm-3">Supplier</dt>
-        <dd class="col-sm-9">@Model.Supplier.CompanyName</dd>
-
         <dt class="col-sm-3">Price</dt>
         <dd class="col-sm-9">@Model.UnitPrice.ToString("N0")</dd>
     </dl>
 
     <form asp-action="Delete" method="post" class="mt-4 d-flex gap-2">
-        <input type="hidden" asp-for="ProductID" />
+        <input type="hidden" asp-for="Id" />
         <button type="submit" class="btn btn-danger">Confirm Delete</button>
         <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
     </form>

@@ -1,0 +1,171 @@
+@model WebActionResults.Data.Entities.Order
+@{
+    ViewData["Title"] = $"Order #{Model.Id}";
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a asp-area="Admin" asp-controller="AdminOrder" asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+        <h4 class="mb-0">Order #@Model.Id</h4>
+        <small class="text-muted">Placed on @Model.CreatedAt.ToString("MMMM dd, yyyy 'at' HH:mm")</small>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Order Items -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Order Items</h5>
+                <span class="badge bg-@GetStatusBadge(Model.Status)">@Model.Status</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="border-0 py-3 ps-4">Product</th>
+                                <th class="border-0 py-3 text-end">Price</th>
+                                <th class="border-0 py-3 text-center">Qty</th>
+                                <th class="border-0 py-3 text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <tr class="border-bottom">
+                                    <td class="py-3 ps-4">
+                                        <strong>@item.Product?.ProductName</strong>
+                                        @if (!string.IsNullOrEmpty(item.Product?.QuantityPerUnit))
+                                        {
+                                            <p class="text-muted small mb-0">@item.Product.QuantityPerUnit</p>
+                                        }
+                                    </td>
+                                    <td class="py-3 text-end">@item.UnitPrice.ToString("N0") VND</td>
+                                    <td class="py-3 text-center">@item.Quantity</td>
+                                    <td class="py-3 text-end fw-semibold">@item.TotalPrice.ToString("N0") VND</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Status -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Update Order Status</h5>
+            </div>
+            <div class="card-body">
+                <form asp-area="Admin" asp-controller="AdminOrder" asp-action="UpdateStatus" method="post">
+                    <input type="hidden" name="id" value="@Model.Id" />
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-8">
+                            <label class="form-label">New Status</label>
+                            <select name="status" class="form-select form-select-lg">
+                                @foreach (WebActionResults.Data.Entities.OrderStatus status in Enum.GetValues(typeof(WebActionResults.Data.Entities.OrderStatus)))
+                                {
+                                    <option value="@status" selected="@(Model.Status == status)">@status</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-check-lg me-2"></i>Update Status
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Customer Info</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Customer:</strong> @Model.User?.UserName</p>
+                <p class="mb-2"><strong>Email:</strong> @Model.User?.Email</p>
+                @if (!string.IsNullOrEmpty(Model.ShippingAddress))
+                {
+                    <p class="mb-0"><strong>Shipping:</strong></p>
+                    <p class="text-muted mb-0">@Html.Raw(Model.ShippingAddress.Replace(", ", "<br />"))</p>
+                }
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Payment Info</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><strong>Method:</strong> @Model.PaymentMethod</p>
+                <p class="mb-0"><strong>Status:</strong>
+                    <span class="badge bg-@GetPaymentBadge(Model.PaymentStatus) ms-1">@Model.PaymentStatus</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-3">
+                <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Subtotal</span>
+                    <span>@Model.SubTotal.ToString("N0") VND</span>
+                </div>
+                @if (Model.DiscountAmount > 0)
+                {
+                    <div class="d-flex justify-content-between mb-2 text-success">
+                        <span>Discount</span>
+                        <span>-@Model.DiscountAmount.ToString("N0") VND</span>
+                    </div>
+                }
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted">Shipping</span>
+                    <span>@Model.ShippingFee.ToString("N0") VND</span>
+                </div>
+                <hr />
+                <div class="d-flex justify-content-between fw-bold fs-5 mb-0">
+                    <span>Total</span>
+                    <span class="text-primary">@Model.TotalAmount.ToString("N0") VND</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@{
+    string GetStatusBadge(WebActionResults.Data.Entities.OrderStatus status) => status switch
+    {
+        WebActionResults.Data.Entities.OrderStatus.Pending => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.Confirmed => "info",
+        WebActionResults.Data.Entities.OrderStatus.Processing => "primary",
+        WebActionResults.Data.Entities.OrderStatus.Shipped => "info",
+        WebActionResults.Data.Entities.OrderStatus.Delivered => "success",
+        WebActionResults.Data.Entities.OrderStatus.Cancelled => "danger",
+        _ => "secondary"
+    };
+
+    string GetPaymentBadge(WebActionResults.Data.Entities.PaymentStatus status) => status switch
+    {
+        WebActionResults.Data.Entities.PaymentStatus.Pending => "warning text-dark",
+        WebActionResults.Data.Entities.PaymentStatus.Paid => "success",
+        WebActionResults.Data.Entities.PaymentStatus.Failed => "danger",
+        WebActionResults.Data.Entities.PaymentStatus.Refunded => "info",
+        _ => "secondary"
+    };
+}
+
+<style>
+    .card {
+        border-radius: 1rem;
+    }
+</style>

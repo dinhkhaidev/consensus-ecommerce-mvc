@@ -94,11 +94,23 @@ ScaffoldingReadMe.txt
 # Microsoft Azure Web App publish settings
 PublishScripts/
 
+# Environment variables - NEVER commit these
+.env
+.env.*
+!.env.example
+
 # Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Secrets and credentials
+*.pem
+*.key
+credentials.json
+secrets.json
+.env
 
 # TypeScript
 *.tsbuildinfo
@@ -121,3 +133,7 @@ Desktop.ini
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
+
+.claude
+
+.github

@@ -1,0 +1,92 @@
+@model WebActionResults.Data.Entities.Coupon
+@{
+    ViewData["Title"] = "Create Coupon";
+}
+
+<div class="mb-4">
+    <a asp-area="Admin" asp-controller="AdminCoupon" asp-action="Index" class="btn btn-outline-secondary rounded-pill">
+        <i class="bi bi-arrow-left me-2"></i>Back to List
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 1rem;">
+    <div class="card-header bg-white py-4">
+        <h4 class="mb-0">Create New Coupon</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Coupon Code</label>
+                    <input asp-for="Code" class="form-control form-control-lg" placeholder="e.g. SUMMER2024" />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Description</label>
+                    <input asp-for="Description" class="form-control form-control-lg" placeholder="Summer sale discount" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Coupon Type</label>
+                    <select asp-for="Type" class="form-select form-control-lg">
+                        <option value="0">Percentage (%)</option>
+                        <option value="1">Fixed Amount (VND)</option>
+                        <option value="2">Free Shipping</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Discount Value</label>
+                    <input asp-for="DiscountValue" class="form-control form-control-lg" placeholder="10" />
+                    <span asp-validation-for="DiscountValue" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Max Discount Amount</label>
+                    <input asp-for="MaxDiscountAmount" class="form-control form-control-lg" placeholder="Leave empty for no limit" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Start Date</label>
+                    <input asp-for="StartDate" type="datetime-local"
+                           value="@DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm")"
+                           class="form-control form-control-lg" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">End Date</label>
+                    <input asp-for="EndDate" type="datetime-local"
+                           value="@DateTime.UtcNow.AddDays(30).ToString("yyyy-MM-ddTHH:mm")"
+                           class="form-control form-control-lg" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Min Order Amount</label>
+                    <input asp-for="MinOrderAmount" class="form-control form-control-lg" placeholder="0" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Usage Limit</label>
+                    <input asp-for="UsageLimit" class="form-control form-control-lg" placeholder="100" />
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Is Active</label>
+                    <select asp-for="IsActive" class="form-select form-control-lg">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5">
+                    <i class="bi bi-check-lg me-2"></i>Create Coupon
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

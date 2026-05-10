@@ -1,58 +1,107 @@
-@model IEnumerable<WebActionResults.Models.Category>
-
+@model IEnumerable<WebActionResults.ViewModels.CategoryViewModel>
 @{
-    ViewData["Title"] = "Categories";
+    ViewData["Title"] = "Categories - Furnish";
 }
 
-<div class="page-hero d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-    <div>
-        <h1 class="page-title mb-1">Category Management</h1>
-        <p class="text-secondary mb-0">Organize product groups for better tracking.</p>
+<!-- Breadcrumb -->
+<section class="py-3 bg-light">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item active">Categories</li>
+            </ol>
+        </nav>
     </div>
-    <a asp-action="Create" class="btn btn-primary btn-lg">+ Add Category</a>
-</div>
+</section>
 
-<div class="panel-card">
-    <div class="table-responsive">
-        <table class="table table-modern align-middle mb-0">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Category Name</th>
-                    <th>Description</th>
-                    <th class="text-center">Products</th>
-                    <th class="text-end">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            @if (!Model.Any())
-            {
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-secondary">No categories found.</td>
-                </tr>
-            }
-            else
-            {
-                @foreach (var item in Model)
+<section class="py-lg-8 py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="bi bi-grid-3x3-gap me-2"></i>Shop Categories
+            </h1>
+            <p class="text-muted lead">Browse our furniture collection by category</p>
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-secondary text-center py-5">
+                <i class="bi bi-folder-x" style="font-size: 4rem;"></i>
+                <h5 class="mt-3 mb-2">No categories found</h5>
+                <p class="text-muted mb-0">Check back later for our furniture categories.</p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+                @foreach (var category in Model)
                 {
-                    <tr>
-                        <td>@item.CategoryID</td>
-                        <td class="fw-semibold">@item.CategoryName</td>
-                        <td>@(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)</td>
-                        <td class="text-center">
-                            <span class="badge rounded-pill text-bg-light border">@item.Products.Count</span>
-                        </td>
-                        <td class="text-end">
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a asp-action="Details" asp-route-id="@item.CategoryID" class="btn btn-outline-info">Details</a>
-                                <a asp-action="Edit" asp-route-id="@item.CategoryID" class="btn btn-outline-primary">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@item.CategoryID" class="btn btn-outline-danger">Delete</a>
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <a asp-controller="Category" asp-action="Details" asp-route-id="@category.CategoryId"
+                           class="text-decoration-none">
+                            <div class="card category-card h-100 border-0 shadow-sm text-center hover-lift">
+                                <div class="card-body d-flex flex-column justify-content-center align-items-center py-5">
+                                    @{
+                                        var iconClass = "bi-folder";
+                                        if (category.CategoryName.Contains("Living"))
+                                        {
+                                            iconClass = "bi-house-door";
+                                        }
+                                        else if (category.CategoryName.Contains("Office"))
+                                        {
+                                            iconClass = "bi-laptop";
+                                        }
+                                        else if (category.CategoryName.Contains("Bed"))
+                                        {
+                                            iconClass = "bi-moon";
+                                        }
+                                        else if (category.CategoryName.Contains("Dining"))
+                                        {
+                                            iconClass = "bi-cup-hot";
+                                        }
+                                        else if (category.CategoryName.Contains("Decor"))
+                                        {
+                                            iconClass = "bi-flower1";
+                                        }
+                                        else if (category.CategoryName.Contains("Outdoor"))
+                                        {
+                                            iconClass = "bi-sun";
+                                        }
+                                    }
+                                    <i class="bi @iconClass text-primary mb-3" style="font-size: 3rem;"></i>
+                                    <h5 class="card-title mb-2">@category.CategoryName</h5>
+                                    <p class="text-muted small mb-0">@category.ProductCount products</p>
+                                </div>
                             </div>
-                        </td>
-                    </tr>
+                        </a>
+                    </div>
                 }
-            }
-            </tbody>
-        </table>
+            </div>
+        }
     </div>
-</div>
+</section>
+
+<style>
+    .category-card {
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .category-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 40px rgba(0,0,0,0.15) !important;
+    }
+
+    .category-card i {
+        transition: transform 0.3s ease;
+    }
+
+    .category-card:hover i {
+        transform: scale(1.2);
+    }
+
+    .hover-lift:hover {
+        transform: translateY(-8px);
+    }
+</style>

@@ -20,7 +20,6 @@
                     <th>ID</th>
                     <th>Company Name</th>
                     <th>Phone</th>
-                    <th class="text-center">Products</th>
                     <th class="text-end">Actions</th>
                 </tr>
             </thead>
@@ -28,7 +27,7 @@
             @if (!Model.Any())
             {
                 <tr>
-                    <td colspan="5" class="text-center py-4 text-secondary">No suppliers found.</td>
+                    <td colspan="4" class="text-center py-4 text-secondary">No suppliers found.</td>
                 </tr>
             }
             else
@@ -36,17 +35,14 @@
                 @foreach (var item in Model)
                 {
                     <tr>
-                        <td>@item.SupplierID</td>
+                        <td>@item.Id</td>
                         <td class="fw-semibold">@item.CompanyName</td>
                         <td>@(string.IsNullOrWhiteSpace(item.Phone) ? "-" : item.Phone)</td>
-                        <td class="text-center">
-                            <span class="badge rounded-pill text-bg-light border">@item.Products.Count</span>
-                        </td>
                         <td class="text-end">
                             <div class="btn-group btn-group-sm" role="group">
-                                <a asp-action="Details" asp-route-id="@item.SupplierID" class="btn btn-outline-info">Details</a>
-                                <a asp-action="Edit" asp-route-id="@item.SupplierID" class="btn btn-outline-primary">Edit</a>
-                                <a asp-action="Delete" asp-route-id="@item.SupplierID" class="btn btn-outline-danger">Delete</a>
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-outline-info">Details</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-outline-primary">Edit</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-outline-danger">Delete</a>
                             </div>
                         </td>
                     </tr>

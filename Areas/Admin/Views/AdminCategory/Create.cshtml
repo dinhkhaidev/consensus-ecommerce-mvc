@@ -1,0 +1,52 @@
+@model WebActionResults.Models.Category
+@{
+    ViewData["Title"] = "Create Category";
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a asp-area="Admin" asp-controller="AdminCategory" asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+        <h4 class="mb-0">Create New Category</h4>
+        <small class="text-muted">Add a new category for your products</small>
+    </div>
+</div>
+
+<form asp-area="Admin" asp-controller="AdminCategory" asp-action="Create" method="post">
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Category Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Category Name</label>
+                        <input name="CategoryName" class="form-control form-control-lg" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description (Optional)</label>
+                        <textarea name="Description" class="form-control" rows="4"></textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-2"></i>Create Category
+                        </button>
+                        <a asp-area="Admin" asp-controller="AdminCategory" asp-action="Index" class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<style>
+    .card {
+        border-radius: 1rem;
+    }
+</style>

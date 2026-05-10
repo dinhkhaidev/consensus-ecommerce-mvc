@@ -1,0 +1,274 @@
+@model WebActionResults.ViewModels.CheckoutViewModel
+@{
+    ViewData["Title"] = localizer.Get("Checkout") + " - Furnish";
+    var addresses = ViewBag.Addresses as List<WebActionResults.ViewModels.AddressViewModel> ?? new();
+}
+
+<!-- Breadcrumb -->
+<section class="py-3 bg-light">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">@localizer.Get("Home")</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Cart" asp-action="Index" class="text-decoration-none">@localizer.Get("Cart")</a></li>
+                <li class="breadcrumb-item active">@localizer.Get("Checkout")</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<section class="py-lg-8 py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold mb-3">
+                <i class="bi bi-bag-check me-2"></i>@localizer.Get("Checkout")
+            </h1>
+            <p class="text-muted lead">@localizer.Get("SecureCheckout")</p>
+        </div>
+
+        <form asp-action="ProcessCheckout" method="post">
+            <input type="hidden" name="couponCode" value="@Model.CouponCode" />
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <!-- Shipping Address -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>@localizer.Get("ShippingAddress")</h5>
+                        </div>
+                        <div class="card-body">
+                            @if (addresses.Any())
+                            {
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold text-muted small text-uppercase">
+                                        <i class="bi bi-collection me-1"></i>@localizer.Get("SelectedOptions")
+                                    </label>
+                                    <select name="SelectedAddressId" class="form-select form-select-lg" id="addressSelect">
+                                        <option value="">-- @localizer.Get("AddAddress") --</option>
+                                        @foreach (var addr in addresses)
+                                        {
+                                            <option value="@addr.Id" selected="@(addr.Id == Model.SelectedAddressId)">
+                                                @addr.FullName - @addr.AddressLine, @addr.City
+                                            </option>
+                                        }
+                                    </select>
+                                </div>
+                                <hr class="my-4" />
+                            }
+
+                            <div id="newAddressSection">
+                                <h6 class="fw-semibold text-muted text-uppercase text-xs mb-3">@localizer.Get("AddAddress")</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-muted small">@localizer.Get("FullName") <span class="text-danger">*</span></label>
+                                        <input name="SelectedAddress.FullName" class="form-control form-control-lg"
+                                               value="@Model.SelectedAddress?.FullName" placeholder="@localizer.Get("FullName")"
+                                               required minlength="2" maxlength="100" />
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-muted small">@localizer.Get("Phone") <span class="text-danger">*</span></label>
+                                        <input name="SelectedAddress.Phone" class="form-control form-control-lg"
+                                               value="@Model.SelectedAddress?.Phone" placeholder="@localizer.Get("Phone")"
+                                               required pattern="^0[0-9]{9,10}$" title="Enter valid phone (10-11 digits starting with 0)" />
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-semibold text-muted small">@localizer.Get("Address") <span class="text-danger">*</span></label>
+                                        <input name="SelectedAddress.AddressLine" class="form-control form-control-lg"
+                                               value="@Model.SelectedAddress?.AddressLine" placeholder="@localizer.Get("Address")"
+                                               required minlength="5" maxlength="255" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold text-muted small">@localizer.Get("Ward") <span class="text-danger">*</span></label>
+                                        <input name="SelectedAddress.Ward" class="form-control form-control-lg"
+                                               value="@Model.SelectedAddress?.Ward" placeholder="@localizer.Get("Ward")"
+                                               required minlength="2" maxlength="100" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold text-muted small">@localizer.Get("District") <span class="text-danger">*</span></label>
+                                        <input name="SelectedAddress.District" class="form-control form-control-lg"
+                                               value="@Model.SelectedAddress?.District" placeholder="@localizer.Get("District")"
+                                               required minlength="2" maxlength="100" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-semibold text-muted small">@localizer.Get("City") <span class="text-danger">*</span></label>
+                                        <input name="SelectedAddress.City" class="form-control form-control-lg"
+                                               value="@Model.SelectedAddress?.City" placeholder="@localizer.Get("City")"
+                                               required minlength="2" maxlength="100" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0"><i class="bi bi-credit-card me-2 text-primary"></i>@localizer.Get("PaymentMethod")</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="payment-card d-flex flex-column align-items-center justify-content-center p-4 border rounded h-100 cursor-pointer @(Model.SelectedPaymentMethod == WebActionResults.Data.Entities.PaymentMethod.COD ? "border-primary border-2" : "")">
+                                        <input type="radio" name="SelectedPaymentMethod" value="0" checked class="d-none" />
+                                        <i class="bi bi-cash display-4 text-success mb-2"></i>
+                                        <strong>COD</strong>
+                                        <span class="text-muted small text-center">Cash on Delivery</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="payment-card d-flex flex-column align-items-center justify-content-center p-4 border rounded h-100 cursor-pointer @(Model.SelectedPaymentMethod == WebActionResults.Data.Entities.PaymentMethod.VNPay ? "border-primary border-2" : "")">
+                                        <input type="radio" name="SelectedPaymentMethod" value="1" class="d-none" />
+                                        <img src="~/assets/images/vnpay.png" alt="VNPay" style="height: 40px;" class="mb-2" onerror="this.style.display='none'" />
+                                        <strong>VNPay</strong>
+                                        <span class="text-muted small text-center">VNPay e-wallet or bank transfer</span>
+                                    </label>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="payment-card d-flex flex-column align-items-center justify-content-center p-4 border rounded h-100 cursor-pointer @(Model.SelectedPaymentMethod == WebActionResults.Data.Entities.PaymentMethod.MoMo ? "border-primary border-2" : "")">
+                                        <input type="radio" name="SelectedPaymentMethod" value="2" class="d-none" />
+                                        <img src="~/assets/images/momo.png" alt="MoMo" style="height: 40px;" class="mb-2" onerror="this.style.display='none'" />
+                                        <strong>MoMo</strong>
+                                        <span class="text-muted small text-center">MoMo e-wallet</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Notes -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0"><i class="bi bi-sticky me-2 text-primary"></i>@localizer.Get("OrderNotes")</h5>
+                        </div>
+                        <div class="card-body">
+                            <textarea name="OrderNotes" class="form-control" rows="3"
+                                      placeholder="@localizer.Get("OrderNotes")"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+                        <div class="card-header bg-primary text-white py-3">
+                            <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>@localizer.Get("OrderSummary")</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="list-group list-group-flush">
+                                @foreach (var item in Model.Items)
+                                {
+                                    <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                        <div class="flex-grow-1 me-3">
+                                            <strong class="d-block">@item.ProductName</strong>
+                                            <span class="text-muted small">x @item.Quantity</span>
+                                        </div>
+                                        <span class="fw-semibold">@item.Total.ToString("N0") VND</span>
+                                    </div>
+                                }
+                            </div>
+                            <div class="p-3 border-top">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">@localizer.Get("Subtotal")</span>
+                                    <span>@Model.SubTotal.ToString("N0") VND</span>
+                                </div>
+                                @{
+                                    var variantAdj = Model.Items.Where(i => i.PriceAdjustment != 0).Sum(i => i.PriceAdjustment * i.Quantity);
+                                }
+                                @if (variantAdj != 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span>@localizer.Get("VariantAdjustments")</span>
+                                        <span>+@variantAdj.ToString("N0") VND</span>
+                                    </div>
+                                }
+                                @if (Model.DiscountAmount > 0)
+                                {
+                                    <div class="d-flex justify-content-between mb-2 text-success">
+                                        <span>@localizer.Get("Discount")</span>
+                                        <span>-@Model.DiscountAmount.ToString("N0") VND</span>
+                                    </div>
+                                }
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="text-muted">@localizer.Get("Shipping")</span>
+                                    <span>@Model.ShippingFee.ToString("N0") VND</span>
+                                </div>
+                                <hr />
+                                <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                                    <span>@localizer.Get("Total")</span>
+                                    <span class="text-primary">@Model.Total.ToString("N0") VND</span>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="bi bi-bag-check me-2"></i>@localizer.Get("PlaceOrderConfirm")
+                                </button>
+                                <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-secondary w-100 mt-2">
+                                    <i class="bi bi-arrow-left me-2"></i>@localizer.Get("BackToCart")
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Applied Coupon (read-only, applied in Cart) -->
+                    <div class="card border-0 shadow-sm mt-3">
+                        <div class="card-body">
+                            <h6 class="fw-semibold mb-3">
+                                <i class="bi bi-tag me-2 text-primary"></i>@localizer.Get("Coupons")
+                            </h6>
+                            @if (!string.IsNullOrEmpty(Model.CouponCode))
+                            {
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>@Model.CouponCode</span>
+                                    <span class="text-muted small">@localizer.Get("CouponApplied")</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-muted small mb-0">@localizer.Get("HaveCoupon")</p>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Trust Badges -->
+                    <div class="row g-3 mt-3 text-center">
+                        <div class="col-4">
+                            <i class="bi bi-shield-lock text-success fs-4"></i>
+                            <p class="small mb-0 text-muted">@localizer.Get("SecureCheckout")</p>
+                        </div>
+                        <div class="col-4">
+                            <i class="bi bi-truck text-primary fs-4"></i>
+                            <p class="small mb-0 text-muted">@localizer.Get("FastDelivery")</p>
+                        </div>
+                        <div class="col-4">
+                            <i class="bi bi-arrow-repeat text-warning fs-4"></i>
+                            <p class="small mb-0 text-muted">@localizer.Get("EasyReturns")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<style>
+    .card {
+        border-radius: 1rem;
+    }
+
+    .payment-card {
+        transition: all 0.2s;
+    }
+
+    .payment-card:hover {
+        border-color: #d47f31 !important;
+        background-color: #fef9f5;
+    }
+
+    .form-control:focus {
+        border-color: #d47f31;
+        box-shadow: 0 0 0 0.2rem rgba(212, 127, 49, 0.25);
+    }
+
+    .sticky-top {
+        z-index: 100;
+    }
+</style>

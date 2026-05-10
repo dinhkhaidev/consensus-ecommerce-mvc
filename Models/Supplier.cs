@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,7 +9,7 @@ namespace WebActionResults.Models;
 public partial class Supplier
 {
     [Key]
-    public int SupplierID { get; set; }
+    public int Id { get; set; }
 
     [StringLength(150)]
     public string CompanyName { get; set; } = null!;

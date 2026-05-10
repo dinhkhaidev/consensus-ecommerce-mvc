@@ -1,0 +1,93 @@
+@model Dictionary<string, string>
+@{
+    ViewData["Title"] = "Payment Settings";
+}
+
+<div class="mb-4">
+    <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-outline-secondary rounded-pill">
+        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 1rem;">
+    <div class="card-header bg-white py-4">
+        <h4 class="mb-0"><i class="bi bi-credit-card me-2"></i>Payment Settings</h4>
+    </div>
+    <div class="card-body">
+        <form asp-action="UpdatePaymentSettings" method="post">
+            @* VNPay Section *@
+            <h5 class="mb-3 text-primary"><i class="bi bi-bank me-2"></i>VNPay Configuration</h5>
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">VNPay URL</label>
+                    <input type="text" name="VNPayUrl" class="form-control"
+                           value="@(Model.GetValueOrDefault("VNPayUrl", "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"))"
+                           placeholder="https://sandbox.vnpayment.vn/paymentv2/vpcpay.html" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Merchant ID (TMN Code)</label>
+                    <input type="text" name="VNPayMerchantId" class="form-control"
+                           value="@Model.GetValueOrDefault("VNPayMerchantId", "")"
+                           placeholder="Your VNPay Merchant ID" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Merchant Secret</label>
+                    <input type="password" name="VNPayMerchantSecret" class="form-control"
+                           value="@Model.GetValueOrDefault("VNPayMerchantSecret", "")"
+                           placeholder="Your VNPay Secret Key" />
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            @* MoMo Section *@
+            <h5 class="mb-3 text-success"><i class="bi bi-wallet2 me-2"></i>MoMo Configuration</h5>
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">MoMo URL</label>
+                    <input type="text" name="MoMoUrl" class="form-control"
+                           value="@(Model.GetValueOrDefault("MoMoUrl", "https://test-payment.momo.vn/v2/gateway/api/create"))"
+                           placeholder="https://test-payment.momo.vn/v2/gateway/api/create" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Partner Code</label>
+                    <input type="text" name="MoMoPartnerCode" class="form-control"
+                           value="@Model.GetValueOrDefault("MoMoPartnerCode", "")"
+                           placeholder="Your MoMo Partner Code" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Access Key</label>
+                    <input type="text" name="MoMoAccessKey" class="form-control"
+                           value="@Model.GetValueOrDefault("MoMoAccessKey", "")"
+                           placeholder="Your MoMo Access Key" />
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Secret Key</label>
+                    <input type="password" name="MoMoSecretKey" class="form-control"
+                           value="@Model.GetValueOrDefault("MoMoSecretKey", "")"
+                           placeholder="Your MoMo Secret Key" />
+                </div>
+            </div>
+
+            <hr class="my-4" />
+
+            @* COD Section *@
+            <h5 class="mb-3 text-warning"><i class="bi bi-cash-stack me-2"></i>Cash on Delivery (COD)</h5>
+            <div class="row mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="form-check form-switch">
+                        <input type="checkbox" name="EnableCOD" class="form-check-input" id="enableCOD"
+                               @(Model.GetValueOrDefault("EnableCOD", "true") == "true" ? "checked" : "") />
+                        <label class="form-check-label" for="enableCOD">Enable Cash on Delivery</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5">
+                    <i class="bi bi-check-lg me-2"></i>Save Payment Settings
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

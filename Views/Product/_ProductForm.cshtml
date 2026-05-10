@@ -10,7 +10,7 @@
     <form asp-action="@formAction" method="post" novalidate>
         @if (showProductId)
         {
-            <input type="hidden" asp-for="ProductID" />
+            <input type="hidden" asp-for="Id" />
         }
 
         <div asp-validation-summary="All" class="alert alert-warning validation-summary-box" role="alert"></div>
@@ -22,16 +22,10 @@
                 <span asp-validation-for="ProductName" class="text-danger"></span>
             </div>
 
-            <div class="col-md-3">
-                <label asp-for="CategoryID" class="form-label"></label>
-                <select asp-for="CategoryID" class="form-select" asp-items="ViewBag.CategoryID"></select>
-                <span asp-validation-for="CategoryID" class="text-danger"></span>
-            </div>
-
-            <div class="col-md-3">
-                <label asp-for="SupplierID" class="form-label"></label>
-                <select asp-for="SupplierID" class="form-select" asp-items="ViewBag.SupplierID"></select>
-                <span asp-validation-for="SupplierID" class="text-danger"></span>
+            <div class="col-md-6">
+                <label asp-for="Id" class="form-label"></label>
+                <select asp-for="Id" class="form-select" asp-items="ViewBag.Categories"></select>
+                <span asp-validation-for="Category.Id" class="text-danger"></span>
             </div>
 
             <div class="col-md-6">

@@ -1,0 +1,62 @@
+@model IEnumerable<WebActionResults.Models.Category>
+@{
+    ViewData["Title"] = "Categories";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <p class="text-muted mb-0">Manage product categories</p>
+    </div>
+    <a asp-area="Admin" asp-controller="AdminCategory" asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Add Category
+    </a>
+</div>
+
+<div class="row g-4">
+    @foreach (var category in Model)
+    {
+        <div class="col-sm-6 col-lg-4 col-xl-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center py-5">
+                    <i class="bi bi-folder text-primary mb-3" style="font-size: 3rem;"></i>
+                    <h5 class="mb-2">@category.CategoryName</h5>
+                    @if (!string.IsNullOrEmpty(category.Description))
+                    {
+                        <p class="text-muted small text-center mb-3">@category.Description</p>
+                    }
+                    <p class="text-muted small mb-0">@category.Products?.Count() products</p>
+                </div>
+                <div class="card-footer bg-transparent border-top-0 pb-4 d-flex gap-2 justify-content-center">
+                    <a asp-area="Admin" asp-controller="AdminCategory" asp-action="Edit" asp-route-id="@category.Id"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form asp-area="Admin" asp-controller="AdminCategory" asp-action="Delete" asp-route-id="@category.Id"
+                          method="post" class="d-inline" onsubmit="return confirm('Delete this category?');">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5">
+        <i class="bi bi-folder-x text-muted" style="font-size: 4rem;"></i>
+        <h4 class="mt-3 mb-2">No categories yet</h4>
+        <p class="text-muted mb-4">Add categories to organize your products</p>
+        <a asp-area="Admin" asp-controller="AdminCategory" asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Add First Category
+        </a>
+    </div>
+}
+
+<style>
+    .card {
+        border-radius: 1rem;
+    }
+</style>

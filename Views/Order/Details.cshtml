@@ -1,0 +1,178 @@
+@model WebActionResults.ViewModels.OrderViewModel
+@{
+    ViewData["Title"] = $"Order {Model.OrderNumber} - Furnish";
+}
+
+<!-- Breadcrumb -->
+<section class="py-3 bg-light">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">Home</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Order" asp-action="Index" class="text-decoration-none">Orders</a></li>
+                <li class="breadcrumb-item active">#@Model.OrderNumber</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+
+<section class="py-lg-8 py-5">
+    <div class="container">
+        <!-- Header -->
+        <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center mb-5 gap-3">
+            <div>
+                <h1 class="display-5 fw-bold mb-2">
+                    <i class="bi bi-box-seam me-2 text-primary"></i>Order #@Model.OrderNumber
+                </h1>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-calendar3 me-1"></i>Placed on @Model.CreatedAt.ToString("MMMM dd, yyyy 'at' HH:mm")
+                </p>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                <i class="bi bi-arrow-left me-2"></i>Back to Orders
+            </a>
+        </div>
+
+        <div class="row g-4">
+            <!-- Order Items -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-list-ul me-2 text-primary"></i>Order Items</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="border-0 py-3 ps-4">Product</th>
+                                        <th class="border-0 py-3 text-end">Price</th>
+                                        <th class="border-0 py-3 text-center">Qty</th>
+                                        <th class="border-0 py-3 text-end pe-4">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.Items)
+                                    {
+                                        <tr class="border-bottom">
+                                            <td class="py-3 ps-4">
+                                                <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
+                                                   class="text-decoration-none fw-semibold text-dark">@item.ProductName</a>
+                                                @if (!string.IsNullOrEmpty(item.VariantName))
+                                                {
+                                                    <br /><span class="text-muted small">@item.VariantName</span>
+                                                }
+                                            </td>
+                                            <td class="py-3 text-end">@item.UnitPrice.ToString("N0") VND</td>
+                                            <td class="py-3 text-center">@item.Quantity</td>
+                                            <td class="py-3 text-end pe-4 fw-semibold text-primary">@item.TotalPrice.ToString("N0") VND</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.ShippingAddress))
+                {
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white py-3">
+                            <h5 class="mb-0"><i class="bi bi-geo-alt me-2 text-primary"></i>Shipping Address</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0 text-muted">@Html.Raw(Model.ShippingAddress.Replace(", ", "<br />"))</p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <!-- Status Card -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-info-circle me-2 text-primary"></i>Order Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <span class="badge bg-@GetStatusBadgeClass(Model.Status) fs-6 px-3 py-2">
+                                <i class="bi bi-circle-fill me-1" style="font-size: 0.5rem;"></i>
+                                @Model.StatusText
+                            </span>
+                        </div>
+                        <dl class="mb-0">
+                            <div class="d-flex justify-content-between py-2 border-bottom">
+                                <dt class="text-muted">Payment Method</dt>
+                                <dd class="fw-semibold mb-0">@Model.PaymentMethod</dd>
+                            </div>
+                            <div class="d-flex justify-content-between py-2">
+                                <dt class="text-muted">Payment Status</dt>
+                                <dd class="mb-0">
+                                    <span class="badge bg-@GetPaymentBadgeClass(Model.PaymentStatus)">@Model.PaymentStatusText</span>
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Subtotal</span>
+                            <span>@Model.SubTotal.ToString("N0") VND</span>
+                        </div>
+                        @if (Model.DiscountAmount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Discount</span>
+                                <span>-@Model.DiscountAmount.ToString("N0") VND</span>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Shipping</span>
+                            <span>@Model.ShippingFee.ToString("N0") VND</span>
+                        </div>
+                        <hr />
+                        <div class="d-flex justify-content-between fw-bold fs-5 mb-0">
+                            <span>Total</span>
+                            <span class="text-primary">@Model.TotalAmount.ToString("N0") VND</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+@{
+    string GetStatusBadgeClass(WebActionResults.Data.Entities.OrderStatus status) => status switch
+    {
+        WebActionResults.Data.Entities.OrderStatus.Pending => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.Confirmed => "info",
+        WebActionResults.Data.Entities.OrderStatus.Processing => "primary",
+        WebActionResults.Data.Entities.OrderStatus.Shipped => "info",
+        WebActionResults.Data.Entities.OrderStatus.Delivered => "success",
+        WebActionResults.Data.Entities.OrderStatus.Cancelled => "danger",
+        _ => "secondary"
+    };
+
+    string GetPaymentBadgeClass(WebActionResults.Data.Entities.PaymentStatus status) => status switch
+    {
+        WebActionResults.Data.Entities.PaymentStatus.Pending => "warning text-dark",
+        WebActionResults.Data.Entities.PaymentStatus.Paid => "success",
+        WebActionResults.Data.Entities.PaymentStatus.Failed => "danger",
+        WebActionResults.Data.Entities.PaymentStatus.Refunded => "info",
+        _ => "secondary"
+    };
+}
+
+<style>
+    .card {
+        border-radius: 1rem;
+    }
+</style>

@@ -1,0 +1,109 @@
+@*
+    Dynamic Toast Notifications
+    Usage: TempData["ToastSuccess"], TempData["ToastError"], TempData["ToastWarning"], TempData["ToastInfo"]
+*@
+
+@if (TempData["ToastSuccess"] is string toastSuccess)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="4000">
+            <div class="toast-header" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; border: none;">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <strong class="me-auto">@localizer.Get("Success")</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" style="background: #f8f9fa; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
+                @toastSuccess
+            </div>
+        </div>
+    </div>
+}
+
+@if (TempData["ToastError"] is string toastError)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+            <div class="toast-header" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none;">
+                <i class="bi bi-x-circle-fill me-2"></i>
+                <strong class="me-auto">@localizer.Get("Error")</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" style="background: #fff5f5; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
+                @toastError
+            </div>
+        </div>
+    </div>
+}
+
+@if (TempData["ToastWarning"] is string toastWarning)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="4500">
+            <div class="toast-header" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border: none;">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong class="me-auto">@localizer.Get("Warning")</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" style="background: #fef9f0; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
+                @toastWarning
+            </div>
+        </div>
+    </div>
+}
+
+@if (TempData["ToastInfo"] is string toastInfo)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="4000">
+            <div class="toast-header" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none;">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong class="me-auto">@localizer.Get("Info")</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" style="background: #f0f8ff; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
+                @toastInfo
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .toast-container {
+        pointer-events: none;
+        margin-top: 80px;
+    }
+    .toast-container .toast {
+        pointer-events: auto;
+        animation: slideInRight 0.3s ease-out;
+        min-width: 320px;
+        max-width: 420px;
+        border: none;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    .toast-header {
+        padding: 0.875rem 1rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+        font-weight: 600;
+    }
+    .toast-body {
+        padding: 1rem;
+        font-size: 0.95rem;
+        color: #333;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+    @@keyframes slideInRight {
+        from {
+            transform: translateX(100%) translateY(-10px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0) translateY(0);
+            opacity: 1;
+        }
+    }
+    .toast-header i {
+        font-size: 1.1rem;
+    }
+</style>
