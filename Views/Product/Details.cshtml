@@ -2,6 +2,17 @@
 @{
     ViewData["Title"] = Model.ProductName + " - Furnish";
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var defaultVariant = Model.Variants.FirstOrDefault(v => v.StockQuantity > 0) ?? Model.Variants.FirstOrDefault();
+    var displayPrice = Model.UnitPrice + (defaultVariant?.PriceAdjustment ?? 0);
+    var galleryImages = Model.Images
+        .Concat(Model.Variants.SelectMany(v => v.Images))
+        .Where(i => !string.IsNullOrWhiteSpace(i.ImageUrl))
+        .GroupBy(i => i.ImageUrl)
+        .Select(g => g.First())
+        .OrderByDescending(i => i.IsMain)
+        .ThenBy(i => i.Id)
+        .ToList();
+    var mainImage = galleryImages.FirstOrDefault(i => i.IsMain) ?? galleryImages.FirstOrDefault();
 }
 
 <!-- Breadcrumb -->
@@ -13,7 +24,7 @@
                 <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index" class="text-decoration-none">@localizer.Get("Products")</a></li>
                 @if (!string.IsNullOrEmpty(Model.CategoryName))
                 {
-                    <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index" asp-route-categoryId="@Model.CategoryName" class="text-decoration-none">@Model.CategoryName</a></li>
+                    <li class="breadcrumb-item"><a asp-controller="Product" asp-action="Index" class="text-decoration-none">@Model.CategoryName</a></li>
                 }
                 <li class="breadcrumb-item active" aria-current="page">@Model.ProductName</li>
             </ol>
@@ -27,15 +38,29 @@
         <div class="row">
             <!-- Product Images -->
             <div class="col-lg-6 mb-4 mb-lg-0">
-                <!-- Main Image -->
-                <div class="card border-0 shadow-sm mb-3">
-                    @if (Model.Images.Any())
+                <div class="product-gallery">
+                    @if (mainImage != null)
                     {
-                        var mainImage = Model.Images.FirstOrDefault(i => i.IsMain) ?? Model.Images.First();
-                        <div class="main-image-container text-center p-4" style="background: #f8f9fa; min-height: 400px; display: flex; align-items: center; justify-content: center;">
-                            <img src="@mainImage.ImageUrl" alt="@Model.ProductName"
-                                 class="img-fluid rounded" id="mainProductImage"
-                                 style="max-height: 450px; object-fit: contain;">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="main-image-container product-gallery-main">
+                                @if (galleryImages.Count > 1)
+                                {
+                                    <button type="button" class="gallery-arrow gallery-arrow-prev" aria-label="Previous image" onclick="showGalleryImage(currentGalleryIndex - 1)">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </button>
+                                }
+
+                                <img src="@mainImage.ImageUrl" alt="@(mainImage.AltText ?? Model.ProductName)"
+                                     class="img-fluid rounded" id="mainProductImage"
+                                     style="max-height: 450px; object-fit: contain;">
+
+                                @if (galleryImages.Count > 1)
+                                {
+                                    <button type="button" class="gallery-arrow gallery-arrow-next" aria-label="Next image" onclick="showGalleryImage(currentGalleryIndex + 1)">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </button>
+                                }
+                            </div>
                         </div>
                     }
                     else
@@ -44,21 +69,37 @@
                             <i class="bi bi-image text-secondary" style="font-size: 8rem;"></i>
                         </div>
                     }
+
+                    @if (galleryImages.Count > 1)
+                    {
+                        <div class="gallery-thumbnails">
+                            @for (var i = 0; i < galleryImages.Count; i++)
+                            {
+                                var img = galleryImages[i];
+                                var isActive = img.ImageUrl == mainImage?.ImageUrl;
+                                <button type="button"
+                                        class="gallery-thumb @(isActive ? "active" : "")"
+                                        onclick="showGalleryImage(@i)"
+                                        data-gallery-index="@i"
+                                        data-image-url="@img.ImageUrl"
+                                        data-bs-toggle="tooltip"
+                                        title="@(img.AltText ?? Model.ProductName)">
+                                    <img src="@img.ImageUrl" alt="@(img.AltText ?? Model.ProductName)" />
+                                </button>
+                            }
+                        </div>
+                    }
                 </div>
 
-                <!-- Thumbnails -->
-                @if (Model.Images.Count > 1)
+                @if (galleryImages.Any())
                 {
-                    <div class="d-flex gap-3 flex-wrap justify-content-center">
-                        @foreach (var img in Model.Images)
+                    <script type="application/json" id="productGalleryData">
+                        @Html.Raw(System.Text.Json.JsonSerializer.Serialize(galleryImages.Select(i => new
                         {
-                            <img src="@img.ImageUrl" alt="@img.AltText"
-                                 class="thumbnail-img rounded @(img.IsMain ? "border border-primary" : "")"
-                                 style="width: 80px; height: 80px; object-fit: cover; cursor: pointer; transition: all 0.2s;"
-                                 onclick="changeMainImage('@img.ImageUrl', this)"
-                                 data-bs-toggle="tooltip" title="@img.AltText" />
-                        }
-                    </div>
+                            url = i.ImageUrl,
+                            alt = i.AltText ?? Model.ProductName
+                        })))
+                    </script>
                 }
             </div>
 
@@ -93,13 +134,47 @@
 
                 <!-- Price -->
                 <div class="mb-4">
-                    <span class="display-6 fw-bold text-primary">@Model.UnitPrice.ToString("N0") VND</span>
+                    <span class="display-6 fw-bold text-primary" id="productPrice" data-base-price="@Model.UnitPrice">@displayPrice.ToString("N0") VND</span>
                     @if (Model.OriginalPrice.HasValue && Model.OriginalPrice > Model.UnitPrice)
                     {
                         <span class="text-muted text-decoration-line-through ms-2">@Model.OriginalPrice.Value.ToString("N0") VND</span>
                         <span class="badge bg-danger ms-2">-@(((1 - Model.UnitPrice / Model.OriginalPrice.Value) * 100).ToString("0"))%</span>
                     }
                 </div>
+
+                @{
+                    var webSettings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+                    var showLowStock = string.Equals(webSettings.GetValueOrDefault("ShowLowStockWarning", "true"), "true", StringComparison.OrdinalIgnoreCase);
+                    var lowStockThreshold = int.TryParse(webSettings.GetValueOrDefault("LowStockThreshold", "5"), out var lst) ? lst : 5;
+                    var totalStock = Model.Variants.Any() ? Model.Variants.Sum(v => v.StockQuantity) : 0;
+                    var returnPolicy = webSettings.GetValueOrDefault("ReturnPolicySummary", "");
+                    var returnDays = webSettings.GetValueOrDefault("ReturnWindowDays", "30");
+                }
+
+                <!-- Low Stock Warning -->
+                @if (showLowStock && totalStock > 0 && totalStock <= lowStockThreshold)
+                {
+                    <div class="alert alert-warning py-2 px-3 d-flex align-items-center gap-2 mb-3" style="font-size: 0.85rem;">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span><strong>@localizer.Get("LowStock")!</strong> @string.Format(localizer.Get("OnlyXLeft"), totalStock)</span>
+                    </div>
+                }
+
+                <!-- Return Policy Badge -->
+                @if (!string.IsNullOrWhiteSpace(returnPolicy))
+                {
+                    <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
+                        <i class="bi bi-arrow-repeat text-success"></i>
+                        <span>@returnPolicy</span>
+                    </div>
+                }
+                else if (!string.IsNullOrWhiteSpace(returnDays))
+                {
+                    <div class="d-flex align-items-center gap-2 mb-3 text-muted small">
+                        <i class="bi bi-arrow-repeat text-success"></i>
+                        <span>@returnDays-day return policy</span>
+                    </div>
+                }
 
                 <!-- Description -->
                 @if (!string.IsNullOrEmpty(Model.Description))
@@ -119,8 +194,13 @@
                         <div class="d-flex flex-wrap gap-3">
                             @foreach (var variant in Model.Variants)
                             {
-                                <div class="variant-card border rounded p-3 text-center @(variant.StockQuantity <= 0 ? "opacity-50" : "")"
-                                     style="min-width: 120px; cursor: pointer;"
+                                var variantImage = variant.Images.FirstOrDefault()?.ImageUrl;
+                                var isSelected = defaultVariant?.Id == variant.Id;
+                                var finalPrice = Model.UnitPrice + (variant.PriceAdjustment ?? 0);
+                                <div class="variant-card border rounded p-3 text-center @(isSelected ? "border-primary selected" : "") @(variant.StockQuantity <= 0 ? "opacity-50" : "")"
+                                     style="min-width: 120px; cursor: @(variant.StockQuantity > 0 ? "pointer" : "not-allowed");"
+                                     data-price="@finalPrice"
+                                     data-image="@variantImage"
                                      onclick="selectVariant(this, '@variant.Id')">
                                     @if (!string.IsNullOrEmpty(variant.Color))
                                     {
@@ -150,7 +230,7 @@
                 <!-- Add to Cart Form -->
                 <form asp-controller="Cart" asp-action="Add" method="post" class="mb-4" id="addToCartForm">
                     <input type="hidden" name="productId" value="@Model.ProductId" />
-                    <input type="hidden" name="quantity" value="1" />
+                    <input type="hidden" name="variantId" id="selectedVariantId" value="@(defaultVariant?.Id ?? 0)" />
                     <input type="hidden" name="returnUrl" value="@returnUrl" />
 
                     <div class="d-flex align-items-center gap-3">
@@ -165,33 +245,39 @@
                                     <i class="bi bi-plus"></i>
                                 </button>
                             </div>
-                            <button type="submit" class="btn btn-primary flex-grow-1 py-3" style="font-size: 1rem;" @(Model.Variants.Any(v => v.StockQuantity <= 0) ? "disabled" : "")>
+                            <button type="submit" class="btn btn-primary flex-grow-1 py-3" style="font-size: 1rem;" @(Model.Variants.Any() && defaultVariant?.StockQuantity <= 0 ? "disabled" : "")>
                                 <i class="bi bi-cart-plus me-2"></i>@localizer.Get("AddToCart")
                             </button>
                         </div>
                 </form>
 
                 <!-- Wishlist -->
-                @if (User.Identity?.IsAuthenticated == true)
-                {
-                    <div class="mb-4">
-                        <form asp-controller="Wishlist" asp-action="Add" method="post" class="flex-grow-1">
-                            <input type="hidden" name="productId" value="@Model.ProductId" />
-                            <input type="hidden" name="returnUrl" value="@returnUrl" />
-                            <button type="submit" class="btn btn-outline-danger w-100 @(Model.IsInWishlist ? "active" : "")">
-                                <i class="bi @(Model.IsInWishlist ? "bi-heart-fill" : "bi-heart") me-2"></i>
-                                @(Model.IsInWishlist ? localizer.Get("Wishlist") : localizer.Get("AddToCart"))
-                            </button>
-                        </form>
-                    </div>
+                @{
+                    var wishlistEnabled = string.Equals(webSettings.GetValueOrDefault("EnableWishlist", "true"), "true", StringComparison.OrdinalIgnoreCase);
                 }
-                else
+                @if (wishlistEnabled)
                 {
-                    <div class="mb-4">
-                        <a asp-controller="Account" asp-action="Login" class="btn btn-outline-danger w-100">
-                            <i class="bi bi-heart me-2"></i>@localizer.Get("Wishlist")
-                        </a>
-                    </div>
+                    if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="mb-4">
+                            <form asp-controller="Wishlist" asp-action="Add" method="post" class="flex-grow-1">
+                                <input type="hidden" name="productId" value="@Model.ProductId" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button type="submit" class="btn btn-outline-danger w-100 @(Model.IsInWishlist ? "active" : "")">
+                                    <i class="bi @(Model.IsInWishlist ? "bi-heart-fill" : "bi-heart") me-2"></i>
+                                    @(Model.IsInWishlist ? localizer.Get("Wishlist") : localizer.Get("AddToWishlist"))
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-4">
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-heart me-2"></i>@localizer.Get("Wishlist")
+                            </a>
+                        </div>
+                    }
                 }
 
                 <!-- Features -->
@@ -217,7 +303,7 @@
                     <div class="col-6">
                         <div class="d-flex align-items-center text-muted small">
                             <i class="bi bi-headset me-2 text-info"></i>
-                            <span>24/7 support</span>
+                            <span>@localizer.Get("Support247")</span>
                         </div>
                     </div>
                 </div>
@@ -225,6 +311,11 @@
         </div>
 
         <!-- Reviews Section -->
+        @{
+            var reviewsEnabled = string.Equals(webSettings.GetValueOrDefault("EnableReviews", "true"), "true", StringComparison.OrdinalIgnoreCase);
+        }
+        @if (reviewsEnabled)
+        {
         <div class="row mt-5" id="reviews">
             <div class="col-lg-12">
                 <hr class="my-4">
@@ -279,7 +370,7 @@
                 {
                     <div class="alert alert-secondary text-center py-4">
                         <i class="bi bi-chat-square-text display-4 text-muted mb-3"></i>
-                        <p class="mb-0">@localizer.Get("NoOrdersYet")</p>
+                        <p class="mb-0">@localizer.Get("NoReviewsYet")</p>
                     </div>
                 }
 
@@ -287,29 +378,29 @@
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <div class="mt-5 p-4 bg-light rounded">
-                        <h4 class="mb-3"><i class="bi bi-pencil-square me-2"></i>@localizer.Get("Reviews")</h4>
+                        <h4 class="mb-3"><i class="bi bi-pencil-square me-2"></i>@localizer.Get("WriteReview")</h4>
                         <form asp-action="AddReview" method="post">
                             <input type="hidden" name="ProductId" value="@Model.ProductId" />
                             <div class="row g-3">
                                 <div class="col-md-3">
-                                    <label class="form-label">@localizer.Get("Reviews")</label>
+                                    <label class="form-label">@localizer.Get("Rating")</label>
                                     <select name="Rating" class="form-select" required>
-                                        <option value="5">5 - Excellent</option>
-                                        <option value="4">4 - Good</option>
-                                        <option value="3">3 - Average</option>
-                                        <option value="2">2 - Poor</option>
-                                        <option value="1">1 - Terrible</option>
+                                        <option value="5">5 - @localizer.Get("Excellent")</option>
+                                        <option value="4">4 - @localizer.Get("Good")</option>
+                                        <option value="3">3 - @localizer.Get("Average")</option>
+                                        <option value="2">2 - @localizer.Get("Poor")</option>
+                                        <option value="1">1 - @localizer.Get("Terrible")</option>
                                     </select>
                                 </div>
                                 <div class="col-md-9">
-                                    <label class="form-label">@localizer.Get("Description")</label>
+                                    <label class="form-label">@localizer.Get("ReviewComment")</label>
                                     <textarea name="Comment" class="form-control" rows="3" required maxlength="500"
-                                              placeholder="@localizer.Get("Description")"></textarea>
+                                              placeholder="@localizer.Get("ReviewComment")"></textarea>
                                 </div>
                             </div>
                             <div class="mt-3">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-send me-2"></i>@localizer.Get("PlaceOrderConfirm")
+                                    <i class="bi bi-send me-2"></i>@localizer.Get("SubmitReview")
                                 </button>
                             </div>
                         </form>
@@ -320,12 +411,13 @@
                     <div class="mt-4 text-center">
                         <p class="text-muted">
                             <a asp-controller="Account" asp-action="Login" class="text-decoration-none">@localizer.Get("Login")</a>
-                            @localizer.Get("DontHaveAccount")
+                            @localizer.Get("LoginToReview")
                         </p>
                     </div>
                 }
             </div>
         </div>
+        } @* end reviewsEnabled *@
     </div>
 </section>
 
@@ -368,10 +460,35 @@
 
 @section Scripts {
     <script>
-        function changeMainImage(url, thumb) {
-            document.getElementById('mainProductImage').src = url;
-            document.querySelectorAll('.thumbnail-img').forEach(t => t.classList.remove('border-primary'));
-            thumb.classList.add('border-primary');
+        const galleryDataElement = document.getElementById('productGalleryData');
+        const productGallery = galleryDataElement ? JSON.parse(galleryDataElement.textContent || '[]') : [];
+        let currentGalleryIndex = 0;
+
+        window.showGalleryImage = function(index) {
+            if (!productGallery.length) return;
+
+            currentGalleryIndex = (index + productGallery.length) % productGallery.length;
+            const image = productGallery[currentGalleryIndex];
+            const mainImage = document.getElementById('mainProductImage');
+
+            if (mainImage) {
+                mainImage.src = image.url;
+                mainImage.alt = image.alt || '@Model.ProductName';
+            }
+
+            document.querySelectorAll('.gallery-thumb').forEach(thumb => {
+                thumb.classList.toggle('active', Number(thumb.dataset.galleryIndex) === currentGalleryIndex);
+            });
+        }
+
+        function showGalleryImageByUrl(url) {
+            const imageIndex = productGallery.findIndex(image => image.url === url);
+            if (imageIndex >= 0) {
+                showGalleryImage(imageIndex);
+                return true;
+            }
+
+            return false;
         }
 
         function incrementQty() {
@@ -387,8 +504,28 @@
         }
 
         function selectVariant(card, variantId) {
-            document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('border-primary'));
-            card.classList.add('border-primary');
+            if (card.classList.contains('opacity-50')) return;
+
+            document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('border-primary', 'selected'));
+            card.classList.add('border-primary', 'selected');
+
+            var variantInput = document.getElementById('selectedVariantId');
+            if (variantInput) variantInput.value = variantId;
+
+            var price = Number(card.dataset.price || 0);
+            var priceEl = document.getElementById('productPrice');
+            if (priceEl && price > 0) {
+                priceEl.textContent = price.toLocaleString('vi-VN') + ' VND';
+            }
+
+            var imageUrl = card.dataset.image;
+            var mainImage = document.getElementById('mainProductImage');
+            if (imageUrl && mainImage) {
+                if (!showGalleryImageByUrl(imageUrl)) {
+                    mainImage.src = imageUrl;
+                    document.querySelectorAll('.gallery-thumb').forEach(thumb => thumb.classList.remove('active'));
+                }
+            }
         }
 
         // Initialize tooltips
@@ -400,13 +537,108 @@
 }
 
 <style>
-    .thumbnail-img {
-        transition: all 0.2s ease;
+    .product-gallery-main {
+        position: relative;
+        min-height: 400px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 3.5rem;
+        background: #f8f9fa;
+        overflow: hidden;
     }
 
-    .thumbnail-img:hover {
-        transform: scale(1.1);
-        border-color: #d47f31 !important;
+    .gallery-arrow {
+        position: absolute;
+        top: 50%;
+        z-index: 2;
+        width: 42px;
+        height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(33, 31, 28, 0.12);
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.92);
+        color: #211f1c;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        transform: translateY(-50%);
+        transition: all 0.18s ease;
+    }
+
+    .gallery-arrow:hover {
+        background: #d47f31;
+        border-color: #d47f31;
+        color: #fff;
+    }
+
+    .gallery-arrow-prev {
+        left: 16px;
+    }
+
+    .gallery-arrow-next {
+        right: 16px;
+    }
+
+    .gallery-thumbnails {
+        display: flex;
+        gap: 0.75rem;
+        padding: 0.2rem 0 0.35rem;
+        overflow-x: auto;
+        scrollbar-width: thin;
+    }
+
+    .gallery-thumb {
+        width: 78px;
+        height: 78px;
+        flex: 0 0 78px;
+        padding: 3px;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        background: #fff;
+        cursor: pointer;
+        transition: border-color 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .gallery-thumb img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+        border-radius: 6px;
+    }
+
+    .gallery-thumb:hover,
+    .gallery-thumb.active {
+        border-color: #d47f31;
+        box-shadow: 0 8px 22px rgba(212, 127, 49, 0.16);
+        transform: translateY(-1px);
+    }
+
+    @@media (max-width: 575.98px) {
+        .product-gallery-main {
+            min-height: 310px;
+            padding: 1rem 2.7rem;
+        }
+
+        .gallery-arrow {
+            width: 36px;
+            height: 36px;
+        }
+
+        .gallery-arrow-prev {
+            left: 10px;
+        }
+
+        .gallery-arrow-next {
+            right: 10px;
+        }
+
+        .gallery-thumb {
+            width: 64px;
+            height: 64px;
+            flex-basis: 64px;
+        }
     }
 
     .variant-card {

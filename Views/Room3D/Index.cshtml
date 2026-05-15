@@ -1,0 +1,93 @@
+@{
+    ViewData["Title"] = "Trải nghiệm phòng 3D";
+}
+
+<link rel="stylesheet" href="~/css/room3d.css" asp-append-version="true" />
+
+<div class="room3d-page">
+    <div class="room3d-topbar">
+        <div>
+            <div class="eyebrow">Interactive 3D Room</div>
+            <h1>Trải nghiệm phòng 3D</h1>
+            <p>Đặt thử nội thất vào showroom ảo, xoay góc nhìn và xây một combo phòng khách theo gu riêng.</p>
+        </div>
+
+        <div class="topbar-actions">
+            <button id="snapshotBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-camera"></i>
+                <span>Chụp ảnh phòng</span>
+            </button>
+            <button id="buyRoomBtn" type="button" class="room3d-btn room3d-btn-primary">
+                <i class="bi bi-bag-check"></i>
+                <span>Mua cả bộ phòng</span>
+            </button>
+        </div>
+    </div>
+
+    <aside class="room3d-sidebar" aria-label="Danh sách nội thất 3D">
+        <div class="sidebar-header">
+            <span class="panel-kicker">Furniture library</span>
+            <h2>Chọn nội thất</h2>
+            <p>Click Add để đặt sản phẩm vào phòng. Nếu thiếu model GLB, hệ thống tự tạo bản 3D placeholder.</p>
+        </div>
+
+        <div id="productList" class="product-list"></div>
+    </aside>
+
+    <main class="room3d-stage">
+        <canvas id="room3dCanvas"></canvas>
+
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loader"></div>
+            <p>Đang dựng showroom 3D...</p>
+        </div>
+
+        <div id="roomToast" class="room-toast" role="status" aria-live="polite"></div>
+
+        <div class="scene-help">
+            <i class="bi bi-mouse"></i>
+            <span>Kéo để xoay phòng · Scroll để zoom · Click sản phẩm để chỉnh · Kéo sản phẩm để di chuyển</span>
+        </div>
+    </main>
+
+    <aside class="room3d-inspector" aria-label="Thông tin sản phẩm đang chọn">
+        <div class="inspector-header">
+            <span class="panel-kicker">Selection</span>
+            <h2>Đang chọn</h2>
+        </div>
+
+        <div id="selectedInfo" class="selected-info empty">Chưa chọn sản phẩm</div>
+
+        <div class="control-grid">
+            <button id="rotateLeftBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span>Xoay trái</span>
+            </button>
+            <button id="rotateRightBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Xoay phải</span>
+            </button>
+            <button id="deleteBtn" type="button" class="room3d-btn room3d-btn-danger">
+                <i class="bi bi-trash"></i>
+                <span>Xóa</span>
+            </button>
+        </div>
+
+        <div class="room-total">
+            <span>Tổng giá</span>
+            <strong id="totalPrice">0&nbsp;₫</strong>
+        </div>
+    </aside>
+</div>
+
+@section Scripts {
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module" src="~/js/room3d.js" asp-append-version="true"></script>
+}

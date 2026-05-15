@@ -222,6 +222,26 @@ namespace WebActionResults.Migrations
                     b.Property<int?>("CouponId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CancelAdminNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool?>("CancelApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("CancelRequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CancelRequestedFromStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CancelReviewedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -247,6 +267,30 @@ namespace WebActionResults.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("ShippedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ReturnAdminNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool?>("ReturnApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ReturnImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReturnReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReturnRequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReturnRequestedFromStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReturnReviewedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ShippingAddress")

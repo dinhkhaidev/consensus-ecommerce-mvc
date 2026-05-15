@@ -12,7 +12,7 @@ public class WebSettingsViewComponent : ViewComponent
         _webSettingsService = webSettingsService;
     }
 
-    public async Task<IViewComponentResult> Invoke()
+    public async Task<IViewComponentResult> InvokeAsync()
     {
         var settings = await _webSettingsService.GetAllSettingsAsync();
         return View(settings);

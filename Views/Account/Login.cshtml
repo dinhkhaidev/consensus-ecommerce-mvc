@@ -24,10 +24,10 @@
 
                             <div class="mb-3">
                                 <label asp-for="UserName" class="form-label fw-semibold">
-                                    <i class="bi bi-person me-1"></i>@localizer.Get("Email")
+                                    <i class="bi bi-person me-1"></i>@localizer.Get("UsernameOrEmail")
                                 </label>
                                 <input asp-for="UserName" class="form-control form-control-lg"
-                                       placeholder="@localizer.Get("Email")"
+                                       placeholder="@localizer.Get("UsernameOrEmail")"
                                        autofocus />
                                 <span asp-validation-for="UserName" class="text-danger"></span>
                             </div>
@@ -50,7 +50,7 @@
 
                             <div class="mb-3 form-check">
                                 <input asp-for="RememberMe" class="form-check-input" />
-                                <label asp-for="RememberMe" class="form-check-label">Remember me</label>
+                                <label asp-for="RememberMe" class="form-check-label">@localizer.Get("RememberMe")</label>
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">

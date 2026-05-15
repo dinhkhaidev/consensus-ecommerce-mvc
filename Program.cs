@@ -5,6 +5,7 @@ using WebActionResults.Mappings;
 using WebActionResults.Middleware;
 using WebActionResults.Models;
 using WebActionResults.Services;
+using WebActionResults.Filters;
 using Microsoft.AspNetCore.Authentication;
 using VNPAY.Extensions;
 
@@ -14,7 +15,10 @@ DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<WebSettingsActionFilter>();
+});
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -95,6 +99,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
+app.UseMaintenanceMode();
+
 app.UseRouting();
 
 app.UseSession();
@@ -103,11 +109,6 @@ app.UseSessionAuthentication();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "adminRoot",
-    pattern: "Admin",
-    defaults: new { area = "Admin", controller = "Dashboard", action = "Index" });
 
 app.MapAreaControllerRoute(
     name: "admin",

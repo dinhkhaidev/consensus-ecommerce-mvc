@@ -13,6 +13,9 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Account') 
     ALTER TABLE Account ADD CreatedAt DATETIME DEFAULT GETDATE();
 GO
 
+UPDATE Account SET CreatedAt = GETDATE() WHERE CreatedAt IS NULL;
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Categories') AND name = 'CreatedAt')
     ALTER TABLE Categories ADD CreatedAt DATETIME DEFAULT GETDATE();
 GO
@@ -33,8 +36,27 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('ProductVar
     ALTER TABLE ProductVariants ADD CreatedAt DATETIME DEFAULT GETDATE();
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('ProductVariants') AND name = 'IsActive')
+    ALTER TABLE ProductVariants ADD IsActive BIT NOT NULL DEFAULT 1;
+GO
+
+IF EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('ProductVariants') AND name = 'SKU')
+    ALTER TABLE ProductVariants ALTER COLUMN SKU NVARCHAR(100) NULL;
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('ProductImages') AND name = 'CreatedAt')
     ALTER TABLE ProductImages ADD CreatedAt DATETIME DEFAULT GETDATE();
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('ProductImages') AND name = 'DisplayOrder')
+    ALTER TABLE ProductImages ADD DisplayOrder INT NOT NULL DEFAULT 0;
+GO
+
+IF EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('ProductImages') AND name = 'ImageUrl')
+BEGIN
+    UPDATE ProductImages SET ImageUrl = '' WHERE ImageUrl IS NULL;
+    ALTER TABLE ProductImages ALTER COLUMN ImageUrl NVARCHAR(500) NOT NULL;
+END
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Reviews') AND name = 'CreatedAt')
@@ -85,6 +107,62 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') A
     ALTER TABLE Orders ADD DeliveredAt DATETIME DEFAULT NULL;
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'CancelReason')
+    ALTER TABLE Orders ADD CancelReason NVARCHAR(500) NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'CancelRequestedAt')
+    ALTER TABLE Orders ADD CancelRequestedAt DATETIME NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'CancelRequestedFromStatus')
+    ALTER TABLE Orders ADD CancelRequestedFromStatus INT NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'CancelApproved')
+    ALTER TABLE Orders ADD CancelApproved BIT NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'CancelAdminNote')
+    ALTER TABLE Orders ADD CancelAdminNote NVARCHAR(500) NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'CancelReviewedAt')
+    ALTER TABLE Orders ADD CancelReviewedAt DATETIME NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'ReturnReason')
+    ALTER TABLE Orders ADD ReturnReason NVARCHAR(1000) NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'ReturnImageUrl')
+    ALTER TABLE Orders ADD ReturnImageUrl NVARCHAR(500) NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'ReturnRequestedAt')
+    ALTER TABLE Orders ADD ReturnRequestedAt DATETIME NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'ReturnRequestedFromStatus')
+    ALTER TABLE Orders ADD ReturnRequestedFromStatus INT NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'ReturnApproved')
+    ALTER TABLE Orders ADD ReturnApproved BIT NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'ReturnAdminNote')
+    ALTER TABLE Orders ADD ReturnAdminNote NVARCHAR(500) NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Orders') AND name = 'ReturnReviewedAt')
+    ALTER TABLE Orders ADD ReturnReviewedAt DATETIME NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Reviews') AND name = 'IsApproved')
+    ALTER TABLE Reviews ADD IsApproved BIT NOT NULL DEFAULT 0;
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Reviews') AND name = 'UpdatedAt')
     ALTER TABLE Reviews ADD UpdatedAt DATETIME DEFAULT GETDATE();
 GO
@@ -95,6 +173,10 @@ GO
 
 IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Account') AND name = 'IsEmailVerified')
     ALTER TABLE Account ADD IsEmailVerified BIT NULL;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Account') AND name = 'AvatarUrl')
+    ALTER TABLE Account ADD AvatarUrl NVARCHAR(500) NULL;
 GO
 
 UPDATE Account SET IsEmailVerified = 0 WHERE IsEmailVerified IS NULL;
@@ -108,6 +190,30 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('Account') 
     ALTER TABLE Account ADD EmailVerificationTokenExpiresAt DATETIME NULL;
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = '__EFMigrationsHistory')
+BEGIN
+    CREATE TABLE __EFMigrationsHistory (
+        MigrationId NVARCHAR(150) NOT NULL PRIMARY KEY,
+        ProductVersion NVARCHAR(32) NOT NULL
+    );
+END
+GO
+
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId = '20260510125916_InitialCreate')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion)
+    VALUES ('20260510125916_InitialCreate', '8.0.25');
+GO
+
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId = '20260510140146_AddCartItemPriceColumns')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion)
+    VALUES ('20260510140146_AddCartItemPriceColumns', '8.0.25');
+GO
+
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId = '20260515123000_AddOrderRequestFlow')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion)
+    VALUES ('20260515123000_AddOrderRequestFlow', '8.0.25');
+GO
+
 -- =========================
 -- CREATE WebSettings TABLE
 -- =========================
@@ -116,11 +222,15 @@ BEGIN
     CREATE TABLE WebSettings (
         Id INT IDENTITY(1,1) PRIMARY KEY,
         SettingKey NVARCHAR(100) NOT NULL UNIQUE,
-        SettingValue NVARCHAR(500) NULL,
+        SettingValue NVARCHAR(MAX) NULL,
         CreatedAt DATETIME DEFAULT GETDATE(),
         UpdatedAt DATETIME DEFAULT NULL
     );
 END
+GO
+
+IF EXISTS (SELECT * FROM sys.columns WHERE Object_ID = Object_ID('WebSettings') AND name = 'SettingValue')
+    ALTER TABLE WebSettings ALTER COLUMN SettingValue NVARCHAR(MAX) NULL;
 GO
 
 -- Insert default web settings
@@ -129,14 +239,108 @@ BEGIN
     INSERT INTO WebSettings (SettingKey, SettingValue, CreatedAt) VALUES
     ('SiteTitle', 'Furnish - Premium Furniture Store', GETDATE()),
     ('SiteDescription', 'Discover premium quality furniture for every room in your home. Shop sofas, beds, dining sets, and more.', GETDATE()),
-    ('LogoUrl', '/assets/images/logo.svg', GETDATE()),
+    ('LogoUrl', '', GETDATE()),
     ('ContactEmail', 'contact@furnish.com', GETDATE()),
     ('ContactPhone', '0901234567', GETDATE()),
     ('Address', '123 Furniture Street, District 1, Ho Chi Minh City', GETDATE()),
     ('FacebookUrl', 'https://facebook.com/furnish', GETDATE()),
     ('InstagramUrl', 'https://instagram.com/furnish', GETDATE()),
-    ('FooterCopyright', '© 2024 Furnish. All rights reserved.', GETDATE());
+    ('FooterCopyright', '(c) 2024 Furnish. All rights reserved.', GETDATE());
 END
+GO
+
+DECLARE @DefaultSettings TABLE (
+    SettingKey NVARCHAR(100) NOT NULL,
+    SettingValue NVARCHAR(MAX) NULL
+);
+
+INSERT INTO @DefaultSettings (SettingKey, SettingValue) VALUES
+('StoreName', 'Furnish'),
+('SiteTagline', 'Premium Furniture'),
+('AdminConsoleTitle', 'Furnish Admin'),
+('AdminDashboardTitle', 'Dashboard'),
+('FaviconUrl', '/favicon.ico'),
+('PrimaryColor', '#d47f31'),
+('AccentColor', '#1f2933'),
+('DefaultLanguage', 'vi'),
+('SeoKeywords', 'furniture, sofa, chair, table, home decor, noi that'),
+('OpenGraphImageUrl', '/assets/images/slider/slider-img-1.png'),
+('HeroTitle', '20% OFF'),
+('HeroSubtitle', 'Comfy Sofa Home-Office'),
+('HeroDescription', 'Premium comfort for your modern workspace'),
+('HeroCtaText', 'Shop Now'),
+('Feature1Title', 'Free Shipping'),
+('Feature1Desc', 'On orders over 500,000 VND'),
+('Feature2Title', 'Secure Payment'),
+('Feature2Desc', '100% secure checkout'),
+('Feature3Title', 'Easy Returns'),
+('Feature3Desc', '30-day return policy'),
+('Feature4Title', '24/7 Support'),
+('Feature4Desc', 'Dedicated customer care'),
+('NewsletterTitle', 'Subscribe to Our Newsletter'),
+('NewsletterDesc', 'Get exclusive deals, new arrivals, and design inspiration delivered to your inbox.'),
+('SupportEmail', 'support@furnish.com'),
+('SalesEmail', 'sales@furnish.com'),
+('Hotline', '1900 1234'),
+('ZaloPhone', '0901234567'),
+('WorkingHours', '08:00 - 21:00'),
+('BusinessTaxCode', ''),
+('FooterShortAbout', 'Premium furniture for modern homes.'),
+('YouTubeUrl', ''),
+('TikTokUrl', ''),
+('MaintenanceMode', 'false'),
+('MaintenanceTitle', 'Website under maintenance'),
+('MaintenanceMessage', 'We are improving the shopping experience. Please come back soon.'),
+('MaintenanceEstimatedBackAt', ''),
+('MaintenanceSupportEmail', 'support@furnish.com'),
+('EnableCOD', 'true'),
+('EnableVNPay', 'true'),
+('EnableMoMo', 'true'),
+('EnableBankTransfer', 'false'),
+('EnableReviews', 'true'),
+('AutoApproveReviews', 'false'),
+('EnableWishlist', 'true'),
+('EnableNewsletterPopup', 'false'),
+('EnableChatWidget', 'false'),
+('ShowLowStockWarning', 'true'),
+('RequireEmailVerification', 'false'),
+('StandardShippingFee', '50000'),
+('FreeShippingThreshold', '500000'),
+('ReturnWindowDays', '30'),
+('LowStockThreshold', '5'),
+('ReturnPolicySummary', 'Products can be returned within 30 days if eligible and approved by our support team.'),
+('GoogleAnalyticsId', ''),
+('FacebookPixelId', ''),
+('AnnouncementEnabled', 'false'),
+('AnnouncementText', 'Free shipping for eligible orders.'),
+('AnnouncementBgColor', '#d47f31'),
+('AnnouncementLink', ''),
+('PopupEnabled', 'false'),
+('PopupTitle', 'Welcome!'),
+('PopupContent', 'Get the latest offers and new arrivals from our store.'),
+('PopupImageUrl', ''),
+('PopupDelay', '3000'),
+('CustomHeadCode', ''),
+('CustomFooterCode', ''),
+('PrivacyPolicyHtml', ''),
+('TermsOfServiceHtml', ''),
+('ShippingPolicyHtml', ''),
+('VNPayUrl', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
+('VNPayMerchantId', ''),
+('VNPayMerchantSecret', ''),
+('MoMoUrl', 'https://test-payment.momo.vn/v2/gateway/api/create'),
+('MoMoPartnerCode', ''),
+('MoMoAccessKey', ''),
+('MoMoSecretKey', '');
+
+INSERT INTO WebSettings (SettingKey, SettingValue, CreatedAt)
+SELECT ds.SettingKey, ds.SettingValue, GETDATE()
+FROM @DefaultSettings ds
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM WebSettings ws
+    WHERE ws.SettingKey = ds.SettingKey
+);
 GO
 
 -- =========================

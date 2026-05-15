@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebActionResults.Data.Entities;
+using WebActionResults.Data.Services;
 using WebActionResults.Models;
 
 namespace WebActionResults.Areas.Admin.Controllers;
@@ -9,10 +10,12 @@ namespace WebActionResults.Areas.Admin.Controllers;
 public class AdminOrderController : AdminControllerBase
 {
     private readonly ShopDbContext _context;
+    private readonly IOrderService _orderService;
 
-    public AdminOrderController(ShopDbContext context)
+    public AdminOrderController(ShopDbContext context, IOrderService orderService)
     {
         _context = context;
+        _orderService = orderService;
     }
 
     public async Task<IActionResult> Index(string? status, int page = 1, int pageSize = 15)
@@ -55,15 +58,53 @@ public class AdminOrderController : AdminControllerBase
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateStatus(int id, OrderStatus status)
     {
-        var order = await _context.Orders.FindAsync(id);
-        if (order != null)
+        try
         {
-            order.Status = status;
-            await _context.SaveChangesAsync();
+            await _orderService.UpdateOrderStatusAsync(id, status);
             TempData["ToastSuccess"] = "Order status updated!";
         }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ToastError"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReviewCancellation(int id, bool approve, string? adminNote)
+    {
+        try
+        {
+            await _orderService.ReviewCancellationAsync(id, approve, adminNote);
+            TempData["ToastSuccess"] = approve ? "Cancellation approved." : "Cancellation rejected.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ToastError"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Details), new { id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReviewReturn(int id, bool approve, string? adminNote)
+    {
+        try
+        {
+            await _orderService.ReviewReturnAsync(id, approve, adminNote);
+            TempData["ToastSuccess"] = approve ? "Return approved and refund marked." : "Return rejected.";
+        }
+        catch (InvalidOperationException ex)
+        {
+            TempData["ToastError"] = ex.Message;
+        }
+
         return RedirectToAction(nameof(Details), new { id });
     }
 }

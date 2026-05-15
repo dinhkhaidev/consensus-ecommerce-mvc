@@ -1,212 +1,361 @@
 @model Dictionary<string, string>
 @{
-    ViewData["Title"] = "Web Settings";
+    ViewData["Title"] = localizer.Get("AdminSettings.Title");
     Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+
+    string L(string key) => localizer.Get($"AdminSettings.{key}");
+    string Value(string key, string fallback = "") => Model.GetValueOrDefault(key, fallback);
+    string LocalFallback(string key) => L($"Fallbacks.{key}");
+    bool Enabled(string key, string fallback = "false") => string.Equals(Value(key, fallback), "true", StringComparison.OrdinalIgnoreCase);
 }
 
-<div class="container-fluid">
-    <!-- Page Heading -->
-    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="bi bi-gear me-2"></i>Web Settings
-        </h1>
-    </div>
+<form method="post" action="@Url.Action("Update", "AdminSettings", new { area = "Admin" })" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
 
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="admin-page-header mb-4">
+        <div>
+            <p class="text-uppercase text-primary fw-semibold small mb-1">@L("Eyebrow")</p>
+            <h1 class="h3 fw-bold mb-1">@L("Title")</h1>
+            <p class="text-muted mb-0">@L("Subtitle")</p>
         </div>
-    }
-
-    <form method="post" action="@Url.Action("Update", "AdminSettings", new { area = "Admin" })">
-        @Html.AntiForgeryToken()
-
-        <div class="row">
-            <!-- General Settings -->
-            <div class="col-lg-6">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="bi bi-globe me-2"></i>General Settings
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Site Title</label>
-                            <input type="text" name="settings[SiteTitle]" class="form-control"
-                                   value="@Model.GetValueOrDefault("SiteTitle", "")" />
-                            <small class="text-muted">The title shown in browser tab and SEO</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Site Description</label>
-                            <textarea name="settings[SiteDescription]" class="form-control" rows="3">@Model.GetValueOrDefault("SiteDescription", "")</textarea>
-                            <small class="text-muted">Meta description for SEO</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Logo URL</label>
-                            <input type="text" name="settings[LogoUrl]" class="form-control"
-                                   value="@Model.GetValueOrDefault("LogoUrl", "")" />
-                            <small class="text-muted">Path to your logo image</small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Contact Information -->
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="bi bi-telephone me-2"></i>Contact Information
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Contact Email</label>
-                            <input type="email" name="settings[ContactEmail]" class="form-control"
-                                   value="@Model.GetValueOrDefault("ContactEmail", "")" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Contact Phone</label>
-                            <input type="text" name="settings[ContactPhone]" class="form-control"
-                                   value="@Model.GetValueOrDefault("ContactPhone", "")" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Address</label>
-                            <textarea name="settings[Address]" class="form-control" rows="2">@Model.GetValueOrDefault("Address", "")</textarea>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Social & Footer Settings -->
-            <div class="col-lg-6">
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="bi bi-share me-2"></i>Social Media Links
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Facebook URL</label>
-                            <input type="url" name="settings[FacebookUrl]" class="form-control"
-                                   value="@Model.GetValueOrDefault("FacebookUrl", "")" />
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Instagram URL</label>
-                            <input type="url" name="settings[InstagramUrl]" class="form-control"
-                                   value="@Model.GetValueOrDefault("InstagramUrl", "")" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="bi bi-c-circle me-2"></i>Footer Settings
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Copyright Text</label>
-                            <input type="text" name="settings[FooterCopyright]" class="form-control"
-                                   value="@Model.GetValueOrDefault("FooterCopyright", "")" />
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payment Settings -->
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">
-                            <i class="bi bi-credit-card me-2"></i>Payment Settings
-                        </h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">VNPay URL</label>
-                            <input type="text" name="settings[VNPayUrl]" class="form-control"
-                                   placeholder="https://sandbox.vnpayment.vn/..." />
-                            <small class="text-muted">VNPay sandbox or production URL</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">MoMo URL</label>
-                            <input type="text" name="settings[MoMoUrl]" class="form-control"
-                                   placeholder="https://momo.vn/..." />
-                            <small class="text-muted">MoMo payment URL</small>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-check">
-                                <input type="checkbox" class="form-check-input" name="settings[EnableCOD]" value="true"
-                                       @(Model.GetValueOrDefault("EnableCOD") == "true" ? "checked" : "") />
-                                <label class="form-check-label">Enable Cash on Delivery (COD)</label>
-                            </label>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Min Order Amount for Free Shipping (VND)</label>
-                            <input type="number" name="settings[FreeShippingThreshold]" class="form-control"
-                                   value="@Model.GetValueOrDefault("FreeShippingThreshold", "500000")" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="d-flex justify-content-end gap-3">
-            <a asp-area="Admin" asp-controller="Dashboard" asp-action="Index" class="btn btn-secondary btn-lg px-5">
-                <i class="bi bi-x-lg me-2"></i>Cancel
+        <div class="d-flex gap-2">
+            <a asp-area="" asp-controller="Home" asp-action="Index" target="_blank" class="btn btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right me-2"></i>@L("ViewSite")
             </a>
-            <button type="submit" class="btn btn-primary btn-lg px-5">
-                <i class="bi bi-check-lg me-2"></i>Save All Changes
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check2-circle me-2"></i>@L("SaveSettings")
             </button>
         </div>
-    </form>
-</div>
+    </div>
+
+    <div class="settings-shell">
+        <aside class="settings-nav">
+            <a href="#operations" class="settings-nav-link active"><i class="bi bi-toggles2"></i><span>@L("Sections.Operations")</span></a>
+            <a href="#identity" class="settings-nav-link"><i class="bi bi-shop"></i><span>@L("Sections.Identity")</span></a>
+            <a href="#homepage" class="settings-nav-link"><i class="bi bi-house-heart"></i><span>@L("Sections.Homepage")</span></a>
+            <a href="#contact" class="settings-nav-link"><i class="bi bi-headset"></i><span>@L("Sections.Contact")</span></a>
+            <a href="#commerce" class="settings-nav-link"><i class="bi bi-bag-check"></i><span>@L("Sections.Commerce")</span></a>
+            <a href="#marketing" class="settings-nav-link"><i class="bi bi-broadcast"></i><span>@L("Sections.Marketing")</span></a>
+            <a href="#announcement" class="settings-nav-link"><i class="bi bi-megaphone"></i><span>Announcement Bar</span></a>
+            <a href="#popup" class="settings-nav-link"><i class="bi bi-window-stack"></i><span>Welcome Popup</span></a>
+            <a href="#codeinjection" class="settings-nav-link"><i class="bi bi-code-slash"></i><span>Code Injection</span></a>
+            <a href="#policies" class="settings-nav-link"><i class="bi bi-file-earmark-text"></i><span>Store Policies</span></a>
+        </aside>
+
+        <div class="settings-content">
+            <section id="operations" class="settings-section">
+                <div class="section-title">
+                    <div>
+                        <h2>@L("Sections.Operations")</h2>
+                        <p>@L("Descriptions.Operations")</p>
+                    </div>
+                    <span class="status-chip @(Enabled("MaintenanceMode") ? "danger" : "success")">
+                        @(Enabled("MaintenanceMode") ? L("MaintenanceOn") : L("StoreLive"))
+                    </span>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-lg-5">
+                        <div class="setting-panel h-100">
+                            <div class="d-flex justify-content-between gap-3 align-items-start">
+                                <div>
+                                    <label class="form-label mb-1">@L("Fields.MaintenanceMode")</label>
+                                    <p class="text-muted small mb-0">@L("Hints.MaintenanceMode")</p>
+                                </div>
+                                <div class="form-check form-switch fs-4 m-0">
+                                    <input class="form-check-input" type="checkbox" name="settings[MaintenanceMode]" value="true" @(Enabled("MaintenanceMode") ? "checked" : "") />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-7">
+                        <div class="setting-panel">
+                            <div class="row g-3">
+                                <div class="col-md-6 setting-field">
+                                    <label>@L("Fields.MaintenanceTitle")</label>
+                                    <input name="settings[MaintenanceTitle]" class="form-control" value="@Value("MaintenanceTitle", LocalFallback("MaintenanceTitle"))" />
+                                </div>
+                                <div class="col-md-6 setting-field">
+                                    <label>@L("Fields.MaintenanceEstimatedBackAt")</label>
+                                    <input name="settings[MaintenanceEstimatedBackAt]" class="form-control" value="@Value("MaintenanceEstimatedBackAt")" placeholder="@L("Placeholders.MaintenanceEstimatedBackAt")" />
+                                </div>
+                                <div class="col-12 setting-field">
+                                    <label>@L("Fields.MaintenanceMessage")</label>
+                                    <textarea name="settings[MaintenanceMessage]" class="form-control" rows="3">@Value("MaintenanceMessage", LocalFallback("MaintenanceMessage"))</textarea>
+                                </div>
+                                <div class="col-12 setting-field">
+                                    <label>@L("Fields.MaintenanceSupportEmail")</label>
+                                    <input name="settings[MaintenanceSupportEmail]" type="email" class="form-control" value="@Value("MaintenanceSupportEmail", Value("SupportEmail", "support@furnish.com"))" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-panel mt-3">
+                    <div class="row g-3">
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableReviews]" value="true" @(Enabled("EnableReviews", "true") ? "checked" : "") /><label class="form-check-label">@localizer.Get("Reviews")</label></div></div>
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[AutoApproveReviews]" value="true" @(Enabled("AutoApproveReviews") ? "checked" : "") /><label class="form-check-label">@L("Fields.AutoApproveReviews")</label></div></div>
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableWishlist]" value="true" @(Enabled("EnableWishlist", "true") ? "checked" : "") /><label class="form-check-label">@localizer.Get("Wishlist")</label></div></div>
+                        <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[RequireEmailVerification]" value="true" @(Enabled("RequireEmailVerification") ? "checked" : "") /><label class="form-check-label">@L("Fields.EmailVerification")</label></div></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="identity" class="settings-section">
+                <div class="section-title"><div><h2>@L("Sections.IdentitySeo")</h2><p>@L("Descriptions.Identity")</p></div></div>
+                <div class="row g-3">
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.StoreName")</label><input name="settings[StoreName]" class="form-control" value="@Value("StoreName", "Furnish")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.SiteTitle")</label><input name="settings[SiteTitle]" class="form-control" value="@Value("SiteTitle", LocalFallback("SiteTitle"))" /></div>
+                    <div class="col-lg-4 setting-field"><label>Site Tagline</label><input name="settings[SiteTagline]" class="form-control" value="@Value("SiteTagline", "Premium Furniture")" placeholder="Shown under store name" /></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.AdminConsoleTitle")</label><input name="settings[AdminConsoleTitle]" class="form-control" value="@Value("AdminConsoleTitle", LocalFallback("AdminConsoleTitle"))" /></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.AdminDashboardTitle")</label><input name="settings[AdminDashboardTitle]" class="form-control" value="@Value("AdminDashboardTitle", localizer.Get("Dashboard"))" /></div>
+                    <div class="col-12 setting-field"><label>@L("Fields.SiteDescription")</label><textarea name="settings[SiteDescription]" class="form-control" rows="3">@Value("SiteDescription")</textarea></div>
+                    <div class="col-lg-6 setting-field">
+                        <label>@L("Fields.LogoUrl")</label>
+                        @if (!string.IsNullOrWhiteSpace(Value("LogoUrl")))
+                        {
+                            <div class="setting-image-preview">
+                                <img src="@Value("LogoUrl")" alt="Current logo" />
+                                <span>Current logo</span>
+                            </div>
+                        }
+                        <input name="settings[LogoUrl]" class="form-control mb-2" value="@Value("LogoUrl")" placeholder="/uploads/site/logo.png" />
+                        <input name="logoFile" type="file" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/x-icon" />
+                        <div class="form-text">Upload logo/avatar website. New upload will replace Logo URL.</div>
+                    </div>
+                    <div class="col-lg-6 setting-field">
+                        <label>@L("Fields.FaviconUrl")</label>
+                        @if (!string.IsNullOrWhiteSpace(Value("FaviconUrl")))
+                        {
+                            <div class="setting-image-preview compact">
+                                <img src="@Value("FaviconUrl")" alt="Current favicon" />
+                                <span>Current favicon</span>
+                            </div>
+                        }
+                        <input name="settings[FaviconUrl]" class="form-control mb-2" value="@Value("FaviconUrl")" placeholder="/uploads/site/favicon.ico" />
+                        <input name="faviconFile" type="file" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml,image/x-icon" />
+                        <div class="form-text">Upload icon shown in browser tab.</div>
+                    </div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.PrimaryColor")</label><input name="settings[PrimaryColor]" type="color" class="form-control form-control-color" value="@Value("PrimaryColor", "#d47f31")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.AccentColor")</label><input name="settings[AccentColor]" type="color" class="form-control form-control-color" value="@Value("AccentColor", "#1f2933")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.DefaultLanguage")</label><select name="settings[DefaultLanguage]" class="form-select"><option value="vi" selected="@(Value("DefaultLanguage", "vi") == "vi")">@localizer.Get("Vietnamese")</option><option value="en" selected="@(Value("DefaultLanguage", "vi") == "en")">@localizer.Get("English")</option></select></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.SeoKeywords")</label><input name="settings[SeoKeywords]" class="form-control" value="@Value("SeoKeywords")" /></div>
+                    <div class="col-lg-6 setting-field">
+                        <label>@L("Fields.OpenGraphImageUrl")</label>
+                        <input name="settings[OpenGraphImageUrl]" class="form-control mb-2" value="@Value("OpenGraphImageUrl")" />
+                        <input name="openGraphImageFile" type="file" class="form-control" accept="image/jpeg,image/png,image/webp,image/gif" />
+                    </div>
+                </div>
+            </section>
+
+            <section id="homepage" class="settings-section">
+                <div class="section-title"><div><h2>@L("Sections.Homepage")</h2><p>@L("Descriptions.Homepage")</p></div></div>
+                <div class="row g-3">
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.HeroTitle")</label><input name="settings[HeroTitle]" class="form-control" value="@Value("HeroTitle", "20% OFF")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.HeroSubtitle")</label><input name="settings[HeroSubtitle]" class="form-control" value="@Value("HeroSubtitle", LocalFallback("HeroSubtitle"))" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.HeroCtaText")</label><input name="settings[HeroCtaText]" class="form-control" value="@Value("HeroCtaText", localizer.Get("ShopNow"))" /></div>
+                    <div class="col-12 setting-field"><label>@L("Fields.HeroDescription")</label><textarea name="settings[HeroDescription]" class="form-control" rows="2">@Value("HeroDescription")</textarea></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.NewsletterTitle")</label><input name="settings[NewsletterTitle]" class="form-control" value="@Value("NewsletterTitle", LocalFallback("NewsletterTitle"))" /></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.NewsletterDescription")</label><input name="settings[NewsletterDesc]" class="form-control" value="@Value("NewsletterDesc")" /></div>
+                    @for (var i = 1; i <= 4; i++)
+                    {
+                        <div class="col-lg-3 setting-field">
+                            <label>@localizer.Get("AdminSettings.FeatureTitle", i)</label>
+                            <input name="settings[Feature@(i)Title]" class="form-control" value="@Value($"Feature{i}Title")" />
+                        </div>
+                        <div class="col-lg-3 setting-field">
+                            <label>@localizer.Get("AdminSettings.FeatureDescription", i)</label>
+                            <input name="settings[Feature@(i)Desc]" class="form-control" value="@Value($"Feature{i}Desc")" />
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section id="contact" class="settings-section">
+                <div class="section-title"><div><h2>@L("Sections.ContactLegal")</h2><p>@L("Descriptions.Contact")</p></div></div>
+                <div class="row g-3">
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.ContactEmail")</label><input name="settings[ContactEmail]" type="email" class="form-control" value="@Value("ContactEmail")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.SupportEmail")</label><input name="settings[SupportEmail]" type="email" class="form-control" value="@Value("SupportEmail")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.SalesEmail")</label><input name="settings[SalesEmail]" type="email" class="form-control" value="@Value("SalesEmail")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.ContactPhone")</label><input name="settings[ContactPhone]" class="form-control" value="@Value("ContactPhone")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.Hotline")</label><input name="settings[Hotline]" class="form-control" value="@Value("Hotline")" /></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.ZaloPhone")</label><input name="settings[ZaloPhone]" class="form-control" value="@Value("ZaloPhone")" /></div>
+                    <div class="col-lg-8 setting-field"><label>@localizer.Get("Address")</label><textarea name="settings[Address]" class="form-control" rows="2">@Value("Address")</textarea></div>
+                    <div class="col-lg-4 setting-field"><label>@L("Fields.WorkingHours")</label><input name="settings[WorkingHours]" class="form-control" value="@Value("WorkingHours", "08:00 - 21:00")" /></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.BusinessTaxCode")</label><input name="settings[BusinessTaxCode]" class="form-control" value="@Value("BusinessTaxCode")" /></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.FooterCopyright")</label><input name="settings[FooterCopyright]" class="form-control" value="@Value("FooterCopyright")" /></div>
+                    <div class="col-12 setting-field"><label>@L("Fields.FooterShortAbout")</label><textarea name="settings[FooterShortAbout]" class="form-control" rows="2">@Value("FooterShortAbout")</textarea></div>
+                </div>
+            </section>
+
+            <section id="commerce" class="settings-section">
+                <div class="section-title"><div><h2>@L("Sections.Commerce")</h2><p>@L("Descriptions.Commerce")</p></div></div>
+                <div class="row g-3">
+                    <div class="col-md-3"><div class="setting-panel"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableCOD]" value="true" @(Enabled("EnableCOD", "true") ? "checked" : "") /><label class="form-check-label">COD</label></div></div></div>
+                    <div class="col-md-3"><div class="setting-panel"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableVNPay]" value="true" @(Enabled("EnableVNPay", "true") ? "checked" : "") /><label class="form-check-label">VNPay</label></div></div></div>
+                    <div class="col-md-3"><div class="setting-panel"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableMoMo]" value="true" @(Enabled("EnableMoMo", "true") ? "checked" : "") /><label class="form-check-label">MoMo</label></div></div></div>
+                    <div class="col-md-3"><div class="setting-panel"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableBankTransfer]" value="true" @(Enabled("EnableBankTransfer") ? "checked" : "") /><label class="form-check-label">@localizer.Get("PaymentMethods.BankTransfer")</label></div></div></div>
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.StandardShippingFee")</label><input name="settings[StandardShippingFee]" type="number" min="0" class="form-control" value="@Value("StandardShippingFee", "50000")" /></div>
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.FreeShippingThreshold")</label><input name="settings[FreeShippingThreshold]" type="number" min="0" class="form-control" value="@Value("FreeShippingThreshold", "500000")" /></div>
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.ReturnWindowDays")</label><input name="settings[ReturnWindowDays]" type="number" min="0" class="form-control" value="@Value("ReturnWindowDays", "30")" /></div>
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.LowStockThreshold")</label><input name="settings[LowStockThreshold]" type="number" min="0" class="form-control" value="@Value("LowStockThreshold", "5")" /></div>
+                    <div class="col-12 setting-field"><label>@L("Fields.ReturnPolicySummary")</label><textarea name="settings[ReturnPolicySummary]" class="form-control" rows="2">@Value("ReturnPolicySummary", LocalFallback("ReturnPolicySummary"))</textarea></div>
+                </div>
+            </section>
+
+            <section id="marketing" class="settings-section">
+                <div class="section-title"><div><h2>@L("Sections.MarketingSocial")</h2><p>@L("Descriptions.Marketing")</p></div></div>
+                <div class="row g-3">
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.FacebookUrl")</label><input name="settings[FacebookUrl]" type="url" class="form-control" value="@Value("FacebookUrl")" /></div>
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.InstagramUrl")</label><input name="settings[InstagramUrl]" type="url" class="form-control" value="@Value("InstagramUrl")" /></div>
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.YouTubeUrl")</label><input name="settings[YouTubeUrl]" type="url" class="form-control" value="@Value("YouTubeUrl")" /></div>
+                    <div class="col-lg-3 setting-field"><label>@L("Fields.TikTokUrl")</label><input name="settings[TikTokUrl]" type="url" class="form-control" value="@Value("TikTokUrl")" /></div>
+                    <div class="col-md-4"><div class="setting-panel"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableNewsletterPopup]" value="true" @(Enabled("EnableNewsletterPopup") ? "checked" : "") /><label class="form-check-label">@L("Fields.NewsletterPopup")</label></div></div></div>
+                    <div class="col-md-4"><div class="setting-panel"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableChatWidget]" value="true" @(Enabled("EnableChatWidget") ? "checked" : "") /><label class="form-check-label">@L("Fields.ChatWidget")</label></div></div></div>
+                    <div class="col-md-4"><div class="setting-panel"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[ShowLowStockWarning]" value="true" @(Enabled("ShowLowStockWarning", "true") ? "checked" : "") /><label class="form-check-label">@L("Fields.LowStockWarning")</label></div></div></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.GoogleAnalyticsId")</label><input name="settings[GoogleAnalyticsId]" class="form-control" value="@Value("GoogleAnalyticsId")" /></div>
+                    <div class="col-lg-6 setting-field"><label>@L("Fields.FacebookPixelId")</label><input name="settings[FacebookPixelId]" class="form-control" value="@Value("FacebookPixelId")" /></div>
+                </div>
+            </section>
+
+            <!-- Announcement Bar Section -->
+            <section id="announcement" class="settings-section">
+                <div class="section-title">
+                    <div>
+                        <h2><i class="bi bi-megaphone me-2"></i>Announcement Bar</h2>
+                        <p>Display a promotional bar at the top of your store. Great for sales, free shipping notices, or important updates.</p>
+                    </div>
+                    <span class="status-chip @(Enabled("AnnouncementEnabled") ? "success" : "")">@(Enabled("AnnouncementEnabled") ? "Active" : "Inactive")</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="setting-panel h-100">
+                            <div class="d-flex justify-content-between gap-3 align-items-start">
+                                <div>
+                                    <label class="form-label mb-1">Enable Announcement</label>
+                                    <p class="text-muted small mb-0">Show a banner at the top of every page</p>
+                                </div>
+                                <div class="form-check form-switch fs-4 m-0">
+                                    <input class="form-check-input" type="checkbox" name="settings[AnnouncementEnabled]" value="true" @(Enabled("AnnouncementEnabled") ? "checked" : "") />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="setting-panel">
+                            <div class="row g-3">
+                                <div class="col-12 setting-field"><label>Announcement Text</label><input name="settings[AnnouncementText]" class="form-control" value="@Value("AnnouncementText")" placeholder="🎉 Free Shipping on orders over 500K!" /></div>
+                                <div class="col-md-6 setting-field"><label>Background Color</label><input name="settings[AnnouncementBgColor]" type="color" class="form-control form-control-color" value="@Value("AnnouncementBgColor", "#d47f31")" /></div>
+                                <div class="col-md-6 setting-field"><label>Link URL (optional)</label><input name="settings[AnnouncementLink]" type="url" class="form-control" value="@Value("AnnouncementLink")" placeholder="/Product" /></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Welcome Popup Section -->
+            <section id="popup" class="settings-section">
+                <div class="section-title">
+                    <div>
+                        <h2><i class="bi bi-window-stack me-2"></i>Welcome Popup</h2>
+                        <p>Show a popup to first-time visitors. Perfect for welcome discounts or newsletter signups.</p>
+                    </div>
+                    <span class="status-chip @(Enabled("PopupEnabled") ? "success" : "")">@(Enabled("PopupEnabled") ? "Active" : "Inactive")</span>
+                </div>
+                <div class="row g-3">
+                    <div class="col-lg-4">
+                        <div class="setting-panel h-100">
+                            <div class="d-flex justify-content-between gap-3 align-items-start">
+                                <div>
+                                    <label class="form-label mb-1">Enable Popup</label>
+                                    <p class="text-muted small mb-0">Shows once per visitor (localStorage)</p>
+                                </div>
+                                <div class="form-check form-switch fs-4 m-0">
+                                    <input class="form-check-input" type="checkbox" name="settings[PopupEnabled]" value="true" @(Enabled("PopupEnabled") ? "checked" : "") />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-8">
+                        <div class="setting-panel">
+                            <div class="row g-3">
+                                <div class="col-md-6 setting-field"><label>Popup Title</label><input name="settings[PopupTitle]" class="form-control" value="@Value("PopupTitle", "Welcome!")" /></div>
+                                <div class="col-md-6 setting-field"><label>Delay (ms)</label><input name="settings[PopupDelay]" type="number" min="0" class="form-control" value="@Value("PopupDelay", "3000")" /></div>
+                                <div class="col-12 setting-field"><label>Popup Content</label><textarea name="settings[PopupContent]" class="form-control" rows="3" placeholder="Get 10% OFF your first order!">@Value("PopupContent")</textarea></div>
+                                <div class="col-12 setting-field"><label>Image URL (optional, left side)</label><input name="settings[PopupImageUrl]" type="url" class="form-control" value="@Value("PopupImageUrl")" placeholder="/assets/images/popup-banner.jpg" /></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Code Injection Section -->
+            <section id="codeinjection" class="settings-section">
+                <div class="section-title">
+                    <div>
+                        <h2><i class="bi bi-code-slash me-2"></i>Code Injection</h2>
+                        <p>Inject custom HTML, CSS, or JavaScript into your store without modifying code. Use for analytics, chat widgets, or custom styling.</p>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-lg-6">
+                        <div class="setting-panel">
+                            <label class="form-label fw-semibold"><i class="bi bi-chevron-left"></i>head<i class="bi bi-chevron-right"></i> Code</label>
+                            <p class="text-muted small">Injected before &lt;/head&gt;. Use for Google Analytics, Facebook Pixel, custom CSS, etc.</p>
+                            <textarea name="settings[CustomHeadCode]" class="form-control font-monospace" rows="6" placeholder="<!-- Paste tracking scripts here -->">@Value("CustomHeadCode")</textarea>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="setting-panel">
+                            <label class="form-label fw-semibold"><i class="bi bi-chevron-left"></i>body<i class="bi bi-chevron-right"></i> Code</label>
+                            <p class="text-muted small">Injected before &lt;/body&gt;. Use for chat widgets (Tawk.to, Tidio), conversion pixels, etc.</p>
+                            <textarea name="settings[CustomFooterCode]" class="form-control font-monospace" rows="6" placeholder="<!-- Paste widget scripts here -->">@Value("CustomFooterCode")</textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Store Policies Section -->
+            <section id="policies" class="settings-section">
+                <div class="section-title">
+                    <div>
+                        <h2><i class="bi bi-file-earmark-text me-2"></i>Store Policies</h2>
+                        <p>Manage your store's legal pages. Content supports HTML formatting.</p>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-12">
+                        <div class="setting-panel">
+                            <label class="form-label fw-semibold">Shipping Policy</label>
+                            <textarea name="settings[ShippingPolicyHtml]" class="form-control" rows="6" placeholder="Enter your shipping policy...">@Value("ShippingPolicyHtml")</textarea>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="setting-panel">
+                            <label class="form-label fw-semibold">Privacy Policy</label>
+                            <textarea name="settings[PrivacyPolicyHtml]" class="form-control" rows="6" placeholder="Enter your privacy policy...">@Value("PrivacyPolicyHtml")</textarea>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="setting-panel">
+                            <label class="form-label fw-semibold">Terms of Service</label>
+                            <textarea name="settings[TermsOfServiceHtml]" class="form-control" rows="6" placeholder="Enter your terms of service...">@Value("TermsOfServiceHtml")</textarea>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</form>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script>
-        // Auto-focus on inputs when card is clicked
-        document.querySelectorAll('.card-body').forEach(card => {
-            card.addEventListener('click', function(e) {
-                if (e.target === this) {
-                    this.querySelector('input, textarea')?.focus();
-                }
+        document.querySelectorAll('.settings-nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelectorAll('.settings-nav-link').forEach(item => item.classList.remove('active'));
+                link.classList.add('active');
             });
         });
     </script>
 }
-
-<style>
-    .card {
-        border-radius: 1rem;
-    }
-
-    .form-control:focus {
-        border-color: #d47f31;
-        box-shadow: 0 0 0 0.2rem rgba(212, 127, 49, 0.25);
-    }
-
-    .btn-primary {
-        background-color: #d47f31;
-        border-color: #d47f31;
-    }
-
-    .btn-primary:hover {
-        background-color: #b86d26;
-        border-color: #b86d26;
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    }
-</style>

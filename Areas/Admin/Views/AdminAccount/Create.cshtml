@@ -65,6 +65,32 @@
                         <option value="0">Inactive</option>
                     </select>
                 </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">Role</label>
+                    <select asp-for="Role" class="form-select form-control-lg" id="roleSelect">
+                        <option value="Customer">Customer</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row" id="adminVerifySection" style="display: none;">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">
+                        <i class="bi bi-shield-lock me-1"></i>Your Admin Password (to confirm)
+                    </label>
+                    <input type="password" name="adminConfirmPassword" class="form-control form-control-lg"
+                           placeholder="Enter your admin password" id="adminConfirmInput" />
+                    <small class="text-muted">Required to assign Admin role</small>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small text-muted text-uppercase">
+                        <i class="bi bi-key me-1"></i>Security Code
+                    </label>
+                    <input type="password" name="adminSecretCode" class="form-control form-control-lg"
+                           placeholder="Enter security code" id="adminSecretInput" />
+                    <small class="text-muted">Secret code from server configuration</small>
+                </div>
             </div>
 
             <div class="mt-4">
@@ -75,3 +101,23 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.getElementById('roleSelect').addEventListener('change', function () {
+        var section = document.getElementById('adminVerifySection');
+        var pwdInput = document.getElementById('adminConfirmInput');
+        var codeInput = document.getElementById('adminSecretInput');
+        if (this.value === 'Admin') {
+            section.style.display = '';
+            pwdInput.required = true;
+            codeInput.required = true;
+        } else {
+            section.style.display = 'none';
+            pwdInput.required = false;
+            codeInput.required = false;
+            pwdInput.value = '';
+            codeInput.value = '';
+        }
+    });
+</script>
+

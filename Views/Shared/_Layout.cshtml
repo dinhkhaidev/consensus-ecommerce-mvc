@@ -1,10 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+@{
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var appName = settings.GetValueOrDefault("StoreName", localizer.Get("AppName"));
+    var siteTitle = settings.GetValueOrDefault("SiteTitle", appName);
+    var siteDescription = settings.GetValueOrDefault("SiteDescription", $"{appName} - Premium furniture e-commerce store");
+    var faviconUrl = settings.GetValueOrDefault("FaviconUrl", "");
+    var primaryColor = settings.GetValueOrDefault("PrimaryColor", "#d47f31");
+    var accentColor = settings.GetValueOrDefault("AccentColor", "#1f2933");
+    var seoKeywords = settings.GetValueOrDefault("SeoKeywords", "");
+    var ogImage = settings.GetValueOrDefault("OpenGraphImageUrl", "");
+    var gaId = settings.GetValueOrDefault("GoogleAnalyticsId", "");
+    var fbPixelId = settings.GetValueOrDefault("FacebookPixelId", "");
+    var customHeadCode = settings.GetValueOrDefault("CustomHeadCode", "");
+    var customFooterCode = settings.GetValueOrDefault("CustomFooterCode", "");
+    var currentLanguage = localizer.CurrentLanguage;
+    var languageClass = currentLanguage == "vi" ? "lang-vi" : "lang-en";
+}
+<html lang="@currentLanguage">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="@localizer.Get("AppName") - Premium furniture e-commerce store" />
-    <title>@ViewData["Title"] - @localizer.Get("AppName")</title>
+    <meta name="description" content="@siteDescription" />
+    @if (!string.IsNullOrWhiteSpace(seoKeywords))
+    {
+        <meta name="keywords" content="@seoKeywords" />
+    }
+    <meta property="og:title" content="@ViewData["Title"] - @siteTitle" />
+    <meta property="og:description" content="@siteDescription" />
+    <meta property="og:type" content="website" />
+    @if (!string.IsNullOrWhiteSpace(ogImage))
+    {
+        <meta property="og:image" content="@ogImage" />
+    }
+    <title>@ViewData["Title"] - @siteTitle</title>
+    @if (!string.IsNullOrWhiteSpace(faviconUrl))
+    {
+        <link rel="icon" href="@faviconUrl" />
+    }
+    else
+    {
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>" />
+    }
+    <meta name="theme-color" content="@primaryColor" />
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -14,8 +51,43 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="~/css/style.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        :root {
+            --primary-color: @primaryColor;
+            --accent-color: @accentColor;
+        }
+    </style>
+    @if (!string.IsNullOrWhiteSpace(gaId))
+    {
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=@gaId"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '@gaId');
+        </script>
+    }
+    @if (!string.IsNullOrWhiteSpace(fbPixelId))
+    {
+        <!-- Facebook Pixel -->
+        <script>
+            !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+            n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+            document,'script','https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '@fbPixelId');
+            fbq('track', 'PageView');
+        </script>
+    }
+    @if (!string.IsNullOrWhiteSpace(customHeadCode))
+    {
+        @Html.Raw(customHeadCode)
+    }
 </head>
-<body class="font-sans text-gray-800">
+<body class="font-sans text-gray-800 @languageClass">
+    @await Html.PartialAsync("_AnnouncementBar")
     @await Html.PartialAsync("_Header")
 
     <main>
@@ -28,8 +100,14 @@
     @await Html.PartialAsync("_Footer")
     @await Html.PartialAsync("_OffcanvasMenu")
     @await Html.PartialAsync("_ToastNotifications")
+    @await Html.PartialAsync("_WelcomePopup")
 
     @await Html.PartialAsync("_Scripts")
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (!string.IsNullOrWhiteSpace(customFooterCode))
+    {
+        @Html.Raw(customFooterCode)
+    }
 </body>
 </html>

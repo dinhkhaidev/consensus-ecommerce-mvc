@@ -1,9 +1,269 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap");
+
 /* Admin Panel Styles - Furnish */
 
 /* Base */
 body {
     background-color: #f5f5f5;
     font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body.lang-vi {
+    font-family: 'Plus Jakarta Sans', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Admin shell */
+.admin-shell {
+    min-height: 100vh;
+    background: #f4f6f8;
+}
+
+.admin-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: 280px;
+    padding: 20px 16px;
+    overflow-y: auto;
+    background: #171717;
+    color: #fff;
+    box-shadow: 8px 0 24px rgba(15, 23, 42, 0.08);
+    z-index: 1040;
+}
+
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 8px 22px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.admin-brand:hover {
+    color: #fff;
+}
+
+.admin-brand-mark {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #d47f31;
+    color: #fff;
+}
+
+.admin-brand strong,
+.admin-brand small {
+    display: block;
+}
+
+.admin-brand small {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.72rem;
+}
+
+.admin-nav {
+    padding-top: 18px;
+}
+
+.admin-nav-group {
+    margin-bottom: 22px;
+}
+
+.admin-nav-title {
+    color: rgba(255, 255, 255, 0.42);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 0 10px 8px;
+    text-transform: uppercase;
+}
+
+.admin-nav-link {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    color: rgba(255, 255, 255, 0.68);
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: background 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.admin-nav-link i {
+    width: 20px;
+    text-align: center;
+}
+
+.admin-nav-link:hover,
+.admin-nav-link.active {
+    color: #fff;
+    background: rgba(212, 127, 49, 0.18);
+}
+
+.admin-nav-link.active {
+    box-shadow: inset 3px 0 0 #d47f31;
+}
+
+.admin-main {
+    min-height: 100vh;
+    margin-left: 280px;
+}
+
+.admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 28px;
+    background: rgba(255, 255, 255, 0.92);
+    border-bottom: 1px solid #e8edf2;
+    backdrop-filter: blur(12px);
+}
+
+.admin-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.admin-user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #fff;
+    color: #4b5563;
+    font-size: 0.88rem;
+}
+
+.admin-content {
+    padding: 28px;
+}
+
+.admin-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+/* Settings */
+.settings-shell {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.settings-nav {
+    position: sticky;
+    top: 96px;
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    background: #fff;
+    border: 1px solid #e8edf2;
+    border-radius: 8px;
+}
+
+.settings-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    color: #52606d;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.settings-nav-link:hover,
+.settings-nav-link.active {
+    color: #b86d26;
+    background: #fff4e8;
+}
+
+.settings-content {
+    display: grid;
+    gap: 18px;
+}
+
+.settings-section {
+    padding: 22px;
+    background: #fff;
+    border: 1px solid #e8edf2;
+    border-radius: 8px;
+}
+
+.section-title {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.section-title h2 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.section-title p {
+    color: #697586;
+    margin-bottom: 0;
+}
+
+.setting-panel,
+.setting-field {
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #eef2f6;
+    border-radius: 8px;
+}
+
+.setting-field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #5c6670;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.status-chip.success {
+    color: #0f6848;
+    background: #dff7ea;
+}
+
+.status-chip.danger {
+    color: #9f1d2b;
+    background: #fde2e5;
 }
 
 /* Sidebar (if re-enabled) */
@@ -239,6 +499,39 @@ body {
     color: white;
 }
 
+@media (max-width: 991.98px) {
+    .admin-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        border-radius: 0 0 12px 12px;
+    }
+
+    .admin-main {
+        margin-left: 0;
+    }
+
+    .admin-topbar,
+    .admin-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-content {
+        padding: 18px;
+    }
+
+    .settings-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-nav {
+        position: static;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
 .pagination .page-item.disabled .page-link {
     color: #aaa;
 }
@@ -328,4 +621,34 @@ code {
     background-color: #dc3545;
     border-color: #dc3545;
     color: white;
+}
+
+.setting-image-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem;
+    border: 1px solid #eef0f3;
+    border-radius: 0.75rem;
+    background: #fafafa;
+    margin-bottom: 0.5rem;
+}
+
+.setting-image-preview img {
+    width: 88px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 0.5rem;
+    background: #fff;
+    border: 1px solid #eee;
+}
+
+.setting-image-preview.compact img {
+    width: 44px;
+    height: 44px;
+}
+
+.setting-image-preview span {
+    color: #6c757d;
+    font-size: 0.85rem;
 }

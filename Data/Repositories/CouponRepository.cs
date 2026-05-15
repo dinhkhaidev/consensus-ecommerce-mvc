@@ -10,7 +10,8 @@ public interface ICouponRepository
     Task<Coupon?> GetByIdAsync(int id);
     Task<List<Coupon>> GetActiveCouponsAsync();
     Task UpdateAsync(Coupon coupon);
-    Task IncrementUsageAsync(int couponId);
+    Task<bool> IncrementUsageAsync(int couponId);
+    Task DecrementUsageAsync(int couponId);
 }
 
 public class CouponRepository : ICouponRepository
@@ -40,13 +41,26 @@ public class CouponRepository : ICouponRepository
         await _context.SaveChangesAsync();
     }
 
-    public async Task IncrementUsageAsync(int couponId)
+    public async Task<bool> IncrementUsageAsync(int couponId)
     {
-        var coupon = await _context.Coupons.FindAsync(couponId);
-        if (coupon != null)
-        {
-            coupon.UsedCount++;
-            await _context.SaveChangesAsync();
-        }
+        var now = DateTime.UtcNow;
+        var updatedRows = await _context.Coupons
+            .Where(c => c.Id == couponId &&
+                        c.IsActive &&
+                        c.StartDate <= now &&
+                        c.EndDate >= now &&
+                        c.UsedCount < c.UsageLimit)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(c => c.UsedCount, c => c.UsedCount + 1));
+
+        return updatedRows > 0;
+    }
+
+    public async Task DecrementUsageAsync(int couponId)
+    {
+        await _context.Coupons
+            .Where(c => c.Id == couponId && c.UsedCount > 0)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(c => c.UsedCount, c => c.UsedCount - 1));
     }
 }

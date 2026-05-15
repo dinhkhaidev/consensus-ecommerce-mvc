@@ -10,11 +10,13 @@ public class WishlistController : Controller
 {
     private readonly IWishlistService _wishlistService;
     private readonly IUserService _userService;
+    private readonly IWebSettingsService _settingsService;
 
-    public WishlistController(IWishlistService wishlistService, IUserService userService)
+    public WishlistController(IWishlistService wishlistService, IUserService userService, IWebSettingsService settingsService)
     {
         _wishlistService = wishlistService;
         _userService = userService;
+        _settingsService = settingsService;
     }
 
     public async Task<IActionResult> Index()
@@ -41,6 +43,13 @@ public class WishlistController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(int productId, string? returnUrl = null)
     {
+        var settings = await _settingsService.GetAllSettingsAsync();
+        if (!string.Equals(settings.GetValueOrDefault("EnableWishlist", "true"), "true", StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["ToastError"] = "Wishlist is currently disabled.";
+            return RedirectToAction("Index", "Product");
+        }
+
         var userId = await _userService.GetCurrentUserIdAsync();
         if (userId == null)
             return RedirectToAction("Login", "Account");

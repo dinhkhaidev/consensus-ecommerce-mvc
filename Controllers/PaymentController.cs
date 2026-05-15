@@ -80,11 +80,7 @@ public class PaymentController : Controller
                         payment.CompletedAt = DateTime.UtcNow;
                         await _paymentService.UpdatePaymentAsync(payment);
 
-                        await _orderService.UpdatePaymentStatusAsync(payment.OrderId, PaymentStatus.Paid);
-                        await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.Confirmed);
-                        var userId = await _userService.GetCurrentUserIdAsync();
-                        if (userId.HasValue)
-                            await _cartService.ClearCartAsync(userId.Value);
+                        await CompletePaidOrderAsync(payment.OrderId);
 
                         TempData["ToastSuccess"] = "Payment successful! Your order has been confirmed.";
                         return RedirectToAction("Details", "Order", new { id = payment.OrderId });
@@ -119,11 +115,7 @@ public class PaymentController : Controller
 
                             if (responseCode == "00")
                             {
-                                await _orderService.UpdatePaymentStatusAsync(payment.OrderId, PaymentStatus.Paid);
-                                await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.Confirmed);
-                                var userId = await _userService.GetCurrentUserIdAsync();
-                                if (userId.HasValue)
-                                    await _cartService.ClearCartAsync(userId.Value);
+                                await CompletePaidOrderAsync(payment.OrderId);
 
                                 TempData["ToastSuccess"] = "Payment successful! Your order has been confirmed.";
                                 return RedirectToAction("Details", "Order", new { id = payment.OrderId });
@@ -167,11 +159,7 @@ public class PaymentController : Controller
 
                         if (responseCode == "00")
                         {
-                            await _orderService.UpdatePaymentStatusAsync(payment.OrderId, PaymentStatus.Paid);
-                            await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.Confirmed);
-                            var userId = await _userService.GetCurrentUserIdAsync();
-                            if (userId.HasValue)
-                                await _cartService.ClearCartAsync(userId.Value);
+                            await CompletePaidOrderAsync(payment.OrderId);
 
                             TempData["ToastSuccess"] = "Payment successful! Your order has been confirmed.";
                             return RedirectToAction("Details", "Order", new { id = payment.OrderId });
@@ -226,11 +214,7 @@ public class PaymentController : Controller
                         payment.CompletedAt = DateTime.UtcNow;
                         await _paymentService.UpdatePaymentAsync(payment);
 
-                        await _orderService.UpdatePaymentStatusAsync(payment.OrderId, PaymentStatus.Paid);
-                        await _orderService.UpdateOrderStatusAsync(payment.OrderId, OrderStatus.Confirmed);
-                        var userId = await _userService.GetCurrentUserIdAsync();
-                        if (userId.HasValue)
-                            await _cartService.ClearCartAsync(userId.Value);
+                        await CompletePaidOrderAsync(payment.OrderId);
                     }
                 }
 
@@ -243,5 +227,17 @@ public class PaymentController : Controller
         }
 
         return BadRequest();
+    }
+
+    private async Task CompletePaidOrderAsync(int orderId)
+    {
+        await _orderService.UpdatePaymentStatusAsync(orderId, PaymentStatus.Paid);
+        await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.Confirmed);
+
+        var order = await _orderService.GetOrderByIdAsync(orderId);
+        if (order != null)
+            await _cartService.RemovePurchasedItemsAsync(order.UserId, order.OrderItems);
+
+        HttpContext.Session.Remove(CartController.CheckoutItemIdsSessionKey);
     }
 }

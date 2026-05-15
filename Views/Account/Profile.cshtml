@@ -1,6 +1,12 @@
 @model WebActionResults.ViewModels.ProfileViewModel
 @{
     ViewData["Title"] = localizer.Get("Profile") + " - Furnish";
+    var birthdayValue = Model.Birthday?.ToString("yyyy-MM-dd") ?? string.Empty;
+    var birthdayDay = Model.Birthday?.Day;
+    var birthdayMonth = Model.Birthday?.Month;
+    var birthdayYear = Model.Birthday?.Year;
+    var currentYear = DateTime.Today.Year;
+    var minBirthYear = currentYear - 120;
 }
 
 <!-- Breadcrumb -->
@@ -31,8 +37,12 @@
                 <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body text-center py-5">
                         <div class="mb-3">
-                            <div class="profile-avatar mx-auto d-flex align-items-center justify-content-center rounded-circle"
-                                 style="width: 120px; height: 120px; background: linear-gradient(135deg, #d47f31 0%, #ff9f5a 100%);">
+                            @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+                            {
+                                <img src="@Model.AvatarUrl" alt="@Model.FullName" class="profile-avatar mx-auto rounded-circle"
+                                     onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');" />
+                            }
+                            <div class="profile-avatar mx-auto align-items-center justify-content-center rounded-circle profile-avatar-fallback @(!string.IsNullOrWhiteSpace(Model.AvatarUrl) ? "d-none" : "d-flex")">
                                 <span class="text-white fs-1 fw-bold">@Model.FullName?.FirstOrDefault()</span>
                             </div>
                         </div>
@@ -83,13 +93,21 @@
                         </button>
                     </div>
                     <div class="card-body">
-                        <form asp-action="UpdateProfile" method="post" id="profileForm">
+                        <form asp-action="UpdateProfile" method="post" id="profileForm" enctype="multipart/form-data">
                             <input type="hidden" asp-for="Id" />
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold text-muted small text-uppercase">
+                                    <i class="bi bi-image me-1"></i>Avatar
+                                </label>
+                                <input type="file" name="avatarFile" class="form-control edit-enabled" accept="image/jpeg,image/png,image/webp,image/gif" disabled />
+                                <div class="form-text">JPG, PNG, WEBP hoặc GIF. Tối đa 3MB.</div>
+                            </div>
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label asp-for="UserName" class="form-label fw-semibold text-muted small text-uppercase">
-                                        <i class="bi bi-person me-1"></i>@localizer.Get("Email")
+                                        <i class="bi bi-person me-1"></i>@localizer.Get("Username")
                                     </label>
                                     <input asp-for="UserName" class="form-control" readonly />
                                 </div>
@@ -119,9 +137,32 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label asp-for="Birthday" class="form-label fw-semibold text-muted small text-uppercase">
-                                        <i class="bi bi-calendar me-1"></i>Birthday
+                                        <i class="bi bi-calendar me-1"></i>@localizer.Get("Birthday")
                                     </label>
-                                    <input asp-for="Birthday" class="form-control edit-enabled" type="date" disabled />
+                                    <input asp-for="Birthday" type="hidden" value="@birthdayValue" class="edit-enabled" data-birthday-value disabled />
+                                    <div class="birthday-picker" data-birthday-picker>
+                                        <select class="form-select edit-enabled birthday-day-select" data-birthday-day aria-label="@localizer.Get("Day")" disabled>
+                                            <option value="">@localizer.Get("Day")</option>
+                                            @for (var day = 1; day <= 31; day++)
+                                            {
+                                                <option value="@day" selected="@(birthdayDay == day)">@day</option>
+                                            }
+                                        </select>
+                                        <select class="form-select edit-enabled birthday-month-select" data-birthday-month aria-label="@localizer.Get("Month")" disabled>
+                                            <option value="">@localizer.Get("Month")</option>
+                                            @for (var month = 1; month <= 12; month++)
+                                            {
+                                                <option value="@month" selected="@(birthdayMonth == month)">@month</option>
+                                            }
+                                        </select>
+                                        <select class="form-select edit-enabled birthday-year-select" data-birthday-year aria-label="@localizer.Get("Year")" disabled>
+                                            <option value="">@localizer.Get("Year")</option>
+                                            @for (var year = currentYear; year >= minBirthYear; year--)
+                                            {
+                                                <option value="@year" selected="@(birthdayYear == year)">@year</option>
+                                            }
+                                        </select>
+                                    </div>
                                     <span asp-validation-for="Birthday" class="text-danger"></span>
                                 </div>
                             </div>
@@ -263,12 +304,63 @@
         function cancelEdit() {
             location.reload();
         }
+
+        document.querySelectorAll('[data-birthday-picker]').forEach(picker => {
+            const daySelect = picker.querySelector('[data-birthday-day]');
+            const monthSelect = picker.querySelector('[data-birthday-month]');
+            const yearSelect = picker.querySelector('[data-birthday-year]');
+            const valueInput = picker.parentElement.querySelector('[data-birthday-value]');
+
+            function daysInMonth(year, month) {
+                if (!year || !month) return 31;
+                return new Date(Number(year), Number(month), 0).getDate();
+            }
+
+            function syncDays() {
+                const selectedDay = Number(daySelect.value || 0);
+                const maxDays = daysInMonth(yearSelect.value, monthSelect.value);
+
+                Array.from(daySelect.options).forEach(option => {
+                    if (!option.value) return;
+                    option.hidden = Number(option.value) > maxDays;
+                });
+
+                if (selectedDay > maxDays) daySelect.value = '';
+            }
+
+            function syncBirthday() {
+                syncDays();
+
+                if (!daySelect.value || !monthSelect.value || !yearSelect.value) {
+                    valueInput.value = '';
+                    return;
+                }
+
+                const day = daySelect.value.padStart(2, '0');
+                const month = monthSelect.value.padStart(2, '0');
+                valueInput.value = `${yearSelect.value}-${month}-${day}`;
+            }
+
+            [daySelect, monthSelect, yearSelect].forEach(select => {
+                select.addEventListener('change', syncBirthday);
+            });
+
+            syncBirthday();
+        });
     </script>
 }
 
 <style>
     .profile-avatar {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
         font-size: 3rem;
+    }
+
+    .profile-avatar-fallback {
+        display: flex;
+        background: linear-gradient(135deg, #d47f31 0%, #ff9f5a 100%);
     }
 
     .quick-link {
@@ -304,5 +396,26 @@
     .edit-enabled:focus {
         border-color: #d47f31;
         box-shadow: 0 0 0 0.2rem rgba(212, 127, 49, 0.25);
+    }
+
+    .birthday-picker {
+        display: grid;
+        grid-template-columns: minmax(66px, 0.8fr) minmax(74px, 0.9fr) minmax(104px, 1.25fr);
+        gap: 0.5rem;
+    }
+
+    .birthday-picker .form-select {
+        min-width: 0;
+        width: 100%;
+        padding-left: 0.65rem;
+        padding-right: 1.8rem;
+        font-size: 1rem;
+        background-position: right 0.55rem center;
+    }
+
+    @@media (max-width: 575.98px) {
+        .birthday-picker {
+            grid-template-columns: 1fr;
+        }
     }
 </style>

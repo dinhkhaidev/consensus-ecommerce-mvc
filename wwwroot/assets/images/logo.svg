@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160" viewBox="0 0 160 160" role="img" aria-label="Furnish logo">
+  <rect width="160" height="160" rx="32" fill="#1f1b16"/>
+  <path d="M36 77.5 80 41l44 36.5v43.5a7 7 0 0 1-7 7H43a7 7 0 0 1-7-7V77.5Z" fill="#d47f31"/>
+  <path d="M58 91h44v37H58z" fill="#f6efe6"/>
+  <path d="M29 80 80 37l51 43" fill="none" stroke="#f6efe6" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M64 104h32" stroke="#1f1b16" stroke-width="8" stroke-linecap="round"/>
+</svg>

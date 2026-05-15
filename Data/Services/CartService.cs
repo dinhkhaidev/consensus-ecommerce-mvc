@@ -9,6 +9,8 @@ public interface ICartService
     Task AddToCartAsync(int userId, int productId, int variantId, decimal unitPrice, decimal basePrice, decimal priceAdjustment, string priceBreakdown, string productName, string? variantName = null, string? imageUrl = null, int quantity = 1);
     Task UpdateQuantityAsync(int userId, int productId, int variantId, int quantity);
     Task RemoveFromCartAsync(int userId, int productId, int variantId);
+    Task RemoveItemsAsync(int userId, IEnumerable<int> cartItemIds);
+    Task RemovePurchasedItemsAsync(int userId, IEnumerable<OrderItem> orderItems);
     Task ClearCartAsync(int userId);
     decimal GetCartTotal(List<CartItem> items);
 }
@@ -55,6 +57,36 @@ public class CartService : ICartService
         if (item != null)
         {
             await _cartRepository.RemoveItemAsync(item.Id);
+        }
+    }
+
+    public async Task RemoveItemsAsync(int userId, IEnumerable<int> cartItemIds)
+    {
+        var selectedIds = cartItemIds.Distinct().ToHashSet();
+        if (!selectedIds.Any()) return;
+
+        var cart = await _cartRepository.GetCartByUserIdAsync(userId);
+        if (cart == null) return;
+
+        foreach (var item in cart.Items.Where(i => selectedIds.Contains(i.Id)).ToList())
+        {
+            await _cartRepository.RemoveItemAsync(item.Id);
+        }
+    }
+
+    public async Task RemovePurchasedItemsAsync(int userId, IEnumerable<OrderItem> orderItems)
+    {
+        var cart = await _cartRepository.GetCartByUserIdAsync(userId);
+        if (cart == null) return;
+
+        foreach (var orderItem in orderItems)
+        {
+            var cartItem = cart.Items.FirstOrDefault(i =>
+                i.ProductId == orderItem.ProductId &&
+                i.VariantId == orderItem.VariantId);
+
+            if (cartItem != null)
+                await _cartRepository.RemoveItemAsync(cartItem.Id);
         }
     }
 

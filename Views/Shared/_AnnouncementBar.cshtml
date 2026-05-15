@@ -1,0 +1,63 @@
+@{
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var enabled = string.Equals(settings.GetValueOrDefault("AnnouncementEnabled", "false"), "true", StringComparison.OrdinalIgnoreCase);
+    var text = settings.GetValueOrDefault("AnnouncementText", "Free shipping for eligible orders.");
+    var bgColor = settings.GetValueOrDefault("AnnouncementBgColor", "#d47f31");
+    var link = settings.GetValueOrDefault("AnnouncementLink", "");
+    var signature = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"{text}|{link}|{bgColor}"));
+}
+
+@if (enabled && !string.IsNullOrWhiteSpace(text))
+{
+    <div id="announcementBar" class="announcement-bar" style="background: @bgColor;">
+        <div class="container d-flex align-items-center justify-content-center position-relative">
+            @if (!string.IsNullOrWhiteSpace(link))
+            {
+                <a href="@link" class="text-white text-decoration-none announcement-text">
+                    @text
+                </a>
+            }
+            else
+            {
+                <span class="announcement-text text-white">@text</span>
+            }
+            <button type="button" class="btn-close btn-close-white position-absolute end-0 me-2"
+            onclick="document.getElementById('announcementBar').remove(); localStorage.setItem('announcementDismissed:@signature', Date.now())"
+                    aria-label="Close" style="font-size: 0.6rem;"></button>
+        </div>
+    </div>
+
+    <style>
+        .announcement-bar {
+            padding: 8px 0;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.02rem;
+            z-index: 1030;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .announcement-text {
+            text-align: center;
+        }
+
+        .announcement-text:hover {
+            opacity: 0.9;
+        }
+
+        @@keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+
+    <script>
+        (function() {
+            var dismissed = localStorage.getItem('announcementDismissed:@signature');
+            if (dismissed && (Date.now() - parseInt(dismissed)) < 86400000) {
+                var bar = document.getElementById('announcementBar');
+                if (bar) bar.remove();
+            }
+        })();
+    </script>
+}
