@@ -6,6 +6,8 @@
     var tagline = settings.GetValueOrDefault("SiteTagline", "Premium Furniture");
     var userAvatarUrl = Context.Session.GetString("USER_AVATAR") ?? "";
     var userInitial = Context.Session.GetString("USER_NAME")?.FirstOrDefault().ToString() ?? "";
+    var currentPath = Context.Request.Path.Value ?? "/";
+    var isHomeActive = currentPath == "/" || currentPath.Equals("/Home", StringComparison.OrdinalIgnoreCase) || currentPath.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
 }
 <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top px-4 py-2 navbar-custom">
     <div class="container-fluid">
@@ -33,16 +35,16 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item">
-                    <a class="nav-link px-3 @(Context.Request.Path.Value == "/" ? "active" : "")" asp-controller="Home" asp-action="Index">@localizer.Get("Home")</a>
+                    <a class="nav-link px-3 @(isHomeActive ? "active" : "")" asp-controller="Home" asp-action="Index">@localizer.Get("Home")</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 @(Context.Request.Path.Value?.StartsWith("/Product") == true ? "active" : "")" asp-controller="Product" asp-action="Index">@localizer.Get("Shop")</a>
+                    <a class="nav-link px-3 @(currentPath.StartsWith("/Product", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Product" asp-action="Index">@localizer.Get("Shop")</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 @(Context.Request.Path.Value?.StartsWith("/Room3D") == true ? "active" : "")" asp-controller="Room3D" asp-action="Index">3D Room</a>
+                    <a class="nav-link px-3 @(currentPath.StartsWith("/Room3D", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Room3D" asp-action="Index">3D Room</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 @(Context.Request.Path.Value?.StartsWith("/Category") == true ? "active" : "")" asp-controller="Category" asp-action="Index">@localizer.Get("Categories")</a>
+                    <a class="nav-link px-3 @(currentPath.StartsWith("/Category", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Category" asp-action="Index">@localizer.Get("Categories")</a>
                 </li>
             </ul>
         </div>
@@ -97,7 +99,7 @@
                                      class="user-avatar-img"
                                      onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');" />
                             }
-                            <span class="user-avatar d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white @(!string.IsNullOrWhiteSpace(userAvatarUrl) ? "d-none" : "")">
+                            <span class="user-avatar d-inline-flex align-items-center justify-content-center rounded-circle text-white @(!string.IsNullOrWhiteSpace(userAvatarUrl) ? "d-none" : "")">
                                 @userInitial
                             </span>
                         </span>
@@ -154,6 +156,14 @@
         } catch (e) {}
     }
     updateCartBadge();
+
+    document.querySelectorAll('.navbar-custom .navbar-nav .nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            link.classList.remove('nav-link-clicked');
+            void link.offsetWidth;
+            link.classList.add('nav-link-clicked');
+        });
+    });
 </script>
 
 <style>
@@ -161,19 +171,99 @@
         z-index: 1020;
     }
 
+    .navbar-custom .navbar-nav {
+        gap: 0.35rem;
+    }
+
     .nav-link {
-        color: #333;
+        position: relative;
+        overflow: hidden;
+        color: #34302c;
         font-weight: 500;
-        transition: color 0.2s;
+        border-radius: 0;
+        transition: color 0.2s, background-color 0.2s, transform 0.18s ease;
     }
 
     .nav-link:hover {
         color: #000;
+        background: transparent;
     }
 
-    .nav-link.active {
-        color: #000;
-        font-weight: 600;
+    .navbar-custom .navbar-nav .nav-link:active {
+        transform: translateY(1px) scale(0.98);
+    }
+
+    .navbar-custom .navbar-nav .nav-link::before {
+        content: "";
+        position: absolute;
+        inset: 0.35rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(138, 129, 120, 0.12);
+        opacity: 0;
+        transform: scaleX(0.55);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: -1;
+    }
+
+    .navbar-custom .navbar-nav .nav-link:hover::before {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+
+    .navbar-custom .navbar-nav .nav-link.active {
+        color: #111;
+        font-weight: 700;
+        background: transparent;
+    }
+
+    .navbar-custom .navbar-nav .nav-link.active::after {
+        content: "";
+        position: absolute;
+        left: 1rem;
+        right: 1rem;
+        bottom: 0.2rem;
+        height: 2px;
+        border-radius: 999px;
+        background: #8a8178;
+        transform-origin: left center;
+        animation: navUnderlineIn 0.28s ease both;
+    }
+
+    .navbar-custom .navbar-nav .nav-link.active:hover {
+        color: #111;
+    }
+
+    .navbar-custom .navbar-nav .nav-link.nav-link-clicked::before {
+        animation: navClickFlash 0.42s ease both;
+    }
+
+    @@keyframes navClickFlash {
+        0% {
+            opacity: 0;
+            transform: scaleX(0.45);
+        }
+
+        35% {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        100% {
+            opacity: 0;
+            transform: scaleX(1.08);
+        }
+    }
+
+    @@keyframes navUnderlineIn {
+        from {
+            opacity: 0;
+            transform: scaleX(0.25);
+        }
+
+        to {
+            opacity: 1;
+            transform: scaleX(1);
+        }
     }
 
     .user-avatar {
@@ -181,6 +271,7 @@
         width: 32px;
         height: 32px;
         font-size: 0.875rem;
+        background: #211f1c;
     }
 
     .user-avatar-img {
@@ -205,8 +296,8 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: #d47f31;
-        background: rgba(212, 127, 49, 0.12);
+        color: #211f1c;
+        background: #ecebe9;
         font-size: 1.25rem;
     }
 
@@ -217,6 +308,12 @@
     .dropdown-item:hover {
         background-color: rgba(0, 0, 0, 0.05);
         color: #000;
+    }
+
+    .dropdown-item.active,
+    .dropdown-item:active {
+        color: #fff;
+        background-color: #211f1c;
     }
 
     .nav-link.dropdown-toggle::after {

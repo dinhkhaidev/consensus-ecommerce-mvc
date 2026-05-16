@@ -7,6 +7,7 @@ using WebActionResults.Models;
 using WebActionResults.Services;
 using WebActionResults.Filters;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.StaticFiles;
 using VNPAY.Extensions;
 
 // Load environment variables from .env file FIRST
@@ -97,7 +98,16 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+var staticFileContentTypes = new FileExtensionContentTypeProvider();
+staticFileContentTypes.Mappings[".gltf"] = "model/gltf+json";
+staticFileContentTypes.Mappings[".glb"] = "model/gltf-binary";
+staticFileContentTypes.Mappings[".fbx"] = "application/octet-stream";
+staticFileContentTypes.Mappings[".bin"] = "application/octet-stream";
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticFileContentTypes
+});
 
 app.UseMaintenanceMode();
 

@@ -6,21 +6,28 @@
     var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
 }
 @{
+    var isVietnamese = localizer.CurrentLanguage == "vi";
+    string SettingOrDefault(string key, string fallback)
+    {
+        var value = settings.GetValueOrDefault(key, "");
+        return string.IsNullOrWhiteSpace(value) ? fallback : value;
+    }
+
     var siteTitle = settings.GetValueOrDefault("SiteTitle", "Furnish - Premium Furniture Store");
     var siteDescription = settings.GetValueOrDefault("SiteDescription", "");
-    var heroTitle = settings.GetValueOrDefault("HeroTitle", "20% OFF");
-    var heroSubtitle = settings.GetValueOrDefault("HeroSubtitle", "Comfy Sofa Home-Office");
-    var heroDescription = settings.GetValueOrDefault("HeroDescription", "Premium comfort for your modern workspace");
-    var feature1Title = settings.GetValueOrDefault("Feature1Title", "Free Shipping");
-    var feature1Desc = settings.GetValueOrDefault("Feature1Desc", "On orders over 500,000 VND");
-    var feature2Title = settings.GetValueOrDefault("Feature2Title", "Secure Payment");
-    var feature2Desc = settings.GetValueOrDefault("Feature2Desc", "100% secure checkout");
-    var feature3Title = settings.GetValueOrDefault("Feature3Title", "Easy Returns");
-    var feature3Desc = settings.GetValueOrDefault("Feature3Desc", "30-day return policy");
-    var feature4Title = settings.GetValueOrDefault("Feature4Title", "24/7 Support");
-    var feature4Desc = settings.GetValueOrDefault("Feature4Desc", "Dedicated customer care");
-    var newsletterTitle = settings.GetValueOrDefault("NewsletterTitle", "Subscribe to Our Newsletter");
-    var newsletterDesc = settings.GetValueOrDefault("NewsletterDesc", "Get exclusive deals, new arrivals, and design inspiration delivered to your inbox.");
+    var heroTitle = SettingOrDefault("HeroTitle", "20% OFF");
+    var heroSubtitle = SettingOrDefault("HeroSubtitle", "Comfy Sofa Home-Office");
+    var heroDescription = SettingOrDefault("HeroDescription", "Premium comfort for your modern workspace");
+    var feature1Title = SettingOrDefault("Feature1Title", isVietnamese ? "Giao hàng nhanh" : "Fast Delivery");
+    var feature1Desc = SettingOrDefault("Feature1Desc", isVietnamese ? "Đóng gói kỹ, giao tận nhà theo lịch hẹn." : "Carefully packed and delivered to your door.");
+    var feature2Title = SettingOrDefault("Feature2Title", isVietnamese ? "Thanh toán an toàn" : "Secure Payment");
+    var feature2Desc = SettingOrDefault("Feature2Desc", isVietnamese ? "Thông tin được bảo vệ trong toàn bộ quy trình." : "Protected checkout from cart to confirmation.");
+    var feature3Title = SettingOrDefault("Feature3Title", isVietnamese ? "Đổi trả rõ ràng" : "Easy Returns");
+    var feature3Desc = SettingOrDefault("Feature3Desc", isVietnamese ? "Chính sách minh bạch, hỗ trợ xử lý nhanh." : "Clear policy with responsive return support.");
+    var feature4Title = SettingOrDefault("Feature4Title", isVietnamese ? "Tư vấn tận tâm" : "Dedicated Support");
+    var feature4Desc = SettingOrDefault("Feature4Desc", isVietnamese ? "Đội ngũ hỗ trợ chọn nội thất hợp không gian." : "Helpful guidance for every room and style.");
+    var newsletterTitle = SettingOrDefault("NewsletterTitle", isVietnamese ? "Đăng ký nhận bản tin" : "Subscribe to our Newsletter");
+    var newsletterDesc = SettingOrDefault("NewsletterDesc", isVietnamese ? "Nhập địa chỉ email của bạn để nhận ưu đãi và cảm hứng nội thất mới nhất." : "Enter your email for exclusive deals and interior inspiration.");
     var contactEmail = settings.GetValueOrDefault("ContactEmail", "info@furnish.com");
     var contactPhone = settings.GetValueOrDefault("ContactPhone", "");
     var address = settings.GetValueOrDefault("Address", "");
@@ -100,39 +107,40 @@
             {
                 foreach (var category in categories.Take(6))
                 {
-                    var iconClass = "bi-folder text-primary";
-                    var iconBg = "rgba(0, 123, 255, 0.1)";
+                    var iconClass = "bi-folder";
 
                     if (category.CategoryName.Contains("Living", StringComparison.OrdinalIgnoreCase))
                     {
-                        iconClass = "bi-house-door text-primary";
+                        iconClass = "bi-house-door";
                     }
                     else if (category.CategoryName.Contains("Office", StringComparison.OrdinalIgnoreCase))
                     {
-                        iconClass = "bi-laptop text-primary";
+                        iconClass = "bi-laptop";
                     }
                     else if (category.CategoryName.Contains("Bed", StringComparison.OrdinalIgnoreCase))
                     {
-                        iconClass = "bi-moon text-primary";
+                        iconClass = "bi-moon";
                     }
                     else if (category.CategoryName.Contains("Dining", StringComparison.OrdinalIgnoreCase))
                     {
-                        iconClass = "bi-cup-hot text-primary";
+                        iconClass = "bi-cup-hot";
                     }
                     else if (category.CategoryName.Contains("Decor", StringComparison.OrdinalIgnoreCase))
                     {
-                        iconClass = "bi-flower1 text-primary";
+                        iconClass = "bi-flower1";
                     }
                     else if (category.CategoryName.Contains("Outdoor", StringComparison.OrdinalIgnoreCase))
                     {
-                        iconClass = "bi-sun text-primary";
+                        iconClass = "bi-sun";
                     }
 
                     <div class="col-6 col-md-4 col-lg-3">
                         <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id" class="text-decoration-none">
                             <div class="card category-card h-100 border-0 shadow-sm text-center hover-lift">
                                 <div class="card-body d-flex flex-column justify-content-center align-items-center py-5">
-                                    <i class="bi @iconClass mb-3" style="font-size: 3rem;"></i>
+                                    <span class="dashboard-category-icon mb-3">
+                                        <i class="bi @iconClass"></i>
+                                    </span>
                                     <h5 class="card-title mb-2">@category.CategoryName</h5>
                                     <p class="text-muted small mb-0">@category.ProductCount @localizer.Get("Products")</p>
                                 </div>
@@ -208,43 +216,51 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-lg-8 text-center text-white">
-                <span class="badge bg-primary px-4 py-2 mb-3">@localizer.Get("LimitedTimeOffer")</span>
+                <span class="badge dashboard-badge px-4 py-2 mb-3">@localizer.Get("LimitedTimeOffer")</span>
                 <h2 class="display-4 fw-bold mb-3">@localizer.Get("Get25PercentOff")</h2>
                 <p class="lead mb-4 opacity-75">@localizer.Get("TransformYourSpace")</p>
-                <a asp-controller="Product" asp-action="Index" class="btn btn-primary btn-lg px-5">@localizer.Get("ShopNow")</a>
+                <a asp-controller="Product" asp-action="Index" class="btn dashboard-btn-light btn-lg px-5">@localizer.Get("ShopNow")</a>
             </div>
         </div>
     </div>
 </section>
 
 <!-- Features Section -->
-<section class="py-lg-8 py-5 bg-white">
+<section class="dashboard-features py-lg-8 py-5 bg-white">
     <div class="container">
-        <div class="row g-4 text-center">
+        <div class="row g-4">
             <div class="col-md-3 col-6">
-                <div class="p-3">
-                    <i class="bi bi-truck display-5 text-primary mb-3 d-block"></i>
+                <div class="dashboard-feature-item h-100">
+                    <span class="dashboard-feature-icon" title="@feature1Title" aria-label="@feature1Title">
+                        <i class="bi bi-truck"></i>
+                    </span>
                     <h6 class="fw-bold mb-1">@feature1Title</h6>
                     <p class="text-muted small mb-0">@feature1Desc</p>
                 </div>
             </div>
             <div class="col-md-3 col-6">
-                <div class="p-3">
-                    <i class="bi bi-shield-check display-5 text-success mb-3 d-block"></i>
+                <div class="dashboard-feature-item h-100">
+                    <span class="dashboard-feature-icon" title="@feature2Title" aria-label="@feature2Title">
+                        <i class="bi bi-shield-check"></i>
+                    </span>
                     <h6 class="fw-bold mb-1">@feature2Title</h6>
                     <p class="text-muted small mb-0">@feature2Desc</p>
                 </div>
             </div>
             <div class="col-md-3 col-6">
-                <div class="p-3">
-                    <i class="bi bi-arrow-repeat display-5 text-warning mb-3 d-block"></i>
+                <div class="dashboard-feature-item h-100">
+                    <span class="dashboard-feature-icon" title="@feature3Title" aria-label="@feature3Title">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </span>
                     <h6 class="fw-bold mb-1">@feature3Title</h6>
                     <p class="text-muted small mb-0">@feature3Desc</p>
                 </div>
             </div>
             <div class="col-md-3 col-6">
-                <div class="p-3">
-                    <i class="bi bi-headset display-5 text-danger mb-3 d-block"></i>
+                <div class="dashboard-feature-item h-100">
+                    <span class="dashboard-feature-icon" title="@feature4Title" aria-label="@feature4Title">
+                        <i class="bi bi-headset"></i>
+                    </span>
                     <h6 class="fw-bold mb-1">@feature4Title</h6>
                     <p class="text-muted small mb-0">@feature4Desc</p>
                 </div>
@@ -267,23 +283,29 @@
             {
                 var avatarUrl = !string.IsNullOrWhiteSpace(testimonial.UserAvatar)
                     ? testimonial.UserAvatar
-                    : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(testimonial.UserName)}&background=d47f31&color=fff&size=48";
+                    : $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(testimonial.UserName)}&background=ecebe9&color=211f1c&size=96";
 
                 <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm p-4">
-                        <div class="card-body text-center">
-                            <div class="text-warning mb-3">
-                                @for (var i = 1; i <= 5; i++)
-                                {
-                                    <i class="bi @(i <= testimonial.Rating ? "bi-star-fill" : "bi-star")"></i>
-                                }
+                    <div class="card testimonial-card h-100 border-0 shadow-sm">
+                        <div class="card-body testimonial-card-body text-center">
+                            <div class="testimonial-content">
+                                <span class="testimonial-quote-mark" aria-hidden="true">“</span>
+                                <p class="card-text fst-italic text-muted mb-0">"@testimonial.Comment"</p>
                             </div>
-                            <p class="card-text fst-italic text-muted">"@testimonial.Comment"</p>
-                            <div class="mt-3">
-                                <img src="@avatarUrl" alt="@testimonial.UserName" class="rounded-circle mb-2 d-block mx-auto customer-say-avatar"
-                                     onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(testimonial.UserName)&background=d47f31&color=fff&size=48';">
-                                <strong>@testimonial.UserName</strong>
-                                <small class="text-muted d-block">@testimonial.CreatedAt.ToString("dd/MM/yyyy")</small>
+                            <div class="testimonial-user mt-auto">
+                                <img src="@avatarUrl" alt="@testimonial.UserName" class="rounded-circle customer-say-avatar"
+                                     onerror="this.src='https://ui-avatars.com/api/?name=@Uri.EscapeDataString(testimonial.UserName)&background=ecebe9&color=211f1c&size=96';">
+                                <div class="testimonial-user-meta">
+                                    <strong>@testimonial.UserName</strong>
+                                    <small class="text-muted d-block">@testimonial.CreatedAt.ToString("dd/MM/yyyy")</small>
+                                    <div class="dashboard-rating mt-2" aria-label="@testimonial.Rating/5">
+                                        @for (var i = 1; i <= 5; i++)
+                                        {
+                                            var isFilled = i <= testimonial.Rating;
+                                            <i class="bi @(isFilled ? "bi-star-fill is-filled" : "bi-star is-empty")"></i>
+                                        }
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -294,15 +316,15 @@
 </section>
 
 <!-- Newsletter Section -->
-<section class="py-lg-8 py-5" style="background: #d47f31;">
+<section class="dashboard-newsletter py-lg-10 py-5">
     <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-6 text-center text-white">
-                <h2 class="display-6 fw-bold mb-3">@newsletterTitle</h2>
-                <p class="mb-4 opacity-75">@newsletterDesc</p>
-                <form class="d-flex gap-2 justify-content-center flex-column flex-sm-row">
-                    <input type="email" class="form-control form-control-lg" placeholder="@localizer.Get("EnterYourEmail")" required style="max-width: 400px;">
-                    <button type="submit" class="btn btn-dark btn-lg px-4">
+        <div class="row justify-content-center mx-lg-10">
+            <div class="col-lg-8 text-center">
+                <h2 class="mb-3">@newsletterTitle</h2>
+                <p class="text-muted mb-5">@newsletterDesc</p>
+                <form class="d-flex justify-content-center gap-2 flex-column flex-sm-row">
+                    <input type="email" class="form-control form-control-lg w-lg-50 w-100 dashboard-newsletter-input" placeholder="@localizer.Get("EnterYourEmail")" required>
+                    <button type="submit" class="btn dashboard-btn-dark btn-lg px-4">
                         <i class="bi bi-send me-2"></i>@localizer.Get("Subscribe")
                     </button>
                 </form>
@@ -312,6 +334,240 @@
 </section>
 
 <style>
+    .dashboard-kicker {
+        color: #5f5a54 !important;
+        letter-spacing: 0.01em;
+    }
+
+    .dashboard-kicker-soft {
+        color: #7d766e !important;
+    }
+
+    .dashboard-kicker-deep {
+        color: #22201d !important;
+    }
+
+    .dashboard-btn-dark,
+    .dashboard-btn-outline,
+    .dashboard-btn-light {
+        border-radius: 999px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        padding-inline: 1.35rem;
+    }
+
+    .dashboard-btn-dark {
+        color: #fff;
+        border-color: #161616;
+        background: #161616;
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+    }
+
+    .dashboard-btn-dark:hover,
+    .dashboard-btn-dark:focus {
+        color: #fff;
+        border-color: #34302c;
+        background: #34302c;
+    }
+
+    .dashboard-btn-outline {
+        color: #161616;
+        border-color: rgba(22, 22, 22, 0.45);
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(8px);
+    }
+
+    .dashboard-btn-outline:hover,
+    .dashboard-btn-outline:focus {
+        color: #fff;
+        border-color: #161616;
+        background: #161616;
+    }
+
+    .dashboard-btn-light {
+        color: #161616;
+        border-color: #fff;
+        background: #fff;
+    }
+
+    .dashboard-btn-light:hover,
+    .dashboard-btn-light:focus {
+        color: #fff;
+        border-color: #161616;
+        background: #161616;
+    }
+
+    .dashboard-badge {
+        color: #171717;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.82);
+        backdrop-filter: blur(10px);
+    }
+
+    .dashboard-category-icon {
+        width: 72px;
+        height: 72px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(24, 24, 24, 0.08);
+        border-radius: 50%;
+        color: #272421;
+        background: radial-gradient(circle at 35% 25%, rgba(255, 255, 255, 0.95), rgba(236, 233, 228, 0.88));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 16px 34px rgba(31, 29, 26, 0.08);
+    }
+
+    .dashboard-category-icon i {
+        font-size: 2rem;
+    }
+
+    .dashboard-features {
+        border-top: 1px solid rgba(24, 24, 24, 0.06);
+        border-bottom: 1px solid rgba(24, 24, 24, 0.06);
+    }
+
+    .dashboard-feature-item {
+        min-height: 190px;
+        padding: 1.35rem 1rem;
+        text-align: center;
+        border: 1px solid rgba(24, 24, 24, 0.08);
+        border-radius: 18px;
+        background: linear-gradient(180deg, #fff, #fbfaf8);
+        box-shadow: 0 16px 36px rgba(31, 29, 26, 0.055);
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+
+    .dashboard-feature-item:hover {
+        transform: translateY(-4px);
+        border-color: rgba(24, 24, 24, 0.16);
+        box-shadow: 0 22px 44px rgba(31, 29, 26, 0.09);
+    }
+
+    .dashboard-feature-icon {
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 1rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 18px;
+        color: #191817;
+        background: #f0ede8;
+        box-shadow: inset 0 0 0 1px rgba(24, 24, 24, 0.07);
+    }
+
+    .dashboard-feature-icon i {
+        font-size: 1.7rem;
+        line-height: 1;
+    }
+
+    .testimonial-card {
+        min-height: 340px;
+        padding: 1.5rem;
+        overflow: hidden;
+        border: 1px solid rgba(24, 24, 24, 0.075) !important;
+        border-radius: 18px;
+        background:
+            linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(250, 249, 247, 0.96)),
+            radial-gradient(circle at 12% 8%, rgba(138, 129, 120, 0.13), transparent 30%);
+        box-shadow: 0 20px 48px rgba(31, 29, 26, 0.075) !important;
+        transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
+    }
+
+    .testimonial-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(24, 24, 24, 0.13) !important;
+        box-shadow: 0 28px 62px rgba(31, 29, 26, 0.11) !important;
+    }
+
+    .testimonial-card-body {
+        min-height: 100%;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dashboard-rating {
+        display: inline-flex;
+        justify-content: flex-start;
+        gap: 0.12rem;
+        font-size: 0.82rem;
+        line-height: 1;
+    }
+
+    .dashboard-rating .is-filled {
+        color: #c99a2e;
+    }
+
+    .dashboard-rating .is-empty {
+        color: #d6d0c8;
+    }
+
+    .testimonial-content {
+        position: relative;
+        min-height: 148px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.4rem 0.3rem 1.5rem;
+    }
+
+    .testimonial-quote-mark {
+        position: absolute;
+        top: -0.45rem;
+        left: 0;
+        color: rgba(33, 31, 28, 0.08);
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 5.8rem;
+        font-style: normal;
+        line-height: 1;
+        pointer-events: none;
+    }
+
+    .testimonial-content .card-text {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        color: #5d5751 !important;
+        font-size: 1rem;
+        line-height: 1.72;
+        position: relative;
+        z-index: 1;
+    }
+
+    .testimonial-user {
+        margin: 0 -0.25rem -0.25rem;
+        padding: 1.05rem 1.1rem;
+        border-top: 1px solid rgba(24, 24, 24, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1rem;
+        text-align: left;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .dashboard-newsletter {
+        background: #fff;
+        border-top: 1px solid rgba(24, 24, 24, 0.06);
+    }
+
+    .dashboard-newsletter h2 {
+        font-size: clamp(2rem, 3vw, 3rem);
+        font-weight: 500;
+        letter-spacing: 0;
+    }
+
+    .dashboard-newsletter-input {
+        max-width: 430px;
+        border-color: rgba(24, 24, 24, 0.16);
+        border-radius: 999px;
+        padding-inline: 1.25rem;
+    }
+
     /* Swiper */
     .swiper {
         width: 100%;
@@ -440,8 +696,32 @@
     }
 
     .customer-say-avatar {
-        width: 48px;
-        height: 48px;
+        width: 62px;
+        height: 62px;
         object-fit: cover;
+        flex: 0 0 62px;
+        border: 3px solid #fff;
+        background: #ecebe9;
+        box-shadow: 0 12px 24px rgba(31, 29, 26, 0.16);
+    }
+
+    .testimonial-user-meta {
+        min-width: 0;
+    }
+
+    .testimonial-user-meta strong {
+        display: block;
+        max-width: 180px;
+        overflow: hidden;
+        color: #211f1c;
+        font-size: 1.06rem;
+        line-height: 1.2;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .testimonial-user-meta small {
+        margin-top: 0.18rem;
+        font-size: 0.84rem;
     }
 </style>
