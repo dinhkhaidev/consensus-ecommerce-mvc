@@ -1,60 +1,58 @@
 @model WebActionResults.ViewModels.VerifyEmailViewModel
 @{
-    ViewData["Title"] = "Verify Email - Furnish";
+    ViewData["Title"] = "Xác minh tài khoản";
 }
 
-<section class="py-lg-8 py-5">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card border-0 shadow-lg">
-                    <div class="card-body p-5 text-center">
-                        @if (TempData["Error"] != null)
-                        {
-                            <div class="alert alert-danger">
-                                <i class="bi bi-exclamation-circle me-2"></i>@TempData["Error"]
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="mb-4">
-                                <i class="bi bi-envelope-check text-success" style="font-size: 4rem;"></i>
-                            </div>
-                            <h3 class="fw-bold mb-3">Verify Your Email</h3>
-                            <p class="text-muted mb-4">
-                                Click the button below to verify your email address and complete your registration.
-                            </p>
-                            <form asp-action="VerifyEmail" method="post">
-                                <input type="hidden" asp-for="Token" />
-                                <button type="submit" class="btn btn-primary btn-lg w-100">
-                                    <i class="bi bi-check-lg me-2"></i>Verify Email
-                                </button>
-                            </form>
-                        }
+<div class="container py-5 my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+                <div class="card-body text-center py-4">
+                    
+                    <div class="mb-4 d-inline-flex align-items-center justify-content-center bg-dark bg-opacity-10 rounded-circle animate-pulse" style="width: 90px; height: 90px;">
+                        <i class="bi bi-envelope-open text-dark" style="font-size: 2.8rem;"></i>
+                    </div>
+                    
+                    <h3 class="fw-bold text-uppercase mb-2" style="letter-spacing: 0.15rem; color: #111;">
+                        Xác thực tài khoản
+                    </h3>
+                    <div class="mx-auto mb-4" style="width: 50px; height: 2px; background-color: #222;"></div>
+                    
+                    <p class="text-muted mb-4 lh-lg" style="font-size: 1rem;">
+                        Hệ thống đã gửi một liên kết xác nhận đến hộp thư:<br>
+                        <span class="fw-bold text-dark fs-5">@Model.Email</span>
+                    </p>
 
-                        <hr class="my-4">
-                        <a asp-action="Login" class="text-muted small">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Login
+                    <div class="p-3 bg-light rounded-3 text-start mb-5 mx-auto" style="max-width: 460px; border-left: 4px solid #222;">
+                        <p class="mb-2 small text-dark fw-bold"><i class="bi bi-info-circle-fill me-2"></i>Hướng dẫn kích hoạt:</p>
+                        <ol class="mb-0 text-muted small ps-3 lh-lg">
+                            <li>Kiểm tra hộp thư đến (hoặc thư rác/spam).</li>
+                            <li>Bấm vào nút <strong class="text-dark">"Xác thực tài khoản ngay"</strong> bên trong email để hoàn tất.</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <a asp-controller="Home" asp-action="Index" 
+                           class="btn btn-outline-dark px-4 py-2 text-uppercase fw-bold rounded-2 small" 
+                           style="font-size: 0.8rem; letter-spacing: 0.05rem; transition: all 0.2s;">
+                            <i class="bi bi-arrow-left me-2"></i>Quay về trang chủ
                         </a>
                     </div>
+
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>
 
 <style>
-    .card {
-        border-radius: 1rem;
+    /* Hiệu ứng nhịp đập nhẹ nhàng cho icon tăng sự chú ý */
+    .animate-pulse {
+        animation: pulse 2s infinite;
     }
-
-    .btn-primary {
-        background-color: #d47f31;
-        border-color: #d47f31;
-    }
-
-    .btn-primary:hover {
-        background-color: #b86d26;
-        border-color: #b86d26;
+    @@keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
     }
 </style>

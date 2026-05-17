@@ -64,7 +64,8 @@ public class AccountController : Controller
                 TempData["ToastWarningKey"] = "Auth.VerifyEmailFirst";
                 var token = await _userService.GenerateEmailVerificationTokenAsync(user.Email);
                 await SendVerificationEmail(user.Email, token);
-                return RedirectToAction("Login");
+
+                return RedirectToAction("VerifyEmail", new { email = user.Email });
             }
 
             TempData["ToastSuccessKey"] = "Auth.LoginSuccessful";
@@ -137,6 +138,8 @@ public class AccountController : Controller
 
             TempData["ToastSuccessKey"] = "Auth.RegisterSuccessfulVerifyEmail";
             return RedirectToAction("Login");
+            TempData["ToastSuccess"] = "Registration successful! Please check your email to verify your account.";
+            return RedirectToAction("VerifyEmail", new { email = user.Email });
         }
 
         AddModelErrorKey("", "Auth.RegisterFailed");
@@ -329,15 +332,15 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult VerifyEmail(string token)
+    public IActionResult VerifyEmail(string email)
     {
-        if (string.IsNullOrEmpty(token))
+        if (string.IsNullOrEmpty(email))
         {
             TempData["ToastErrorKey"] = "Auth.InvalidVerificationLink";
             return RedirectToAction("Login");
         }
 
-        return View("VerifyEmail", new VerifyEmailViewModel { Token = token });
+        return View("VerifyEmail", new VerifyEmailViewModel { Email = email });
     }
 
     [HttpPost]
@@ -347,7 +350,7 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var success = await _userService.VerifyEmailAsync(model.Token);
+        var success = await _userService.VerifyEmailAsync(model.Email, model.Token);
 
         if (success)
         {
@@ -451,5 +454,29 @@ public class AccountController : Controller
         var today = DateTime.UtcNow.Date;
         var cutoff = today.AddYears(-16);
         return birthday.Date <= cutoff;
+    }
+
+    
+
+        [HttpGet]
+    public async Task<IActionResult> VerifyEmailClick(string email, string token)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+        {
+            TempData["ToastError"] = "Đường dẫn xác thực không hợp lệ hoặc đã hết hạn.";
+            return RedirectToAction("Login");
+        }
+
+        // Thực hiện gọi service để kiểm tra DB và update trạng thái IsEmailVerified
+        var success = await _userService.VerifyEmailAsync(email, token);
+
+        if (success)
+        {
+            // Điều hướng sang trang báo thành công thiết kế riêng biệt
+            return View("VerifySuccess");
+        }
+
+        TempData["ToastError"] = "Mã xác thực không chính xác hoặc đã hết hạn.";
+        return RedirectToAction("Login");
     }
 }

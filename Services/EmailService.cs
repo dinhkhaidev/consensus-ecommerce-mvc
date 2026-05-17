@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using System.Web;
 using System.Text;
 using Microsoft.Extensions.Configuration;
 
@@ -23,12 +24,12 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    private string SmtpHost => _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
-    private int SmtpPort => int.Parse(_configuration["Email:SmtpPort"] ?? "587");
-    private string SmtpUser => _configuration["Email:SmtpUser"] ?? "";
-    private string SmtpPassword => _configuration["Email:SmtpPassword"] ?? "";
-    private string FromEmail => _configuration["Email:FromEmail"] ?? "noreply@furnish.com";
-    private string FromName => _configuration["Email:FromName"] ?? "Furnish Shop";
+    private string SmtpHost => Environment.GetEnvironmentVariable("EMAIL_SMTP_HOST") ?? _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
+    private int SmtpPort => int.TryParse(Environment.GetEnvironmentVariable("EMAIL_SMTP_PORT"), out var port) ? port : int.Parse(_configuration["Email:SmtpPort"] ?? "587");
+    private string SmtpUser => Environment.GetEnvironmentVariable("EMAIL_SMTP_USER") ?? _configuration["Email:SmtpUser"] ?? "";
+    private string SmtpPassword => Environment.GetEnvironmentVariable("EMAIL_SMTP_PASSWORD") ?? _configuration["Email:SmtpPassword"] ?? "";
+    private string FromEmail => Environment.GetEnvironmentVariable("EMAIL_FROM") ?? _configuration["Email:FromEmail"] ?? "noreply@furnish.com";
+    private string FromName => Environment.GetEnvironmentVariable("EMAIL_FROM_NAME") ?? _configuration["Email:FromName"] ?? "Furnish Shop";
 
     public async Task SendEmailAsync(string to, string subject, string htmlBody)
     {
@@ -65,29 +66,25 @@ public class EmailService : IEmailService
         }
     }
 
-    public async Task SendVerificationEmailAsync(string email, string token)
+        public async Task SendVerificationEmailAsync(string email, string token)
     {
-        var verificationUrl = $"http://localhost:5085/Account/VerifyEmail?token={token}";
-        var subject = "Verify your email - Furnish Shop";
-        var html = $@"
-            <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;'>
-                <div style='background: linear-gradient(135deg, #d47f31 0%, #e8a05f 100%); padding: 30px; text-align: center;'>
-                    <h1 style='color: white; margin: 0;'>Furnish Shop</h1>
-                </div>
-                <div style='padding: 30px; background: #f9f9f9;'>
-                    <h2 style='color: #333;'>Email Verification</h2>
-                    <p style='color: #666; font-size: 16px;'>Thank you for registering with Furnish Shop. Please click the button below to verify your email address.</p>
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{verificationUrl}' style='background: linear-gradient(135deg, #d47f31 0%, #e8a05f 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 50px; font-weight: bold;'>Verify Email</a>
-                    </div>
-                    <p style='color: #999; font-size: 14px;'>Or copy this link: {verificationUrl}</p>
-                    <p style='color: #999; font-size: 14px;'>This link expires in 24 hours.</p>
-                </div>
-            </div>";
+        var subject = "Xận nhận tài khoản Furnish Shop";
+        
+        // BẮT BUỘC: Mã hóa Token để biến các ký tự +, /, = thành mã an toàn trên URL
+        var encodedToken = HttpUtility.UrlEncode(token);
+        
+        // Đảm bảo dùng đúng http (không có s) và đúng cổng 5085 của bạn
+        var verifyUrl = $"http://localhost:5085/Account/VerifyEmailClick?email={email}&token={encodedToken}";
+        
+        var htmlMessage = $@"
+            <h2>Xin chào!</h2>
+            <p>Cảm ơn bạn đã đăng ký tài khoản. Vui lòng bấm vào nút bên dưới để xác thực:</p>
+            <a href='{verifyUrl}' style='display:inline-block; padding:12px 24px; background-color:#222; color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; text-uppercase:true; font-size:14px;'>
+                Xác thực tài khoản ngay
+            </a>";
 
-        await SendEmailAsync(email, subject, html);
+        await SendEmailAsync(email, subject, htmlMessage);
     }
-
     public async Task SendOrderConfirmationAsync(string email, string orderNumber, decimal totalAmount)
     {
         var subject = $"Order Confirmation - #{orderNumber}";

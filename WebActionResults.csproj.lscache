@@ -78,6 +78,7 @@ Controllers/
  OrderController.cs
  PaymentController.cs
  ProductController.cs
+ Room3DController.cs
  SupplierController.cs
  WishlistController.cs
 Data/Entities/
@@ -117,9 +118,11 @@ Data/Services/
  WishlistService.cs
 DTOs/Requests/Register.cs
 Extensions/SessionExtensions.cs
+Filters/WebSettingsActionFilter.cs
 Helpers/ColorHelper.cs
 Mappings/AutoMapperProfile.cs
 Middleware/
+ MaintenanceModeMiddleware.cs
  SessionAuthenticationHandler.cs
  SessionAuthenticationMiddleware.cs
 Migrations/
@@ -127,6 +130,7 @@ Migrations/
  20260510125916_InitialCreate.Designer.cs
  20260510140146_AddCartItemPriceColumns.cs
  20260510140146_AddCartItemPriceColumns.Designer.cs
+ 20260515123000_AddOrderRequestFlow.cs
  ShopDbContextModelSnapshot.cs
 Models/
  Account.cs
@@ -567,6 +571,7 @@ Views/Account/
  Profile.cshtml
  Register.cshtml
  VerifyEmail.cshtml
+ VerifySuccess.cshtml
 Views/
  Cart/Index.cshtml
  Category/
@@ -578,8 +583,12 @@ Views/
  Checkout/Index.cshtml
  Demo/Index.cshtml
  Home/
+  About.cshtml
+  Contact.cshtml
   Index.cshtml
   Privacy.cshtml
+  ShippingPolicy.cshtml
+  Terms.cshtml
  Order/
   Details.cshtml
   Index.cshtml
@@ -591,6 +600,7 @@ Views/
   Index.cshtml
   _DetailsPartial.cshtml
   _ProductForm.cshtml
+ Room3D/Index.cshtml
  Shared/Components/
   CategoryMenu/Default.cshtml
   LanguageSelector/Default.cshtml
@@ -598,6 +608,7 @@ Views/
  Shared/
   Error.cshtml
   _Alerts.cshtml
+  _AnnouncementBar.cshtml
   _Footer.cshtml
   _Header.cshtml
   _Layout.cshtml
@@ -605,6 +616,7 @@ Views/
   _Scripts.cshtml
   _ToastNotifications.cshtml
   _ValidationScriptsPartial.cshtml
+  _WelcomePopup.cshtml
  Supplier/
   Create.cshtml
   Delete.cshtml
@@ -656,6 +668,7 @@ Views/Account/
  Profile.cshtml
  Register.cshtml
  VerifyEmail.cshtml
+ VerifySuccess.cshtml
 Views/
  Cart/Index.cshtml
  Category/
@@ -667,8 +680,12 @@ Views/
  Checkout/Index.cshtml
  Demo/Index.cshtml
  Home/
+  About.cshtml
+  Contact.cshtml
   Index.cshtml
   Privacy.cshtml
+  ShippingPolicy.cshtml
+  Terms.cshtml
  Order/
   Details.cshtml
   Index.cshtml
@@ -680,6 +697,7 @@ Views/
   Index.cshtml
   _DetailsPartial.cshtml
   _ProductForm.cshtml
+ Room3D/Index.cshtml
  Shared/Components/
   CategoryMenu/Default.cshtml
   LanguageSelector/Default.cshtml
@@ -687,6 +705,7 @@ Views/
  Shared/
   Error.cshtml
   _Alerts.cshtml
+  _AnnouncementBar.cshtml
   _Footer.cshtml
   _Header.cshtml
   _Layout.cshtml
@@ -694,6 +713,7 @@ Views/
   _Scripts.cshtml
   _ToastNotifications.cshtml
   _ValidationScriptsPartial.cshtml
+  _WelcomePopup.cshtml
  Supplier/
   Create.cshtml
   Delete.cshtml
