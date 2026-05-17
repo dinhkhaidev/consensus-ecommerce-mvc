@@ -50,7 +50,10 @@
                     <div class="card border-0 shadow-sm mb-4">
                         <div class="card-header bg-white py-3">
                             <div class="row align-items-center text-uppercase text-xs fw-bold">
-                                <div class="col-md-5">@localizer.Get("Product")</div>
+                                <div class="col-md-1 text-center">
+                                    <input class="form-check-input" type="checkbox" id="selectAllCartItems" checked title="@localizer.Get("SelectAll")">
+                                </div>
+                                <div class="col-md-4">@localizer.Get("Product")</div>
                                 <div class="col-md-2 text-center">@localizer.Get("Price")</div>
                                 <div class="col-md-2 text-center">@localizer.Get("Quantity")</div>
                                 <div class="col-md-2 text-end">@localizer.Get("Total")</div>
@@ -60,10 +63,19 @@
                         <div class="card-body p-0">
                             @foreach (var item in Model.Items)
                             {
-                                <div class="cart-item border-bottom py-3 px-3">
+                                <div class="cart-item border-bottom py-3 px-3"
+                                     data-total="@item.Total.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                     data-variant-adjustment="@((item.PriceAdjustment * item.Quantity).ToString(System.Globalization.CultureInfo.InvariantCulture))">
                                     <div class="row align-items-center g-3">
+                                        <!-- Select -->
+                                        <div class="col-md-1 text-center">
+                                            <input class="form-check-input cart-select" type="checkbox"
+                                                   name="selectedCartItemIds" value="@item.CartItemId"
+                                                   form="checkoutSelectedForm" checked>
+                                        </div>
+
                                         <!-- Product -->
-                                        <div class="col-md-5">
+                                        <div class="col-md-4">
                                             <div class="d-flex align-items-center gap-3">
                                                 @if (!string.IsNullOrEmpty(item.ImageUrl))
                                                 {
@@ -199,16 +211,16 @@
                             <!-- Summary -->
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">@localizer.Get("Subtotal")</span>
-                                <span>@Model.SubTotal.ToString("N0") VND</span>
+                                <span id="selectedSubtotal">@Model.SubTotal.ToString("N0") VND</span>
                             </div>
                             @{
                                 var variantAdjustment = Model.Items.Where(i => i.PriceAdjustment != 0).Sum(i => i.PriceAdjustment * i.Quantity);
                             }
                             @if (variantAdjustment != 0)
                             {
-                                <div class="d-flex justify-content-between mb-2 text-success">
+                                <div class="d-flex justify-content-between mb-2 text-success" id="selectedVariantAdjustmentRow">
                                     <span>@localizer.Get("VariantAdjustments")</span>
-                                    <span>+@variantAdjustment.ToString("N0") VND</span>
+                                    <span id="selectedVariantAdjustment">+@variantAdjustment.ToString("N0") VND</span>
                                 </div>
                             }
                             @if (Model.DiscountAmount > 0)
@@ -225,16 +237,18 @@
                             <hr>
                             <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
                                 <span>@localizer.Get("Total")</span>
-                                <span class="text-primary">@Model.Total.ToString("N0") VND</span>
+                                <span class="text-primary" id="selectedTotal">@Model.Total.ToString("N0") VND</span>
                             </div>
+                            <p class="text-muted small mb-3" id="selectedCheckoutCount"></p>
 
                             <!-- Checkout Button -->
                             <div class="d-grid gap-2">
                                 @if (Context.Session.GetInt32("USER_ID").HasValue)
                                 {
-                                    <a asp-controller="Checkout" asp-action="Index" class="btn btn-primary btn-lg">
+                                    <form id="checkoutSelectedForm" asp-action="CheckoutSelected" method="post"></form>
+                                    <button type="submit" form="checkoutSelectedForm" class="btn btn-primary btn-lg" id="checkoutSelectedButton">
                                         <i class="bi bi-credit-card me-2"></i>@localizer.Get("ProceedToCheckout")
-                                    </a>
+                                    </button>
                                 }
                                 else
                                 {
@@ -319,5 +333,62 @@
                 document.getElementById('productDetailContent').innerHTML = '<div class="text-center text-danger">Failed to load product details.</div>';
             });
     };
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAll = document.getElementById('selectAllCartItems');
+        const itemCheckboxes = Array.from(document.querySelectorAll('.cart-select'));
+        const checkoutButton = document.getElementById('checkoutSelectedButton');
+        const subtotalEl = document.getElementById('selectedSubtotal');
+        const totalEl = document.getElementById('selectedTotal');
+        const variantRow = document.getElementById('selectedVariantAdjustmentRow');
+        const variantEl = document.getElementById('selectedVariantAdjustment');
+        const countEl = document.getElementById('selectedCheckoutCount');
+        const discount = Number('@Model.DiscountAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)');
+        const shipping = Number('@Model.ShippingFee.ToString(System.Globalization.CultureInfo.InvariantCulture)');
+        const selectedProductsLabel = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(localizer.Get("SelectedProducts")));
+
+        function formatVnd(value) {
+            return value.toLocaleString('vi-VN') + ' VND';
+        }
+
+        function updateCheckoutSelection() {
+            let subtotal = 0;
+            let variantAdjustment = 0;
+            let count = 0;
+
+            itemCheckboxes.forEach(checkbox => {
+                const row = checkbox.closest('.cart-item');
+                if (!row) return;
+
+                row.classList.toggle('bg-light', !checkbox.checked);
+                if (!checkbox.checked) return;
+
+                subtotal += Number(row.dataset.total || 0);
+                variantAdjustment += Number(row.dataset.variantAdjustment || 0);
+                count += 1;
+            });
+
+            if (subtotalEl) subtotalEl.textContent = formatVnd(subtotal);
+            if (totalEl) totalEl.textContent = formatVnd(Math.max(0, subtotal - discount + (subtotal > 0 ? shipping : 0)));
+            if (variantEl) variantEl.textContent = '+' + formatVnd(variantAdjustment);
+            if (variantRow) variantRow.classList.toggle('d-none', variantAdjustment === 0);
+            if (countEl) countEl.textContent = `${count} ${selectedProductsLabel}`;
+            if (checkoutButton) checkoutButton.disabled = count === 0;
+            if (selectAll) {
+                selectAll.checked = count === itemCheckboxes.length;
+                selectAll.indeterminate = count > 0 && count < itemCheckboxes.length;
+            }
+        }
+
+        if (selectAll) {
+            selectAll.addEventListener('change', function () {
+                itemCheckboxes.forEach(checkbox => checkbox.checked = selectAll.checked);
+                updateCheckoutSelection();
+            });
+        }
+
+        itemCheckboxes.forEach(checkbox => checkbox.addEventListener('change', updateCheckoutSelection));
+        updateCheckoutSelection();
+    });
 </script>
 }

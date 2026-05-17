@@ -170,6 +170,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Global function for variant selection
 window.selectVariant = function(card, variantId) {
+    if (card.classList.contains('opacity-50')) return;
+
     document.querySelectorAll('.variant-card').forEach(c => c.classList.remove('border-primary', 'selected'));
     card.classList.add('border-primary', 'selected');
 
@@ -184,6 +186,18 @@ window.selectVariant = function(card, variantId) {
             form.appendChild(variantInput);
         }
         variantInput.value = variantId;
+    }
+
+    const price = Number(card.dataset.price || 0);
+    const priceEl = document.getElementById('productPrice');
+    if (priceEl && price > 0) {
+        priceEl.textContent = price.toLocaleString('vi-VN') + ' VND';
+    }
+
+    const imageUrl = card.dataset.image;
+    const mainImage = document.getElementById('mainProductImage');
+    if (imageUrl && mainImage) {
+        mainImage.src = imageUrl;
     }
 };
 

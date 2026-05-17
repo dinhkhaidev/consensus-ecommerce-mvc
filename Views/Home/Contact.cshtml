@@ -1,0 +1,89 @@
+@{
+    ViewData["Title"] = localizer.Get("Info");
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var contactEmail = settings.GetValueOrDefault("ContactEmail", "");
+    var supportEmail = settings.GetValueOrDefault("SupportEmail", "");
+    var contactPhone = settings.GetValueOrDefault("ContactPhone", "");
+    var hotline = settings.GetValueOrDefault("Hotline", "");
+    var zaloPhone = settings.GetValueOrDefault("ZaloPhone", "");
+    var address = settings.GetValueOrDefault("Address", "");
+    var workingHours = settings.GetValueOrDefault("WorkingHours", "");
+}
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-4">@localizer.Get("Info")</h1>
+                <div class="row g-4">
+                    @if (!string.IsNullOrWhiteSpace(contactEmail) || !string.IsNullOrWhiteSpace(supportEmail))
+                    {
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body p-4">
+                                    <i class="bi bi-envelope display-5 text-primary mb-3 d-block"></i>
+                                    <h5 class="fw-bold">@localizer.Get("Email")</h5>
+                                    @if (!string.IsNullOrWhiteSpace(contactEmail))
+                                    {
+                                        <p class="mb-1"><a href="mailto:@contactEmail" class="text-decoration-none">@contactEmail</a></p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(supportEmail))
+                                    {
+                                        <p class="mb-0 text-muted small">Support: <a href="mailto:@supportEmail" class="text-decoration-none">@supportEmail</a></p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(contactPhone) || !string.IsNullOrWhiteSpace(hotline))
+                    {
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body p-4">
+                                    <i class="bi bi-telephone display-5 text-success mb-3 d-block"></i>
+                                    <h5 class="fw-bold">Phone</h5>
+                                    @if (!string.IsNullOrWhiteSpace(contactPhone))
+                                    {
+                                        <p class="mb-1"><a href="tel:@contactPhone" class="text-decoration-none">@contactPhone</a></p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(hotline))
+                                    {
+                                        <p class="mb-0 text-muted small">Hotline: <a href="tel:@hotline" class="text-decoration-none">@hotline</a></p>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(zaloPhone))
+                                    {
+                                        <p class="mb-0 text-muted small">Zalo: @zaloPhone</p>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(address))
+                    {
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body p-4">
+                                    <i class="bi bi-geo-alt display-5 text-danger mb-3 d-block"></i>
+                                    <h5 class="fw-bold">@localizer.Get("Address")</h5>
+                                    <p class="mb-0">@address</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(workingHours))
+                    {
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-body p-4">
+                                    <i class="bi bi-clock display-5 text-warning mb-3 d-block"></i>
+                                    <h5 class="fw-bold">Working Hours</h5>
+                                    <p class="mb-0">@workingHours</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

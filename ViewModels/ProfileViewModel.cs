@@ -37,7 +37,7 @@ public class ProfileViewModel
         FullName = account.FullName ?? string.Empty,
         PhoneNumber = account.Phone,
         Birthday = account.Birthday,
-        AvatarUrl = null
+        AvatarUrl = account.AvatarUrl
     };
 }
 
@@ -120,4 +120,17 @@ public class AddressEditViewModel
     public string PostalCode { get; set; } = string.Empty;
 
     public bool IsDefault { get; set; }
+
+    public static AddressEditViewModel FromEntity(Address address) => new()
+    {
+        Id = address.Id,
+        FullName = address.FullName,
+        Phone = address.Phone,
+        AddressLine = address.AddressLine,
+        Ward = address.Ward,
+        District = address.District,
+        City = address.City,
+        PostalCode = address.PostalCode,
+        IsDefault = address.IsDefault
+    };
 }

@@ -13,7 +13,7 @@
     </div>
 </div>
 
-<form asp-area="Admin" asp-controller="AdminProduct" asp-action="Create" method="post">
+<form asp-area="Admin" asp-controller="AdminProduct" asp-action="Create" method="post" enctype="multipart/form-data">
     <div class="row g-4">
         <div class="col-lg-8">
             <div class="card border-0 shadow-sm mb-4">
@@ -38,7 +38,7 @@
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">Category</label>
-                            <select name="CategoryId" class="form-select form-select-lg">
+                            <select name="CategoryID" class="form-select form-select-lg">
                                 @if (categories != null)
                                 {
                                     foreach (var cat in categories)
@@ -65,6 +65,51 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Variants</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addVariantRow()">
+                        <i class="bi bi-plus-lg me-1"></i>Add Variant
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0 align-middle" id="variantTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">Color</th>
+                                    <th>Size</th>
+                                    <th>SKU</th>
+                                    <th>Price Adj.</th>
+                                    <th>Stock</th>
+                                    <th>Active</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantRows">
+                                <tr>
+                                    <td class="ps-3"><input name="variants[0].Color" class="form-control" placeholder="Brown" /></td>
+                                    <td><input name="variants[0].Size" class="form-control" placeholder="Large" /></td>
+                                    <td><input name="variants[0].SKU" class="form-control" placeholder="SOFA-BR-L" /></td>
+                                    <td><input name="variants[0].PriceAdjustment" class="form-control" type="number" step="1000" value="0" /></td>
+                                    <td><input name="variants[0].StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
+                                    <td>
+                                        <input type="hidden" name="variants[0].IsActive" value="false" />
+                                        <input name="variants[0].IsActive" class="form-check-input" type="checkbox" value="true" checked />
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted small px-3 py-2 mb-0">Leave the row empty if the product does not need variants.</p>
+                </div>
+            </div>
         </div>
 
         <div class="col-lg-4">
@@ -73,10 +118,16 @@
                     <h5 class="mb-0">Product Images</h5>
                 </div>
                 <div class="card-body text-center">
-                    <div class="bg-light rounded p-5 mb-3">
+                    <div class="bg-light rounded p-4 mb-3">
                         <i class="bi bi-cloud-upload text-secondary" style="font-size: 3rem;"></i>
-                        <p class="text-muted small mt-2 mb-0">Images can be added after creation</p>
+                        <p class="text-muted small mt-2 mb-0">Upload product photos now. The first image will be used as main.</p>
                     </div>
+                    <input type="file"
+                           name="imageFiles"
+                           class="form-control"
+                           accept="image/jpeg,image/png,image/webp,image/gif"
+                           multiple />
+                    <p class="text-muted small mt-2 mb-0">JPG, PNG, WEBP or GIF. Max 5MB per image.</p>
                 </div>
             </div>
 
@@ -92,8 +143,58 @@
     </div>
 </form>
 
+<template id="variantRowTemplate">
+    <tr>
+        <td class="ps-3"><input data-name="Color" class="form-control" placeholder="Brown" /></td>
+        <td><input data-name="Size" class="form-control" placeholder="Large" /></td>
+        <td><input data-name="SKU" class="form-control" placeholder="SOFA-BR-L" /></td>
+        <td><input data-name="PriceAdjustment" class="form-control" type="number" step="1000" value="0" /></td>
+        <td><input data-name="StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
+        <td>
+            <input data-name="IsActiveHidden" type="hidden" value="false" />
+            <input data-name="IsActive" class="form-check-input" type="checkbox" value="true" checked />
+        </td>
+        <td class="text-end pe-3">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+<script>
+    let variantIndex = 1;
+
+    function addVariantRow() {
+        const template = document.getElementById('variantRowTemplate');
+        const row = template.content.firstElementChild.cloneNode(true);
+
+        row.querySelectorAll('[data-name]').forEach(input => {
+            const field = input.dataset.name;
+            if (field === 'IsActiveHidden') {
+                input.name = `variants[${variantIndex}].IsActive`;
+                return;
+            }
+            input.name = `variants[${variantIndex}].${field}`;
+        });
+
+        document.getElementById('variantRows').appendChild(row);
+        variantIndex++;
+    }
+
+    function removeVariantRow(button) {
+        button.closest('tr')?.remove();
+    }
+</script>
+
 <style>
     .card {
         border-radius: 1rem;
+    }
+
+    #variantTable th {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        color: #6c757d;
     }
 </style>

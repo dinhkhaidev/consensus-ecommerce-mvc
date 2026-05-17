@@ -16,6 +16,7 @@ public interface IProductRepository
     Task<List<ProductImage>> GetImagesAsync(int productId);
     Task<List<Review>> GetReviewsAsync(int productId, bool approvedOnly = true);
     Task<bool> DeductStockAsync(int variantId, int quantity);
+    Task<bool> RestoreStockAsync(int variantId, int quantity);
 
     // Paginated methods
     Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize);
@@ -126,6 +127,17 @@ public class ProductRepository : IProductRepository
             return false;
 
         variant.StockQuantity -= quantity;
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RestoreStockAsync(int variantId, int quantity)
+    {
+        var variant = await _context.ProductVariants.FindAsync(variantId);
+        if (variant == null)
+            return false;
+
+        variant.StockQuantity += quantity;
         await _context.SaveChangesAsync();
         return true;
     }

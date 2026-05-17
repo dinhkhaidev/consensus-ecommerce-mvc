@@ -1,0 +1,892 @@
+.room3d-page {
+    position: relative;
+    width: 100vw;
+    height: calc(100dvh - 76px);
+    min-height: 560px;
+    max-height: calc(100dvh - 76px);
+    margin-left: calc(50% - 50vw);
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 20% 16%, rgba(255, 181, 89, 0.22), transparent 32%),
+        radial-gradient(circle at 78% 12%, rgba(255, 255, 255, 0.34), transparent 30%),
+        linear-gradient(135deg, #ece4d8 0%, #f6f0e7 46%, #ddd2c4 100%);
+    color: #1f1b16;
+    isolation: isolate;
+}
+
+.room3d-page:fullscreen {
+    width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    margin-left: 0;
+}
+
+body:has(.room3d-page) {
+    overflow-x: hidden;
+}
+
+.room3d-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+#room3dCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    outline: none;
+}
+
+.room3d-topbar,
+.room3d-sidebar,
+.room3d-inspector,
+.room3d-bottom-toolbar,
+.selection-toggle,
+.product-detail-modal,
+.room-toast {
+    position: absolute;
+    z-index: 5;
+}
+
+.room3d-topbar {
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    pointer-events: none;
+}
+
+.room3d-topbar > * {
+    pointer-events: auto;
+}
+
+.topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 10px 13px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    box-shadow: 0 18px 44px rgba(40, 28, 18, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.room3d-topbar h1 {
+    color: #15120f;
+    font-size: clamp(1.15rem, 1.6vw, 1.55rem);
+    line-height: 1;
+    margin: 0;
+    letter-spacing: 0;
+}
+
+.room3d-topbar p {
+    max-width: 390px;
+    margin: 4px 0 0;
+    color: rgba(31, 27, 22, 0.68);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.eyebrow,
+.panel-kicker {
+    display: block;
+    color: #a35c21;
+    font-size: 0.64rem;
+    font-weight: 900;
+    letter-spacing: 0.11rem;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+}
+
+.topbar-actions {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    padding: 8px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.54);
+    border: 1px solid rgba(255, 255, 255, 0.68);
+    box-shadow: 0 18px 44px rgba(40, 28, 18, 0.12);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+.room3d-btn,
+.room3d-icon-btn {
+    border: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+    white-space: nowrap;
+}
+
+.room3d-btn {
+    min-height: 38px;
+    padding: 0 13px;
+    border-radius: 999px;
+    font-weight: 850;
+    font-size: 0.82rem;
+}
+
+.room3d-icon-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    color: #2a2119;
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    box-shadow: 0 14px 30px rgba(31, 27, 22, 0.1);
+    font-size: 1.05rem;
+}
+
+.room3d-btn:hover,
+.room3d-icon-btn:hover {
+    transform: translateY(-1px);
+}
+
+.room3d-btn:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.room3d-btn-primary {
+    color: #fff;
+    background: linear-gradient(135deg, #d47f31, #a9581d);
+    box-shadow: 0 14px 28px rgba(173, 95, 33, 0.26);
+}
+
+.room3d-btn-light,
+.room3d-icon-btn-soft {
+    color: #2b2119;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.76);
+    box-shadow: 0 12px 24px rgba(31, 27, 22, 0.08);
+}
+
+.room3d-btn-danger {
+    color: #fff;
+    background: linear-gradient(135deg, #c34638, #8f2b22);
+    box-shadow: 0 14px 28px rgba(143, 43, 34, 0.22);
+}
+
+.room3d-sidebar,
+.room3d-inspector {
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 26px;
+    box-shadow: 0 28px 78px rgba(42, 29, 18, 0.2);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.room3d-sidebar {
+    top: 92px;
+    left: 18px;
+    bottom: 22px;
+    width: min(374px, calc(100vw - 36px));
+    padding: 17px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(calc(-100% - 28px));
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.22s ease;
+}
+
+.room3d-sidebar .panel-toolbar,
+.room3d-sidebar .library-search,
+.room3d-sidebar .library-stats,
+.room3d-sidebar .category-filters {
+    flex: 0 0 auto;
+}
+
+.room3d-page[data-library-open="true"] .room3d-sidebar {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.panel-toolbar {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.panel-toolbar h2 {
+    margin: 0;
+    font-size: 1.06rem;
+    font-weight: 900;
+    color: #17130f;
+}
+
+.panel-toolbar p {
+    margin: 5px 0 0;
+    color: rgba(31, 27, 22, 0.58);
+    font-size: 0.82rem;
+}
+
+.library-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin: 14px 0 10px;
+    padding: 10px 12px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(31, 27, 22, 0.07);
+}
+
+.library-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: #1f1b16;
+    font-size: 0.88rem;
+}
+
+.category-filters {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding: 2px 0 9px;
+    margin-bottom: 4px;
+    scrollbar-width: none;
+}
+
+.category-filters::-webkit-scrollbar {
+    display: none;
+}
+
+.category-chip {
+    border: 1px solid rgba(31, 27, 22, 0.08);
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+    padding: 7px 11px;
+    color: rgba(31, 27, 22, 0.7);
+    background: rgba(255, 255, 255, 0.64);
+    font-size: 0.76rem;
+    line-height: 1;
+    font-weight: 850;
+    text-transform: none;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.category-chip.is-active {
+    color: #fff;
+    border-color: transparent;
+    background: #1f1b16;
+}
+
+.library-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin: 3px 0 10px;
+    padding: 7px 10px;
+    border-radius: 14px;
+    background: rgba(31, 27, 22, 0.06);
+    color: rgba(31, 27, 22, 0.55);
+    font-size: 0.75rem;
+    font-weight: 750;
+}
+
+.product-list {
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+    padding-top: 4px;
+}
+
+.product-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.product-list::-webkit-scrollbar-thumb {
+    background: rgba(163, 92, 33, 0.22);
+    border-radius: 999px;
+}
+
+.room-product-card {
+    display: grid;
+    grid-template-columns: 68px 1fr;
+    gap: 11px;
+    padding: 9px;
+    border: 1px solid rgba(91, 64, 42, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.76);
+    box-shadow: 0 12px 26px rgba(31, 27, 22, 0.08);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+}
+
+.room-product-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(212, 127, 49, 0.36);
+    box-shadow: 0 18px 34px rgba(31, 27, 22, 0.12);
+}
+
+.product-thumb {
+    width: 68px;
+    height: 68px;
+    border-radius: 14px;
+    overflow: hidden;
+    background:
+        linear-gradient(145deg, rgba(212, 127, 49, 0.2), rgba(255, 255, 255, 0.84)),
+        #eadfce;
+    display: grid;
+    place-items: center;
+    color: #9a5a24;
+    font-size: 1.55rem;
+}
+
+.product-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-meta {
+    min-width: 0;
+}
+
+.product-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+}
+
+.product-line small {
+    color: rgba(31, 27, 22, 0.5);
+    text-transform: uppercase;
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.08rem;
+}
+
+.product-line span {
+    color: #865021;
+    background: rgba(212, 127, 49, 0.12);
+    border-radius: 999px;
+    padding: 2px 7px;
+    font-size: 0.68rem;
+    font-weight: 900;
+}
+
+.product-meta h3 {
+    margin: 3px 0 0;
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: #201913;
+    line-height: 1.18;
+}
+
+.product-card-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.product-actions {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.product-price {
+    flex: 1 1 auto;
+    min-width: 0;
+    color: #8c4d1e;
+    font-weight: 950;
+    font-size: clamp(0.72rem, 2.3vw, 0.84rem);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+}
+
+.add-product-btn {
+    min-height: 32px;
+    min-width: 50px;
+    padding: 0 10px;
+    font-size: 0.76rem;
+}
+
+.view-product-btn {
+    min-height: 32px;
+    min-width: 48px;
+    padding: 0 10px;
+    font-size: 0.76rem;
+}
+
+.room3d-inspector {
+    right: 18px;
+    bottom: 78px;
+    width: min(330px, calc(100vw - 36px));
+    padding: 17px;
+    transform: translateX(calc(100% + 28px));
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.28s ease, opacity 0.22s ease;
+}
+
+.room3d-page[data-inspector-open="true"] .room3d-inspector {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.selected-info {
+    min-height: 86px;
+    margin: 13px 0;
+    padding: 13px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(31, 27, 22, 0.06);
+}
+
+.selected-info.empty {
+    display: grid;
+    place-items: center;
+    color: rgba(31, 27, 22, 0.52);
+    text-align: center;
+}
+
+.selected-info strong {
+    display: block;
+    color: #1d1711;
+    font-size: 0.98rem;
+}
+
+.selected-info span {
+    display: inline-flex;
+    margin-top: 7px;
+    color: rgba(31, 27, 22, 0.58);
+    font-size: 0.8rem;
+}
+
+.selected-info em {
+    display: block;
+    margin-top: 9px;
+    color: rgba(31, 27, 22, 0.7);
+    font-size: 0.76rem;
+    font-style: normal;
+    line-height: 1.38;
+}
+
+.selected-info .selected-price {
+    display: block;
+    color: #a35c21;
+    font-weight: 950;
+    font-size: 1rem;
+}
+
+.control-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.control-grid .room3d-btn {
+    min-height: 36px;
+    padding-inline: 10px;
+    font-size: 0.75rem;
+}
+
+.control-grid .room3d-btn-danger {
+    grid-column: span 2;
+}
+
+.room-total {
+    margin-top: 14px;
+    padding: 15px;
+    border-radius: 20px;
+    color: #fff;
+    background:
+        linear-gradient(135deg, rgba(31, 27, 22, 0.96), rgba(88, 59, 33, 0.92)),
+        #1f1b16;
+    box-shadow: 0 18px 42px rgba(31, 27, 22, 0.24);
+}
+
+.room-total span {
+    display: block;
+    color: rgba(255, 255, 255, 0.64);
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1rem;
+}
+
+.room-total strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 1.36rem;
+    line-height: 1;
+}
+
+.selection-toggle {
+    right: 18px;
+    bottom: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.74);
+    border-radius: 999px;
+    color: #211912;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 16px 38px rgba(31, 27, 22, 0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    font-weight: 900;
+    font-size: 0.82rem;
+    cursor: pointer;
+}
+
+.room3d-page[data-has-selection="true"] .selection-toggle {
+    color: #fff;
+    background: linear-gradient(135deg, #d47f31, #9f541d);
+    box-shadow: 0 18px 44px rgba(173, 95, 33, 0.3);
+}
+
+.room3d-bottom-toolbar {
+    left: 50%;
+    bottom: 20px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    max-width: min(650px, calc(100vw - 220px));
+    padding: 9px 12px;
+    border-radius: 999px;
+    color: rgba(31, 27, 22, 0.66);
+    background: rgba(255, 255, 255, 0.58);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 14px 34px rgba(31, 27, 22, 0.12);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    font-size: 0.78rem;
+    font-weight: 750;
+    pointer-events: none;
+}
+
+.room3d-bottom-toolbar span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 16px;
+    z-index: 7;
+    color: #261c12;
+    background:
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.82), rgba(240, 226, 208, 0.54)),
+        rgba(237, 224, 206, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.loading-overlay.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.loader {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    border: 4px solid rgba(163, 92, 33, 0.16);
+    border-top-color: #d47f31;
+    animation: roomSpin 0.9s linear infinite;
+}
+
+@keyframes roomSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.room-toast {
+    top: 88px;
+    right: 18px;
+    max-width: 360px;
+    padding: 12px 15px;
+    border-radius: 16px;
+    color: #fff;
+    background: rgba(31, 27, 22, 0.9);
+    box-shadow: 0 18px 42px rgba(31, 27, 22, 0.25);
+    opacity: 0;
+    transform: translateY(-12px);
+    pointer-events: none;
+    transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.room-toast.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.product-detail-modal {
+    inset: 0;
+    z-index: 12;
+    display: none;
+    padding: 18px;
+    background: rgba(18, 14, 10, 0.52);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.room3d-page[data-detail-open="true"] .product-detail-modal {
+    display: block;
+}
+
+.detail-viewer-shell {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at 25% 10%, rgba(255, 190, 105, 0.22), transparent 32%),
+        linear-gradient(135deg, #f4eee6, #d8cab8);
+    border: 1px solid rgba(255, 255, 255, 0.58);
+    box-shadow: 0 34px 90px rgba(15, 11, 8, 0.36);
+}
+
+#productDetailCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    outline: 0;
+}
+
+.detail-topbar,
+.detail-actions,
+.detail-loading {
+    position: absolute;
+    z-index: 2;
+}
+
+.detail-topbar {
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    pointer-events: none;
+}
+
+.detail-topbar > * {
+    pointer-events: auto;
+}
+
+.detail-topbar h2 {
+    margin: 0;
+    font-size: clamp(1.3rem, 2vw, 2rem);
+    line-height: 1;
+    color: #17120e;
+}
+
+.detail-topbar p {
+    margin: 7px 0 0;
+    color: rgba(31, 27, 22, 0.68);
+    font-size: 0.9rem;
+}
+
+.detail-actions {
+    left: 50%;
+    bottom: 18px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 18px 42px rgba(31, 27, 22, 0.16);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.detail-actions span {
+    color: rgba(31, 27, 22, 0.66);
+    font-size: 0.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.detail-loading {
+    inset: 0;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 14px;
+    color: #261c12;
+    background: rgba(244, 238, 230, 0.72);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: opacity 0.22s ease, visibility 0.22s ease;
+}
+
+.detail-loading.is-hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+@media (max-width: 991.98px) {
+    .room3d-page {
+        height: calc(100dvh - 76px);
+        max-height: calc(100dvh - 76px);
+        min-height: 620px;
+    }
+
+    .room3d-topbar {
+        align-items: flex-start;
+    }
+
+    .topbar-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        max-width: 330px;
+    }
+
+    .room3d-sidebar {
+        top: 86px;
+        bottom: 86px;
+    }
+
+    .room3d-bottom-toolbar {
+        max-width: calc(100vw - 130px);
+        overflow: hidden;
+    }
+
+    .room3d-bottom-toolbar span:nth-child(n+3) {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .room3d-topbar {
+        left: 12px;
+        right: 12px;
+        top: 12px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .topbar-left,
+    .topbar-actions {
+        width: 100%;
+    }
+
+    .topbar-actions {
+        justify-content: stretch;
+    }
+
+    .topbar-actions .room3d-btn {
+        flex: 1 1 auto;
+    }
+
+    .room3d-sidebar {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        top: 146px;
+        bottom: 82px;
+        transform: translateY(calc(100% + 30px));
+    }
+
+    .room3d-page[data-library-open="true"] .room3d-sidebar {
+        transform: translateY(0);
+    }
+
+    .room3d-inspector {
+        left: 12px;
+        right: 12px;
+        width: auto;
+        bottom: 72px;
+        transform: translateY(calc(100% + 28px));
+    }
+
+    .room3d-page[data-inspector-open="true"] .room3d-inspector {
+        transform: translateY(0);
+    }
+
+    .room3d-bottom-toolbar {
+        left: 12px;
+        right: 12px;
+        bottom: 14px;
+        transform: none;
+        max-width: none;
+        justify-content: center;
+        border-radius: 18px;
+    }
+
+    .selection-toggle {
+        right: 12px;
+        bottom: 66px;
+    }
+
+    .product-detail-modal {
+        padding: 10px;
+    }
+
+    .detail-viewer-shell {
+        border-radius: 22px;
+    }
+
+    .detail-topbar {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+    }
+
+    .detail-actions {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        transform: none;
+        justify-content: center;
+        border-radius: 18px;
+        flex-wrap: wrap;
+    }
+
+    .detail-actions span {
+        width: 100%;
+        text-align: center;
+    }
+}

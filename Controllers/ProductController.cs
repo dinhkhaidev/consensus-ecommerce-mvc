@@ -11,11 +11,13 @@ public class ProductController : Controller
 {
     private readonly ICatalogService _catalogService;
     private readonly IUserService _userService;
+    private readonly IWebSettingsService _settingsService;
 
-    public ProductController(ICatalogService catalogService, IUserService userService)
+    public ProductController(ICatalogService catalogService, IUserService userService, IWebSettingsService settingsService)
     {
         _catalogService = catalogService;
         _userService = userService;
+        _settingsService = settingsService;
     }
 
     public async Task<IActionResult> Index(int? categoryId, string? search, int? minPrice, int? maxPrice, string? priceRange, int page = 1, int pageSize = 12)
@@ -276,6 +278,15 @@ public class ProductController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddReview(AddReviewViewModel model)
     {
+        // Check if reviews are enabled
+        var settings = await _settingsService.GetAllSettingsAsync();
+        var reviewsEnabled = string.Equals(settings.GetValueOrDefault("EnableReviews", "true"), "true", StringComparison.OrdinalIgnoreCase);
+        if (!reviewsEnabled)
+        {
+            TempData["ToastError"] = "Reviews are currently disabled.";
+            return RedirectToAction(nameof(Details), new { id = model.ProductId });
+        }
+
         if (!ModelState.IsValid || model.Rating < 1 || model.Rating > 5)
         {
             return RedirectToAction(nameof(Details), new { id = model.ProductId });
@@ -285,18 +296,22 @@ public class ProductController : Controller
         if (userId == null)
             return RedirectToAction("Login", "Account");
 
+        var autoApprove = string.Equals(settings.GetValueOrDefault("AutoApproveReviews", "false"), "true", StringComparison.OrdinalIgnoreCase);
+
         var review = new Review
         {
             ProductId = model.ProductId,
             UserId = userId.Value,
             Comment = model.Comment,
             Rating = model.Rating,
-            IsApproved = false,
+            IsApproved = autoApprove,
             CreatedAt = DateTime.UtcNow
         };
 
         await _catalogService.AddReviewAsync(review);
-        TempData["ToastSuccess"] = "Review submitted. It will be displayed after approval.";
+        TempData["ToastSuccess"] = autoApprove
+            ? "Review submitted successfully!"
+            : "Review submitted. It will be displayed after approval.";
 
         return RedirectToAction(nameof(Details), new { id = model.ProductId });
     }

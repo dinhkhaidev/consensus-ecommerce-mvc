@@ -18,6 +18,8 @@ public class AdminAccountController : AdminControllerBase
 
     public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string search = "")
     {
+        await NormalizeAccountDateColumnsAsync();
+
         var query = _context.Accounts.AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(search))
@@ -45,6 +47,8 @@ public class AdminAccountController : AdminControllerBase
 
     public async Task<IActionResult> Details(int id)
     {
+        await NormalizeAccountDateColumnsAsync();
+
         var account = await _context.Accounts
             .Include(a => a.Addresses)
             .FirstOrDefaultAsync(a => a.Id == id);
@@ -58,10 +62,21 @@ public class AdminAccountController : AdminControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Account model, string password)
+    public async Task<IActionResult> Create(Account model, string password, string? adminConfirmPassword, string? adminSecretCode)
     {
         if (!ModelState.IsValid)
             return View(model);
+
+        // Verify admin password + secret code when assigning Admin role
+        if (string.Equals(model.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            var verifyResult = await VerifyAdminAssignmentAsync(adminConfirmPassword, adminSecretCode);
+            if (verifyResult != null)
+            {
+                ModelState.AddModelError("", verifyResult);
+                return View(model);
+            }
+        }
 
         if (await _context.Accounts.AnyAsync(a => a.UserName == model.UserName))
         {
@@ -83,6 +98,7 @@ public class AdminAccountController : AdminControllerBase
             Phone = model.Phone ?? "",
             Password = HashPassword(password),
             Status = 1,
+            Role = model.Role ?? "Customer",
             CreatedAt = DateTime.UtcNow,
             IsEmailVerified = true
         };
@@ -101,7 +117,7 @@ public class AdminAccountController : AdminControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Edit(Account model, string? password)
+    public async Task<IActionResult> Edit(Account model, string? password, string? adminConfirmPassword, string? adminSecretCode)
     {
         var account = await _context.Accounts.FindAsync(model.Id);
         if (account == null) return NotFound();
@@ -109,10 +125,23 @@ public class AdminAccountController : AdminControllerBase
         if (!ModelState.IsValid)
             return View(model);
 
+        // Verify admin password + secret code when promoting to Admin role
+        if (string.Equals(model.Role, "Admin", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(account.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            var verifyResult = await VerifyAdminAssignmentAsync(adminConfirmPassword, adminSecretCode);
+            if (verifyResult != null)
+            {
+                ModelState.AddModelError("", verifyResult);
+                return View(model);
+            }
+        }
+
         account.FullName = model.FullName;
         account.Email = model.Email;
         account.Phone = model.Phone ?? "";
         account.Status = model.Status;
+        account.Role = model.Role ?? "Customer";
         account.IsEmailVerified = model.IsEmailVerified;
 
         if (!string.IsNullOrWhiteSpace(password))
@@ -143,5 +172,39 @@ public class AdminAccountController : AdminControllerBase
         using var sha256 = System.Security.Cryptography.SHA256.Create();
         var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
         return Convert.ToBase64String(hashedBytes);
+    }
+
+    private async Task<string?> VerifyAdminAssignmentAsync(string? confirmPassword, string? secretCode)
+    {
+        // 1. Verify admin password
+        if (string.IsNullOrWhiteSpace(confirmPassword))
+            return "Admin password is required to assign Admin role.";
+
+        var currentUserId = HttpContext.Session.GetInt32("USER_ID");
+        if (!currentUserId.HasValue)
+            return "Session expired. Please login again.";
+
+        var currentAdmin = await _context.Accounts.FindAsync(currentUserId.Value);
+        if (currentAdmin == null)
+            return "Current admin account not found.";
+
+        if (currentAdmin.Password != HashPassword(confirmPassword))
+            return "Invalid admin password.";
+
+        // 2. Verify secret code from environment
+        var envSecretCode = Environment.GetEnvironmentVariable("ADMIN_SECRET_CODE") ?? "";
+        if (!string.IsNullOrEmpty(envSecretCode) && !string.Equals(secretCode, envSecretCode, StringComparison.Ordinal))
+            return "Invalid security code.";
+
+        return null; // All checks passed
+    }
+
+    private async Task NormalizeAccountDateColumnsAsync()
+    {
+        await _context.Database.ExecuteSqlRawAsync("""
+            UPDATE Account
+            SET CreatedAt = SYSUTCDATETIME()
+            WHERE CreatedAt IS NULL
+            """);
     }
 }

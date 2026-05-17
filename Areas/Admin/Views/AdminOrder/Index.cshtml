@@ -40,6 +40,14 @@
        class="btn btn-sm @(statusParam == "Cancelled" ? "btn-primary" : "btn-outline-secondary")">
         <i class="bi bi-x-circle me-1"></i>Cancelled
     </a>
+    <a asp-area="Admin" asp-controller="AdminOrder" asp-action="Index" asp-route-status="CancellationRequested"
+       class="btn btn-sm @(statusParam == "CancellationRequested" ? "btn-primary" : "btn-outline-secondary")">
+        <i class="bi bi-exclamation-circle me-1"></i>Cancel Requests
+    </a>
+    <a asp-area="Admin" asp-controller="AdminOrder" asp-action="Index" asp-route-status="ReturnRequested"
+       class="btn btn-sm @(statusParam == "ReturnRequested" ? "btn-primary" : "btn-outline-secondary")">
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Return Requests
+    </a>
 </div>
 
 <div class="card border-0 shadow-sm">
@@ -112,6 +120,10 @@
         WebActionResults.Data.Entities.OrderStatus.Shipped => "info",
         WebActionResults.Data.Entities.OrderStatus.Delivered => "success",
         WebActionResults.Data.Entities.OrderStatus.Cancelled => "danger",
+        WebActionResults.Data.Entities.OrderStatus.CancellationRequested => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.ReturnRequested => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.ReturnApproved => "success",
+        WebActionResults.Data.Entities.OrderStatus.ReturnRejected => "danger",
         _ => "secondary"
     };
 

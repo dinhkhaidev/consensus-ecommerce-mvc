@@ -10,6 +10,8 @@ namespace WebActionResults.Controllers;
 
 public class CartController : Controller
 {
+    public const string CheckoutItemIdsSessionKey = "CHECKOUT_ITEM_IDS";
+
     private readonly ICartService _cartService;
     private readonly IProductRepository _productRepository;
     private readonly IUserService _userService;
@@ -63,6 +65,7 @@ public class CartController : Controller
         {
             Items = cartItems.Select(c => new CartItemViewModel
             {
+                CartItemId = c.Id,
                 ProductId = c.ProductId,
                 VariantId = c.VariantId ?? 0,
                 ProductName = c.ProductName,
@@ -86,13 +89,44 @@ public class CartController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CheckoutSelected(int[] selectedCartItemIds)
+    {
+        var userId = await _userService.GetCurrentUserIdAsync();
+        if (userId == null)
+            return RedirectToAction("Login", "Account");
+
+        var selectedIds = selectedCartItemIds?.Distinct().ToList() ?? new List<int>();
+        if (!selectedIds.Any())
+        {
+            TempData["ToastWarning"] = "Please select at least one product to checkout.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var cartItems = await _cartService.GetCartAsync(userId.Value);
+        var validIds = cartItems
+            .Where(i => selectedIds.Contains(i.Id))
+            .Select(i => i.Id)
+            .ToList();
+
+        if (!validIds.Any())
+        {
+            TempData["ToastWarning"] = "Selected products are no longer in your cart.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        HttpContext.Session.SetString(CheckoutItemIdsSessionKey, string.Join(",", validIds));
+        return RedirectToAction("Index", "Checkout");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(int productId, int variantId = 0, int quantity = 1, decimal unitPrice = 0, string? productName = null, string? variantName = null, string? returnUrl = null)
     {
         var userId = await _userService.GetCurrentUserIdAsync();
         if (userId == null)
             return RedirectToAction("Login", "Account");
 
-        var product = await _productRepository.GetByIdAsync(productId);
+        var product = await _productRepository.GetByIdWithDetailsAsync(productId);
         if (product == null)
         {
             TempData["ToastError"] = "Product not found.";
@@ -104,19 +138,37 @@ public class CartController : Controller
         string? image = product.Images?.FirstOrDefault()?.ImageUrl;
         string? selectedVariantName = variantName;
         string priceBreakdown = "";
+        var activeVariants = product.Variants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
+
+        if (variantId <= 0 && activeVariants.Any())
+        {
+            var defaultVariant = activeVariants.FirstOrDefault(v => v.StockQuantity >= quantity);
+            if (defaultVariant == null)
+            {
+                TempData["ToastError"] = "Product is out of stock.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            variantId = defaultVariant.Id;
+        }
 
         if (variantId > 0)
         {
-            var variant = product.Variants?.FirstOrDefault(v => v.Id == variantId);
+            var variant = activeVariants.FirstOrDefault(v => v.Id == variantId);
             if (variant != null)
             {
+                if (variant.StockQuantity < quantity)
+                {
+                    TempData["ToastError"] = "Selected variant is out of stock.";
+                    return RedirectToLocal(returnUrl);
+                }
+
                 basePrice = product.UnitPrice;
                 priceAdjustment = variant.PriceAdjustment ?? 0;
                 var finalPrice = basePrice + priceAdjustment;
                 priceBreakdown = priceAdjustment != 0 ? $"Base: {basePrice:N0} + Variant: +{priceAdjustment:N0} = {finalPrice:N0} VND" : "";
 
-                if (!string.IsNullOrEmpty(variant.SKU))
-                    selectedVariantName = variantName ?? $"{variant.Color} / {variant.Size}";
+                selectedVariantName = variantName ?? string.Join(" / ", new[] { variant.Color, variant.Size }.Where(v => !string.IsNullOrWhiteSpace(v)));
                 if (variant.Images != null && variant.Images.Any())
                     image = variant.Images.First().ImageUrl;
             }

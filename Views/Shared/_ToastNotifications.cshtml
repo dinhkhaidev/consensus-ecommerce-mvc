@@ -3,10 +3,41 @@
     Usage: TempData["ToastSuccess"], TempData["ToastError"], TempData["ToastWarning"], TempData["ToastInfo"]
 *@
 
-@if (TempData["ToastSuccess"] is string toastSuccess)
+@{
+    // Read and consume TempData keys to ensure they only show once
+    string? ReadAndConsume(string messageKey, string localizedKey)
+    {
+        string? result = null;
+
+        if (TempData.ContainsKey(localizedKey))
+        {
+            var key = TempData[localizedKey] as string;
+            TempData.Remove(localizedKey);
+            if (!string.IsNullOrWhiteSpace(key))
+                result = localizer.Get(key);
+        }
+
+        if (result == null && TempData.ContainsKey(messageKey))
+        {
+            var message = TempData[messageKey] as string;
+            TempData.Remove(messageKey);
+            if (!string.IsNullOrWhiteSpace(message))
+                result = message;
+        }
+
+        return result;
+    }
+
+    var toastSuccess = ReadAndConsume("ToastSuccess", "ToastSuccessKey");
+    var toastError = ReadAndConsume("ToastError", "ToastErrorKey");
+    var toastWarning = ReadAndConsume("ToastWarning", "ToastWarningKey");
+    var toastInfo = ReadAndConsume("ToastInfo", "ToastInfoKey");
+}
+
+@if (!string.IsNullOrWhiteSpace(toastSuccess))
 {
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="4000">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="10000">
             <div class="toast-header" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%); color: white; border: none;">
                 <i class="bi bi-check-circle-fill me-2"></i>
                 <strong class="me-auto">@localizer.Get("Success")</strong>
@@ -19,10 +50,10 @@
     </div>
 }
 
-@if (TempData["ToastError"] is string toastError)
+@if (!string.IsNullOrWhiteSpace(toastError))
 {
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="10000">
             <div class="toast-header" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; border: none;">
                 <i class="bi bi-x-circle-fill me-2"></i>
                 <strong class="me-auto">@localizer.Get("Error")</strong>
@@ -35,10 +66,10 @@
     </div>
 }
 
-@if (TempData["ToastWarning"] is string toastWarning)
+@if (!string.IsNullOrWhiteSpace(toastWarning))
 {
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="4500">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="10000">
             <div class="toast-header" style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; border: none;">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 <strong class="me-auto">@localizer.Get("Warning")</strong>
@@ -51,10 +82,10 @@
     </div>
 }
 
-@if (TempData["ToastInfo"] is string toastInfo)
+@if (!string.IsNullOrWhiteSpace(toastInfo))
 {
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="4000">
+        <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="10000">
             <div class="toast-header" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white; border: none;">
                 <i class="bi bi-info-circle-fill me-2"></i>
                 <strong class="me-auto">@localizer.Get("Info")</strong>
@@ -107,3 +138,12 @@
         font-size: 1.1rem;
     }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.toast.show').forEach(function (el) {
+            var toast = new bootstrap.Toast(el, { autohide: true, delay: 10000 });
+            toast.show();
+        });
+    });
+</script>
