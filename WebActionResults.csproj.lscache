@@ -131,6 +131,8 @@ Migrations/
  20260510140146_AddCartItemPriceColumns.cs
  20260510140146_AddCartItemPriceColumns.Designer.cs
  20260515123000_AddOrderRequestFlow.cs
+ 20260517062015_AddAvatarUrl.cs
+ 20260517062015_AddAvatarUrl.Designer.cs
  ShopDbContextModelSnapshot.cs
 Models/
  Account.cs

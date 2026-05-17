@@ -132,13 +132,7 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
-            // Generate and send email verification
-            var token = await _userService.GenerateEmailVerificationTokenAsync(user.Email);
-            await SendVerificationEmail(user.Email, token);
-
-            TempData["ToastSuccessKey"] = "Auth.RegisterSuccessfulVerifyEmail";
-            return RedirectToAction("Login");
-            TempData["ToastSuccess"] = "Registration successful! Please check your email to verify your account.";
+            TempData["ToastSuccess"] = "Đăng ký thành công! Vui lòng chọn cách thức xác minh tài khoản của bạn.";
             return RedirectToAction("VerifyEmail", new { email = user.Email });
         }
 
@@ -332,15 +326,81 @@ public class AccountController : Controller
     }
 
     [HttpGet]
-    public IActionResult VerifyEmail(string email)
+    public IActionResult VerifyEmail(string email, string? chosenMethod = null)
     {
-        if (string.IsNullOrEmpty(email))
-        {
-            TempData["ToastErrorKey"] = "Auth.InvalidVerificationLink";
-            return RedirectToAction("Login");
-        }
+        if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+        var sessionKey = $"ResendOTP_{email}";
+        var resendCount = HttpContext.Session.GetInt32(sessionKey) ?? 0;
+        
+        ViewBag.RemainingResends = 3 - resendCount;
+        ViewBag.ChosenMethod = chosenMethod; // Ghi nhận khách chọn cách nào: "OTP" hoặc "Link"
 
         return View("VerifyEmail", new VerifyEmailViewModel { Email = email });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendVerificationMethod(string email, string targetMethod)
+    {
+        if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+        var sessionKey = $"ResendOTP_{email}";
+        var resendCount = HttpContext.Session.GetInt32(sessionKey) ?? 0;
+
+        // Giới hạn cứng tối đa 3 lần gửi yêu cầu nhận mail chống spam
+        if (resendCount >= 3)
+        {
+            TempData["ToastError"] = "Bạn đã vượt quá số lần gửi mã (Tối đa 3 lần). Vui lòng kiểm tra kỹ hòm thư.";
+            return RedirectToAction("VerifyEmail", new { email = email, chosenMethod = targetMethod });
+        }
+
+        // Tăng biến đếm trong Session
+        HttpContext.Session.SetInt32(sessionKey, resendCount + 1);
+
+        // Sinh Token từ DB
+        var token = await _userService.GenerateEmailVerificationTokenAsync(email);
+
+        // Kiểm tra khách bấm nút Cách 1 hay Cách 2 để gọi đúng hàm tương ứng
+        if (targetMethod == "OTP")
+        {
+            await _emailService.SendOtpOnlyEmailAsync(email, token);
+            TempData["ToastSuccess"] = "Mã OTP 6 số đã được gửi riêng đến email của bạn.";
+        }
+        else if (targetMethod == "Link")
+        {
+            await _emailService.SendLinkOnlyEmailAsync(email, token);
+            TempData["ToastSuccess"] = "Liên kết xác thực đã được gửi riêng đến email của bạn.";
+        }
+
+        return RedirectToAction("VerifyEmail", new { email = email, chosenMethod = targetMethod });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendOtp(string email)
+    {
+        if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+        var sessionKey = $"ResendOTP_{email}";
+        var resendCount = HttpContext.Session.GetInt32(sessionKey) ?? 0;
+
+        // Kiểm tra nếu đã bấm gửi lại 3 lần
+        if (resendCount >= 3)
+        {
+            TempData["ToastError"] = "Bạn đã hết lượt gửi lại mã (Tối đa 3 lần). Vui lòng kiểm tra kỹ hộp thư hoặc Spam.";
+            return RedirectToAction("VerifyEmail", new { email = email });
+        }
+
+        // Tăng biến đếm lên 1 và lưu lại vào Session
+        HttpContext.Session.SetInt32(sessionKey, resendCount + 1);
+
+        // Tạo mã mới và gửi lại Email
+        var token = await _userService.GenerateEmailVerificationTokenAsync(email);
+        await SendVerificationEmail(email, token);
+
+        TempData["ToastSuccess"] = $"Đã gửi lại mã OTP. Bạn còn {2 - resendCount} lần gửi lại.";
+        return RedirectToAction("VerifyEmail", new { email = email });
     }
 
     [HttpPost]
@@ -458,25 +518,25 @@ public class AccountController : Controller
 
     
 
-        [HttpGet]
+    [HttpGet]
     public async Task<IActionResult> VerifyEmailClick(string email, string token)
     {
         if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
         {
-            TempData["ToastError"] = "Đường dẫn xác thực không hợp lệ hoặc đã hết hạn.";
+            TempData["ToastError"] = "Đường dẫn xác thực không hợp lệ.";
             return RedirectToAction("Login");
         }
 
-        // Thực hiện gọi service để kiểm tra DB và update trạng thái IsEmailVerified
+        // Xác thực mã lấy từ link link
         var success = await _userService.VerifyEmailAsync(email, token);
 
         if (success)
         {
-            // Điều hướng sang trang báo thành công thiết kế riêng biệt
-            return View("VerifySuccess");
+            // Tạo một file tên là VerifySuccess.cshtml trong thư mục Views/Account để hiển thị chúc mừng
+            return View("VerifySuccess"); 
         }
 
-        TempData["ToastError"] = "Mã xác thực không chính xác hoặc đã hết hạn.";
+        TempData["ToastError"] = "Mã xác thực đã hết hạn hoặc không chính xác.";
         return RedirectToAction("Login");
     }
 }

@@ -11,6 +11,9 @@ public interface IEmailService
     Task SendEmailAsync(string to, string subject, string htmlBody);
     Task SendVerificationEmailAsync(string email, string token);
     Task SendOrderConfirmationAsync(string email, string orderNumber, decimal totalAmount);
+
+    Task SendOtpOnlyEmailAsync(string email, string token);
+    Task SendLinkOnlyEmailAsync(string email, string token);
 }
 
 public class EmailService : IEmailService
@@ -66,25 +69,69 @@ public class EmailService : IEmailService
         }
     }
 
-        public async Task SendVerificationEmailAsync(string email, string token)
+    public async Task SendVerificationEmailAsync(string email, string token)
     {
-        var subject = "Xận nhận tài khoản Furnish Shop";
-        
-        // BẮT BUỘC: Mã hóa Token để biến các ký tự +, /, = thành mã an toàn trên URL
+        var subject = "Xác nhận tài khoản Furnish Shop";
+
+        // 1. Tạo đường link chứa mã đã được mã hóa an toàn (Phương án 2)
         var encodedToken = HttpUtility.UrlEncode(token);
-        
-        // Đảm bảo dùng đúng http (không có s) và đúng cổng 5085 của bạn
         var verifyUrl = $"http://localhost:5085/Account/VerifyEmailClick?email={email}&token={encodedToken}";
-        
+
+        // 2. Giao diện Email thiết kế chia làm 2 cách rõ ràng
         var htmlMessage = $@"
-            <h2>Xin chào!</h2>
-            <p>Cảm ơn bạn đã đăng ký tài khoản. Vui lòng bấm vào nút bên dưới để xác thực:</p>
-            <a href='{verifyUrl}' style='display:inline-block; padding:12px 24px; background-color:#222; color:#fff; text-decoration:none; border-radius:6px; font-weight:bold; text-uppercase:true; font-size:14px;'>
-                Xác thực tài khoản ngay
-            </a>";
+            <div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; margin: auto; text-align: center;'>
+                <h2 style='color: #333;'>Xác nhận tài khoản Furnish Shop</h2>
+                <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;' />
+                
+                <p style='font-size: 16px; color: #555;'><strong>CÁCH 1:</strong> Nhập mã OTP 6 số này vào trang web:</p>
+                <h1 style='color: #222; letter-spacing: 10px; font-size: 36px; background: #f4f4f4; padding: 15px; border-radius: 10px; display: inline-block;'>{token}</h1>
+                
+                <p style='margin-top: 30px; font-size: 16px; color: #555;'><strong>CÁCH 2:</strong> Hoặc bấm thẳng vào nút bên dưới để xác thực tự động:</p>
+                <a href='{verifyUrl}' style='display:inline-block; padding:15px 30px; background-color:#198754; color:#fff; text-decoration:none; border-radius:8px; font-weight:bold; font-size: 16px; margin-top: 10px;'>
+                    XÁC THỰC NGAY
+                </a>
+            </div>";
 
         await SendEmailAsync(email, subject, htmlMessage);
     }
+
+        public async Task SendOtpOnlyEmailAsync(string email, string token)
+    {
+        var subject = "Mã OTP xác thực tài khoản Furnish Shop";
+        var htmlMessage = $@"
+            <div style='font-family: Arial, sans-serif; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; margin: auto;'>
+                <h2 style='color: #222; text-transform: uppercase;'>Mã Xác Thực OTP</h2>
+                <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;' />
+                <p style='font-size: 15px; color: #555;'>Tuyệt đối không chia sẻ mã này với bất kỳ ai. Nhập mã 6 số sau đây vào trang web:</p>
+                <h1 style='color: #111; letter-spacing: 10px; font-size: 38px; background: #f8f9fa; padding: 15px; border-radius: 8px; display: inline-block; border: 1px dashed #ccc;'>{token}</h1>
+                <p style='color: #998; font-size: 12px; margin-top: 20px;'>Mã OTP có hiệu lực trong vòng 5 phút.</p>
+            </div>";
+
+        await SendEmailAsync(email, subject, htmlMessage);
+    }
+
+    public async Task SendLinkOnlyEmailAsync(string email, string token)
+    {
+        var subject = "Liên kết kích hoạt tài khoản Furnish Shop";
+        var encodedToken = HttpUtility.UrlEncode(token);
+        var verifyUrl = $"http://localhost:5085/Account/VerifyEmailClick?email={email}&token={encodedToken}";
+        
+        var htmlMessage = $@"
+            <div style='font-family: Arial, sans-serif; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; margin: auto;'>
+                <h2 style='color: #222; text-transform: uppercase;'>Kích Hoạt Tài Khoản</h2>
+                <hr style='border: 0; border-top: 1px solid #eee; margin: 20px 0;' />
+                <p style='font-size: 15px; color: #555;'>Vui lòng bấm vào nút liên kết dưới đây để xác thực tài khoản của bạn trên hệ thống tự động:</p>
+                <div style='margin: 30px 0;'>
+                    <a href='{verifyUrl}' style='display: inline-block; padding: 14px 35px; background-color: #111; color: #fff; text-decoration: none; font-weight: bold; border-radius: 4px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.1rem;'>
+                        Xác thực tài khoản ngay
+                    </a>
+                </div>
+                <p style='color: #998; font-size: 12px;'>Đường dẫn sẽ hết hạn sau khi được sử dụng.</p>
+            </div>";
+
+        await SendEmailAsync(email, subject, htmlMessage);
+    }
+
     public async Task SendOrderConfirmationAsync(string email, string orderNumber, decimal totalAmount)
     {
         var subject = $"Order Confirmation - #{orderNumber}";
