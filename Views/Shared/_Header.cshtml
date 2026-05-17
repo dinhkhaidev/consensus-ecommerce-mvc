@@ -11,7 +11,6 @@
 }
 <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top px-4 py-2 navbar-custom">
     <div class="container-fluid">
-        <!-- Logo -->
         <a class="navbar-brand d-flex align-items-center me-3" asp-area="" asp-controller="Home" asp-action="Index">
             @if (!string.IsNullOrWhiteSpace(logoUrl))
             {
@@ -27,7 +26,6 @@
             </div>
         </a>
 
-        <!-- Desktop Navigation -->
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -49,9 +47,12 @@
             </ul>
         </div>
 
-        <!-- Right Icons -->
         <div class="d-flex align-items-center gap-2">
-            <!-- Language Switcher -->
+            
+            <button id="darkModeToggle" class="nav-link p-2 border-0 bg-transparent" type="button" title="Toggle Dark Mode">
+                <i id="darkModeIcon" class="bi bi-moon-stars fs-5"></i>
+            </button>
+
             <div class="dropdown">
                 <a class="nav-link p-2 dropdown-toggle" href="#" data-bs-toggle="dropdown" title="@localizer.Get("Language")">
                     <i class="bi bi-globe fs-5"></i>
@@ -71,7 +72,6 @@
                 </ul>
             </div>
 
-            <!-- Search -->
             <form method="get" asp-controller="Product" asp-action="Index" class="d-none d-md-flex">
                 <div class="input-group input-group-sm">
                     <input type="text" name="search" class="form-control" placeholder="@localizer.Get("SearchPlaceholder")">
@@ -81,13 +81,11 @@
                 </div>
             </form>
 
-            <!-- Cart Icon -->
             <a class="nav-link position-relative p-2" asp-controller="Cart" asp-action="Index" title="@localizer.Get("ShoppingCart")">
                 <i class="bi bi-cart3 fs-5"></i>
                 <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
             </a>
 
-            <!-- User Menu -->
             @if (Context.Session.GetInt32("USER_ID").HasValue)
             {
                 <div class="dropdown">
@@ -131,7 +129,6 @@
                 <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">@localizer.Get("Login")</a>
             }
 
-            <!-- Mobile Menu -->
             <a class="nav-link d-lg-none p-2" data-bs-toggle="offcanvas" href="#offcanvasMenu">
                 <i class="bi bi-list fs-4"></i>
             </a>
@@ -140,6 +137,50 @@
 </nav>
 
 <script>
+    // Initialize dark mode on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+            updateDarkModeIcon(true);
+        } else {
+            document.documentElement.removeAttribute('data-bs-theme');
+            updateDarkModeIcon(false);
+        }
+
+        // Dark Mode Toggle Handler
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function() {
+                const html = document.documentElement;
+                const isDark = html.getAttribute('data-bs-theme') === 'dark';
+
+                if (isDark) {
+                    html.removeAttribute('data-bs-theme');
+                    localStorage.setItem('darkMode', 'false');
+                    updateDarkModeIcon(false);
+                } else {
+                    html.setAttribute('data-bs-theme', 'dark');
+                    localStorage.setItem('darkMode', 'true');
+                    updateDarkModeIcon(true);
+                }
+            });
+        }
+    });
+
+    function updateDarkModeIcon(isDarkMode) {
+        const icon = document.getElementById('darkModeIcon');
+        if (icon) {
+            if (isDarkMode) {
+                icon.classList.remove('bi-moon-stars');
+                icon.classList.add('bi-sun-fill');
+            } else {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-stars');
+            }
+        }
+    }
+
     async function updateCartBadge() {
         try {
             const res = await fetch('/Cart/GetCartCount');
