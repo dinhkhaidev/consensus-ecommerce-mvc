@@ -1,0 +1,37 @@
+﻿[
+    {
+        "key":  "sofa",
+        "url":  "/models/demo-products/sofa/sofa_02_1k.gltf",
+        "resolution":  "1k",
+        "source":  "https://polyhaven.com/a/sofa_02",
+        "license":  "CC0"
+    },
+    {
+        "key":  "coffee-table",
+        "url":  "/models/demo-products/coffee-table/modern_coffee_table_01_1k.gltf",
+        "resolution":  "1k",
+        "source":  "https://polyhaven.com/a/modern_coffee_table_01",
+        "license":  "CC0"
+    },
+    {
+        "key":  "lounge-chair",
+        "url":  "/models/demo-products/lounge-chair/ArmChair_01_1k.gltf",
+        "resolution":  "1k",
+        "source":  "https://polyhaven.com/a/ArmChair_01",
+        "license":  "CC0"
+    },
+    {
+        "key":  "plant",
+        "url":  "/models/demo-products/plant/potted_plant_04_1k.gltf",
+        "resolution":  "1k",
+        "source":  "https://polyhaven.com/a/potted_plant_04",
+        "license":  "CC0"
+    },
+    {
+        "key":  "tv-stand",
+        "url":  "/models/demo-products/tv-stand/drawer_cabinet_1k.gltf",
+        "resolution":  "1k",
+        "source":  "https://polyhaven.com/a/drawer_cabinet",
+        "license":  "CC0"
+    }
+]

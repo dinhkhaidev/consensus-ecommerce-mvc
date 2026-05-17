@@ -8,8 +8,8 @@
     <div class="container">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">Home</a></li>
-                <li class="breadcrumb-item"><a asp-controller="Category" asp-action="Index" class="text-decoration-none">Categories</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none">@localizer.Get("Home")</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Category" asp-action="Index" class="text-decoration-none">@localizer.Get("Categories")</a></li>
                 <li class="breadcrumb-item active">@Model.CategoryName</li>
             </ol>
         </nav>
@@ -29,11 +29,11 @@
                     <p class="text-muted mb-0">@Model.Description</p>
                 }
                 <p class="text-muted small mb-0">
-                    <i class="bi bi-collection me-1"></i>@Model.ProductCount products available
+                    <i class="bi bi-collection me-1"></i>@Model.ProductCount @localizer.Get("ProductsAvailable")
                 </p>
             </div>
             <a asp-controller="Category" asp-action="Index" class="btn btn-outline-secondary btn-lg">
-                <i class="bi bi-arrow-left me-2"></i>All Categories
+                <i class="bi bi-arrow-left me-2"></i>@localizer.Get("AllCategories")
             </a>
         </div>
 
@@ -44,10 +44,10 @@
                     <div class="card border-0 shadow-sm py-5">
                         <div class="card-body">
                             <i class="bi bi-box text-muted" style="font-size: 6rem;"></i>
-                            <h4 class="mt-4 mb-3">No products yet</h4>
-                            <p class="text-muted mb-4">This category doesn't have any products available at the moment.</p>
+                            <h4 class="mt-4 mb-3">@localizer.Get("NoProductsYet")</h4>
+                            <p class="text-muted mb-4">@localizer.Get("CategoryNoProducts")</p>
                             <a asp-controller="Product" asp-action="Index" class="btn btn-primary">
-                                <i class="bi bi-bag me-2"></i>Browse All Products
+                                <i class="bi bi-bag me-2"></i>@localizer.Get("BrowseAllProducts")
                             </a>
                         </div>
                     </div>
@@ -74,7 +74,7 @@
                                     @if (item.HasVariants)
                                     {
                                         <span class="badge bg-dark position-absolute top-0 end-0 m-2">
-                                            <i class="bi bi-palette me-1"></i>Variants
+                                            <i class="bi bi-palette me-1"></i>@localizer.Get("Variants")
                                         </span>
                                     }
                                 </a>
@@ -98,7 +98,7 @@
                                         <input type="hidden" name="productId" value="@item.ProductId" />
                                         <input type="hidden" name="quantity" value="1" />
                                         <button type="submit" class="btn btn-primary btn-sm w-100">
-                                            <i class="bi bi-cart-plus me-1"></i>Add
+                                            <i class="bi bi-cart-plus me-1"></i>@localizer.Get("Add")
                                         </button>
                                     </form>
                                     <a asp-controller="Product" asp-action="Details" asp-route-id="@item.ProductId"
@@ -178,7 +178,7 @@
                     </ul>
                 </nav>
                 <p class="text-center text-muted small mt-3">
-                    Showing <strong>@totalCount</strong> products in this category
+                    @localizer.Get("Showing") <strong>@totalCount</strong> @localizer.Get("ProductsInThisCategory")
                 </p>
             }
         }

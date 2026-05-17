@@ -1,18 +1,31 @@
 @{
     var currentLang = localizer.CurrentLanguage;
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var storeName = settings.GetValueOrDefault("StoreName", localizer.Get("AppName"));
+    var logoUrl = settings.GetValueOrDefault("LogoUrl", "");
+    var tagline = settings.GetValueOrDefault("SiteTagline", "Premium Furniture");
+    var userAvatarUrl = Context.Session.GetString("USER_AVATAR") ?? "";
+    var userInitial = Context.Session.GetString("USER_NAME")?.FirstOrDefault().ToString() ?? "";
+    var currentPath = Context.Request.Path.Value ?? "/";
+    var isHomeActive = currentPath == "/" || currentPath.Equals("/Home", StringComparison.OrdinalIgnoreCase) || currentPath.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
 }
 <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top px-4 py-2 navbar-custom">
     <div class="container-fluid">
-        <!-- Logo -->
         <a class="navbar-brand d-flex align-items-center me-3" asp-area="" asp-controller="Home" asp-action="Index">
-            <i class="bi bi-house-door-fill text-primary fs-4 me-2"></i>
+            @if (!string.IsNullOrWhiteSpace(logoUrl))
+            {
+                <img src="@logoUrl" alt="@storeName" class="site-logo-img me-2"
+                     onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');" />
+            }
+            <span class="site-logo-fallback me-2 @(!string.IsNullOrWhiteSpace(logoUrl) ? "d-none" : "")">
+                <i class="bi bi-house-door-fill"></i>
+            </span>
             <div class="d-flex flex-column lh-sm">
-                <span class="fw-bold text-uppercase" style="letter-spacing: .15rem; font-size: 0.85rem;">Furnish</span>
-                <span class="text-muted" style="font-size: 0.6rem;">Premium Furniture</span>
+                <span class="fw-bold text-uppercase" style="letter-spacing: .15rem; font-size: 0.85rem;">@storeName</span>
+                <span class="text-muted" style="font-size: 0.6rem;">@tagline</span>
             </div>
         </a>
 
-        <!-- Desktop Navigation -->
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -20,20 +33,26 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
                 <li class="nav-item">
-                    <a class="nav-link px-3 @(Context.Request.Path.Value == "/" ? "active" : "")" asp-controller="Home" asp-action="Index">@localizer.Get("Home")</a>
+                    <a class="nav-link px-3 @(isHomeActive ? "active" : "")" asp-controller="Home" asp-action="Index">@localizer.Get("Home")</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 @(Context.Request.Path.Value?.StartsWith("/Product") == true ? "active" : "")" asp-controller="Product" asp-action="Index">@localizer.Get("Shop")</a>
+                    <a class="nav-link px-3 @(currentPath.StartsWith("/Product", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Product" asp-action="Index">@localizer.Get("Shop")</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link px-3 @(Context.Request.Path.Value?.StartsWith("/Category") == true ? "active" : "")" asp-controller="Category" asp-action="Index">@localizer.Get("Categories")</a>
+                    <a class="nav-link px-3 @(currentPath.StartsWith("/Room3D", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Room3D" asp-action="Index">3D Room</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link px-3 @(currentPath.StartsWith("/Category", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Category" asp-action="Index">@localizer.Get("Categories")</a>
                 </li>
             </ul>
         </div>
 
-        <!-- Right Icons -->
         <div class="d-flex align-items-center gap-2">
-            <!-- Language Switcher -->
+            
+            <button id="darkModeToggle" class="nav-link p-2 border-0 bg-transparent" type="button" title="Toggle Dark Mode">
+                <i id="darkModeIcon" class="bi bi-moon-stars fs-5"></i>
+            </button>
+
             <div class="dropdown">
                 <a class="nav-link p-2 dropdown-toggle" href="#" data-bs-toggle="dropdown" title="@localizer.Get("Language")">
                     <i class="bi bi-globe fs-5"></i>
@@ -53,7 +72,6 @@
                 </ul>
             </div>
 
-            <!-- Search -->
             <form method="get" asp-controller="Product" asp-action="Index" class="d-none d-md-flex">
                 <div class="input-group input-group-sm">
                     <input type="text" name="search" class="form-control" placeholder="@localizer.Get("SearchPlaceholder")">
@@ -63,19 +81,25 @@
                 </div>
             </form>
 
-            <!-- Cart Icon -->
             <a class="nav-link position-relative p-2" asp-controller="Cart" asp-action="Index" title="@localizer.Get("ShoppingCart")">
                 <i class="bi bi-cart3 fs-5"></i>
                 <span id="cartBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">0</span>
             </a>
 
-            <!-- User Menu -->
             @if (Context.Session.GetInt32("USER_ID").HasValue)
             {
                 <div class="dropdown">
                     <a class="nav-link dropdown-toggle p-2" href="#" data-bs-toggle="dropdown">
-                        <span class="user-avatar d-inline-flex align-items-center justify-content-center rounded-circle bg-primary text-white" style="width: 32px; height: 32px; font-size: 0.875rem;">
-                            @Context.Session.GetString("USER_NAME")?.FirstOrDefault()
+                        <span class="user-avatar-shell d-inline-flex align-items-center justify-content-center">
+                            @if (!string.IsNullOrWhiteSpace(userAvatarUrl))
+                            {
+                                <img src="@userAvatarUrl" alt="@Context.Session.GetString("USER_NAME")"
+                                     class="user-avatar-img"
+                                     onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');" />
+                            }
+                            <span class="user-avatar d-inline-flex align-items-center justify-content-center rounded-circle text-white @(!string.IsNullOrWhiteSpace(userAvatarUrl) ? "d-none" : "")">
+                                @userInitial
+                            </span>
                         </span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2" style="min-width: 200px;">
@@ -85,7 +109,10 @@
                         <li><hr class="dropdown-divider mx-3"></li>
                         <li><a class="dropdown-item py-2" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2"></i>@localizer.Get("Profile")</a></li>
                         <li><a class="dropdown-item py-2" asp-controller="Order" asp-action="Index"><i class="bi bi-box-seam me-2"></i>@localizer.Get("Orders")</a></li>
-                        <li><a class="dropdown-item py-2" asp-controller="Wishlist" asp-action="Index"><i class="bi bi-heart me-2"></i>@localizer.Get("Wishlist")</a></li>
+                        @if (string.Equals(settings.GetValueOrDefault("EnableWishlist", "true"), "true", StringComparison.OrdinalIgnoreCase))
+                        {
+                            <li><a class="dropdown-item py-2" asp-controller="Wishlist" asp-action="Index"><i class="bi bi-heart me-2"></i>@localizer.Get("Wishlist")</a></li>
+                        }
                         <li><hr class="dropdown-divider mx-3"></li>
                         <li>
                             <form asp-controller="Account" asp-action="Logout" method="post">
@@ -102,7 +129,6 @@
                 <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="Login">@localizer.Get("Login")</a>
             }
 
-            <!-- Mobile Menu -->
             <a class="nav-link d-lg-none p-2" data-bs-toggle="offcanvas" href="#offcanvasMenu">
                 <i class="bi bi-list fs-4"></i>
             </a>
@@ -111,6 +137,50 @@
 </nav>
 
 <script>
+    // Initialize dark mode on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        if (isDarkMode) {
+            document.documentElement.setAttribute('data-bs-theme', 'dark');
+            updateDarkModeIcon(true);
+        } else {
+            document.documentElement.removeAttribute('data-bs-theme');
+            updateDarkModeIcon(false);
+        }
+
+        // Dark Mode Toggle Handler
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function() {
+                const html = document.documentElement;
+                const isDark = html.getAttribute('data-bs-theme') === 'dark';
+
+                if (isDark) {
+                    html.removeAttribute('data-bs-theme');
+                    localStorage.setItem('darkMode', 'false');
+                    updateDarkModeIcon(false);
+                } else {
+                    html.setAttribute('data-bs-theme', 'dark');
+                    localStorage.setItem('darkMode', 'true');
+                    updateDarkModeIcon(true);
+                }
+            });
+        }
+    });
+
+    function updateDarkModeIcon(isDarkMode) {
+        const icon = document.getElementById('darkModeIcon');
+        if (icon) {
+            if (isDarkMode) {
+                icon.classList.remove('bi-moon-stars');
+                icon.classList.add('bi-sun-fill');
+            } else {
+                icon.classList.remove('bi-sun-fill');
+                icon.classList.add('bi-moon-stars');
+            }
+        }
+    }
+
     async function updateCartBadge() {
         try {
             const res = await fetch('/Cart/GetCartCount');
@@ -127,6 +197,14 @@
         } catch (e) {}
     }
     updateCartBadge();
+
+    document.querySelectorAll('.navbar-custom .navbar-nav .nav-link').forEach(link => {
+        link.addEventListener('click', () => {
+            link.classList.remove('nav-link-clicked');
+            void link.offsetWidth;
+            link.classList.add('nav-link-clicked');
+        });
+    });
 </script>
 
 <style>
@@ -134,23 +212,134 @@
         z-index: 1020;
     }
 
+    .navbar-custom .navbar-nav {
+        gap: 0.35rem;
+    }
+
     .nav-link {
-        color: #333;
+        position: relative;
+        overflow: hidden;
+        color: #34302c;
         font-weight: 500;
-        transition: color 0.2s;
+        border-radius: 0;
+        transition: color 0.2s, background-color 0.2s, transform 0.18s ease;
     }
 
     .nav-link:hover {
         color: #000;
+        background: transparent;
     }
 
-    .nav-link.active {
-        color: #000;
-        font-weight: 600;
+    .navbar-custom .navbar-nav .nav-link:active {
+        transform: translateY(1px) scale(0.98);
+    }
+
+    .navbar-custom .navbar-nav .nav-link::before {
+        content: "";
+        position: absolute;
+        inset: 0.35rem 0.45rem;
+        border-radius: 999px;
+        background: rgba(138, 129, 120, 0.12);
+        opacity: 0;
+        transform: scaleX(0.55);
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: -1;
+    }
+
+    .navbar-custom .navbar-nav .nav-link:hover::before {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+
+    .navbar-custom .navbar-nav .nav-link.active {
+        color: #111;
+        font-weight: 700;
+        background: transparent;
+    }
+
+    .navbar-custom .navbar-nav .nav-link.active::after {
+        content: "";
+        position: absolute;
+        left: 1rem;
+        right: 1rem;
+        bottom: 0.2rem;
+        height: 2px;
+        border-radius: 999px;
+        background: #8a8178;
+        transform-origin: left center;
+        animation: navUnderlineIn 0.28s ease both;
+    }
+
+    .navbar-custom .navbar-nav .nav-link.active:hover {
+        color: #111;
+    }
+
+    .navbar-custom .navbar-nav .nav-link.nav-link-clicked::before {
+        animation: navClickFlash 0.42s ease both;
+    }
+
+    @@keyframes navClickFlash {
+        0% {
+            opacity: 0;
+            transform: scaleX(0.45);
+        }
+
+        35% {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        100% {
+            opacity: 0;
+            transform: scaleX(1.08);
+        }
+    }
+
+    @@keyframes navUnderlineIn {
+        from {
+            opacity: 0;
+            transform: scaleX(0.25);
+        }
+
+        to {
+            opacity: 1;
+            transform: scaleX(1);
+        }
     }
 
     .user-avatar {
         font-weight: 600;
+        width: 32px;
+        height: 32px;
+        font-size: 0.875rem;
+        background: #211f1c;
+    }
+
+    .user-avatar-img {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .site-logo-img {
+        height: 36px;
+        width: auto;
+        max-width: 120px;
+        object-fit: contain;
+    }
+
+    .site-logo-fallback {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #211f1c;
+        background: #ecebe9;
+        font-size: 1.25rem;
     }
 
     .dropdown-menu {
@@ -160,6 +349,12 @@
     .dropdown-item:hover {
         background-color: rgba(0, 0, 0, 0.05);
         color: #000;
+    }
+
+    .dropdown-item.active,
+    .dropdown-item:active {
+        color: #fff;
+        background-color: #211f1c;
     }
 
     .nav-link.dropdown-toggle::after {

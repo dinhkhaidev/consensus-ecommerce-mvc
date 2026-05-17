@@ -1,7 +1,7 @@
 @model WebActionResults.Models.Account
 @{
     ViewData["Title"] = "Account Details";
-    var isAdmin = Model.UserName?.ToLower() == "admin";
+    var isAdmin = string.Equals(Model.Role, "Admin", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="mb-4">
@@ -34,7 +34,7 @@
                 </div>
                 <h4 class="mt-3 mb-1">@@@Model.UserName</h4>
                 <span class="badge rounded-pill bg-@(isAdmin ? "danger" : "primary") px-3 py-2">
-                    @(isAdmin ? "Admin" : "Customer")
+                    @(Model.Role ?? "Customer")
                 </span>
             </div>
             <div class="col-md-8">
@@ -68,7 +68,7 @@
                     </tr>
                     <tr>
                         <th class="text-muted small text-uppercase">Created</th>
-                        <td>@Model.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                        <td>@(Model.CreatedAt?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")</td>
                     </tr>
                 </table>
                 <a asp-area="Admin" asp-controller="AdminAccount" asp-action="Edit" asp-route-id="@Model.Id"

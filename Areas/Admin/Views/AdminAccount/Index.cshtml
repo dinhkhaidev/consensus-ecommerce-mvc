@@ -57,7 +57,7 @@
                     <tbody>
                         @foreach (var account in Model)
                         {
-                            var isAdmin = account.UserName?.ToLower() == "admin";
+                            var isAdmin = string.Equals(account.Role, "Admin", StringComparison.OrdinalIgnoreCase);
                             <tr class="border-bottom">
                                 <td class="py-3 ps-4">
                                     <div class="d-flex align-items-center gap-3">
@@ -90,7 +90,7 @@
                                 </td>
                                 <td class="py-3">
                                     <span class="badge rounded-pill bg-@(isAdmin ? "danger" : "primary")">
-                                        @(isAdmin ? "Admin" : "Customer")
+                                        @(account.Role ?? "Customer")
                                     </span>
                                 </td>
                                 <td class="py-3">

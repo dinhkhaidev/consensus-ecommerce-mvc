@@ -26,7 +26,7 @@ public interface IAuthenticationService
     Task<Account?> GetAccountByEmailAsync(string email);
     Task<Account?> GetAccountByUserNameAsync(string userName);
     Task<string> GenerateEmailVerificationTokenAsync(string email);
-    Task<bool> VerifyEmailAsync(string token);
+    Task<bool> VerifyEmailAsync(string email, string token);
 }
 
 public class AuthenticationService : IAuthenticationService
@@ -34,6 +34,7 @@ public class AuthenticationService : IAuthenticationService
     private const string SessionKey_UserId = "USER_ID";
     private const string SessionKey_UserName = "USER_NAME";
     private const string SessionKey_FullName = "FULL_NAME";
+    private const string SessionKey_AvatarUrl = "USER_AVATAR";
 
     private readonly ShopDbContext _context;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -48,8 +49,9 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<Account?> LoginAsync(string userName, string password)
     {
+        var normalizedUserName = userName.Trim();
         var account = await _context.Accounts
-            .FirstOrDefaultAsync(a => a.UserName == userName);
+            .FirstOrDefaultAsync(a => a.UserName == normalizedUserName || a.Email == normalizedUserName);
 
         if (account == null)
             return null;
@@ -67,7 +69,8 @@ public class AuthenticationService : IAuthenticationService
         Session.SetInt32(SessionKey_UserId, account.Id);
         Session.SetString(SessionKey_UserName, account.UserName ?? "");
         Session.SetString(SessionKey_FullName, account.FullName ?? "");
-        Session.SetString("USER_ROLE", account.UserName == "admin" ? "Admin" : "Customer");
+        Session.SetString(SessionKey_AvatarUrl, account.AvatarUrl ?? "");
+        Session.SetString("USER_ROLE", account.Role ?? "Customer");
 
         return account;
     }
@@ -105,11 +108,6 @@ public class AuthenticationService : IAuthenticationService
 
         _context.Accounts.Add(account);
         await _context.SaveChangesAsync();
-
-        // Auto login after registration
-        Session.SetInt32(SessionKey_UserId, account.Id);
-        Session.SetString(SessionKey_UserName, account.UserName ?? "");
-        Session.SetString(SessionKey_FullName, account.FullName ?? "");
 
         return account;
     }
@@ -207,6 +205,13 @@ public class AuthenticationService : IAuthenticationService
             if (address == null || address.UserId != userId)
                 return false;
 
+            var linkedOrders = await _context.Orders
+                .Where(o => o.UserId == userId && o.AddressId == addressId)
+                .ToListAsync();
+
+            foreach (var order in linkedOrders)
+                order.AddressId = null;
+
             _context.Addresses.Remove(address);
             await _context.SaveChangesAsync();
             return true;
@@ -225,6 +230,7 @@ public class AuthenticationService : IAuthenticationService
             await _context.SaveChangesAsync();
             // Update session
             Session.SetString(SessionKey_FullName, account.FullName ?? "");
+            Session.SetString(SessionKey_AvatarUrl, account.AvatarUrl ?? "");
             return true;
         }
         catch
@@ -250,38 +256,33 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task<string> GenerateEmailVerificationTokenAsync(string email)
     {
-        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
-        if (account == null)
-            return string.Empty;
+        var user = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+        if (user == null) return string.Empty;
 
-        var token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
-            .Replace("+", "-")
-            .Replace("/", "_")
-            .TrimEnd('=');
-
-        account.EmailVerificationToken = token;
-        account.EmailVerificationTokenExpiresAt = DateTime.UtcNow.AddHours(24);
+        // Tạo mã OTP 6 số cực xịn
+        string otpCode = new Random().Next(100000, 999999).ToString();
+        
+        user.EmailVerificationToken = otpCode;
+        user.EmailVerificationTokenExpiresAt = DateTime.Now.AddMinutes(5);
+        
         await _context.SaveChangesAsync();
-
-        return token;
+        return otpCode;
     }
 
-    public async Task<bool> VerifyEmailAsync(string token)
+    public async Task<bool> VerifyEmailAsync(string email, string token)
     {
-        var account = await _context.Accounts
-            .FirstOrDefaultAsync(a => a.EmailVerificationToken == token);
+        // Chữ email ở đây giờ đã được nhận từ trên xuống nên sẽ không báo đỏ nữa
+        var user = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == email);
+        
+        if (user == null) return false;
+        if (user.EmailVerificationToken != token) return false;
+        if (user.EmailVerificationTokenExpiresAt < DateTime.Now) return false;
 
-        if (account == null)
-            return false;
-
-        if (account.EmailVerificationTokenExpiresAt < DateTime.UtcNow)
-            return false;
-
-        account.IsEmailVerified = true;
-        account.EmailVerificationToken = null;
-        account.EmailVerificationTokenExpiresAt = null;
+        user.IsEmailVerified = true;
+        user.EmailVerificationToken = null; 
+        user.EmailVerificationTokenExpiresAt = null;
+        
         await _context.SaveChangesAsync();
-
         return true;
     }
 

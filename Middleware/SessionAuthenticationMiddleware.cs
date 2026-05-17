@@ -28,7 +28,7 @@ public class SessionAuthenticationMiddleware
             var user = await authService.GetAccountByIdAsync(userId.Value);
             if (user != null)
             {
-                var role = user.UserName?.ToLower() == "admin" ? "Admin" : "Customer";
+                var role = user.Role ?? "Customer";
                 var claims = new List<Claim>
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),

@@ -1,0 +1,36 @@
+@{
+    ViewData["Title"] = "Xác thực thành công";
+}
+
+<div class="container py-5 mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="mb-4 d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle" style="width: 100px; height: 100px;">
+                <i class="bi bi-shield-check text-success" style="font-size: 3.5rem;"></i>
+            </div>
+            
+            <h2 class="fw-bold text-uppercase mb-3" style="letter-spacing: 0.1rem; color: #222;">
+                Xác thực thành công
+            </h2>
+            
+            <p class="text-muted mb-5 mx-auto" style="max-width: 450px; font-size: 1.05rem; line-height: 1.6;">
+                Tài khoản của bạn tại <span class="fw-bold text-dark">Furnish</span> đã được kích hoạt hoàn tất. Hãy bắt đầu khám phá không gian nội thất cao cấp ngay bây giờ.
+            </p>
+            
+            <a asp-controller="Account" asp-action="Login" 
+               class="btn btn-primary btn-lg px-5 py-3 border-0 shadow-sm text-uppercase fw-bold text-white rounded-3" 
+               style="font-size: 0.9rem; letter-spacing: 0.1rem; transition: all 0.3s ease;">
+                Đăng nhập ngay
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hiệu ứng hover nhẹ nhàng cho nút chuẩn chỉnh */
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15) !important;
+        opacity: 0.9;
+    }
+</style>

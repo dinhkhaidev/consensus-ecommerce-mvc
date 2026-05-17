@@ -29,8 +29,10 @@ public interface IUserService
     Task<AuthResult> DeleteAddressAsync(int userId, int addressId);
     Task<Account?> GetCurrentUserAsync();
     Task<int?> GetCurrentUserIdAsync();
+    
+    // Giao việc tạo và xác thực OTP
     Task<string> GenerateEmailVerificationTokenAsync(string email);
-    Task<bool> VerifyEmailAsync(string token);
+    Task<bool> VerifyEmailAsync(string email, string token);
 }
 
 public class UserService : IUserService
@@ -125,9 +127,12 @@ public class UserService : IUserService
     public async Task<int?> GetCurrentUserIdAsync()
         => await _authService.GetCurrentUserIdAsync();
 
+    // ==========================================
+    // CHUYỀN BÓNG SANG CHO AuthenticationService
+    // ==========================================
     public async Task<string> GenerateEmailVerificationTokenAsync(string email)
         => await _authService.GenerateEmailVerificationTokenAsync(email);
 
-    public async Task<bool> VerifyEmailAsync(string token)
-        => await _authService.VerifyEmailAsync(token);
+    public async Task<bool> VerifyEmailAsync(string email, string token)
+        => await _authService.VerifyEmailAsync(email, token);
 }

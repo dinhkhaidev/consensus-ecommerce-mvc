@@ -6,6 +6,7 @@ public class RegisterViewModel
 {
     [Required(ErrorMessage = "Username is required.")]
     [StringLength(20, MinimumLength = 3, ErrorMessage = "Username must be 3-20 characters.")]
+    [RegularExpression(@"^[a-zA-Z0-9_]+$", ErrorMessage = "Username can only contain letters, numbers and underscores.")]
     public string UserName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Email is required.")]
@@ -26,9 +27,13 @@ public class RegisterViewModel
     [StringLength(100, ErrorMessage = "Full name cannot exceed 100 characters.")]
     public string FullName { get; set; } = string.Empty;
 
-    [Phone(ErrorMessage = "Invalid phone number.")]
-    public string? PhoneNumber { get; set; }
+    [Required(ErrorMessage = "Phone number is required.")]
+    [RegularExpression(@"0[39875]\d{8}", ErrorMessage = "Phone format is invalid for Vietnam mobile.")]
+    public string PhoneNumber { get; set; } = string.Empty;
 
+    [Required(ErrorMessage = "Birthday is required.")]
     [DataType(DataType.Date)]
     public DateTime? Birthday { get; set; }
+
+    public bool TermsAccepted { get; set; }
 }
