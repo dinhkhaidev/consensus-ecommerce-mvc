@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Edit Product";
     var categories = ViewBag.Categories as IEnumerable<WebActionResults.Models.Category>;
+    var suppliers = ViewBag.Suppliers as IEnumerable<WebActionResults.Models.Supplier>;
 }
 
 <div class="d-flex align-items-center gap-3 mb-4">
@@ -14,8 +15,10 @@
     </div>
 </div>
 
-<form asp-area="Admin" asp-controller="AdminProduct" asp-action="Edit" method="post" enctype="multipart/form-data">
+<form action="/Admin/AdminProduct/Edit" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
     <div class="row g-4">
         <div class="col-lg-8">
@@ -32,25 +35,51 @@
 
                     <div class="mb-3">
                         <label asp-for="QuantityPerUnit" class="form-label fw-semibold">Description</label>
-                        <textarea asp-for="QuantityPerUnit" class="form-control" rows="4"></textarea>
+                        <textarea asp-for="QuantityPerUnit" class="form-control" rows="4" maxlength="100"></textarea>
+                        <span asp-validation-for="QuantityPerUnit" class="text-danger"></span>
+                        <div class="form-text">Maximum 100 characters.</div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="UnitPrice" class="form-label fw-semibold">Price (VND)</label>
-                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1000" />
+                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1000" min="0" />
                             <span asp-validation-for="UnitPrice" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">Category</label>
-                            <select name="CategoryID" class="form-select form-select-lg">
+                            <select asp-for="CategoryID" class="form-select form-select-lg" required>
                                 @if (categories != null)
                                 {
                                     @foreach (var cat in categories)
                                     {
-                                        <option value="@cat.Id" selected="@(Model.CategoryID == cat.Id)">@cat.CategoryName</option>
+                                        <option value="@cat.Id">@cat.CategoryName</option>
                                     }
                                 }
+                            </select>
+                            <span asp-validation-for="CategoryID" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SupplierID" class="form-label fw-semibold">Supplier</label>
+                            <select asp-for="SupplierID" class="form-select form-select-lg">
+                                <option value="">No supplier</option>
+                                @if (suppliers != null)
+                                {
+                                    @foreach (var supplier in suppliers)
+                                    {
+                                        <option value="@supplier.Id">@supplier.CompanyName</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Discontinued" class="form-label fw-semibold">Discontinued</label>
+                            <select asp-for="Discontinued" class="form-select form-select-lg">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
                             </select>
                         </div>
                     </div>
@@ -219,5 +248,9 @@
         font-size: 0.72rem;
         text-transform: uppercase;
         color: #6c757d;
+    }
+
+    .validation-summary-valid {
+        display: none;
     }
 </style>

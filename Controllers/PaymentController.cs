@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using VNPAY;
 using WebActionResults.Data.Entities;
 using WebActionResults.Data.Services;
+using WebActionResults.Utilities;
 
 namespace WebActionResults.Controllers;
 
@@ -43,7 +44,7 @@ public class PaymentController : Controller
         };
 
         if (!string.IsNullOrEmpty(paymentUrl))
-            return Redirect(paymentUrl);
+            return Redirect(RedirectUrlSanitizer.EscapeHeaderValue(paymentUrl));
 
         TempData["ToastError"] = "Payment method not supported.";
         return RedirectToAction("Details", "Order", new { id = orderId });

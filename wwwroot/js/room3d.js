@@ -16,6 +16,9 @@ const MODEL_PATHS = {
     cabinet: "/models/demo-products/tv-stand/drawer_cabinet_1k.gltf"
 };
 
+const WINDOW_SCARE_MODEL_URL = "/models/tung_tung_tung_sahur_for_horror_free_download.glb";
+const PENDING_ROOM_CART_KEY = "room3d.pendingCartItems";
+
 const SHARETEXTURES = {
     sofa22: asset("sofa-22", "sofa-22"),
     sofa21: asset("sofa-21", "sofa-21"),
@@ -44,25 +47,25 @@ const STATIC_DECOR = [
     {
         id: "katana-wall",
         name: "Ceremonial Katana Wall Display",
-        model3DUrl: "/models/rooms/decor/katana-wall.glb",
+        model3DUrl: "/models/rooms/decor/katana-bright/katana_goldberg_bright.glb",
         model3DUrlCandidates: [
-            "/models/rooms/decor/katana-wall.glb",
-            "/models/rooms/decor/katana-wall/scene.gltf"
+            "/models/rooms/decor/katana-bright/katana_goldberg_bright.glb"
         ],
         fallback: "katana",
         position: [-3.82, 1.72, 0],
         rotation: [0, 90, 0],
-        modelPreRotation: [0, 0, 90],
+        modelPreRotation: [90, 0, 90],
+        modelOffset: [0, 0.1, 0],
         maxHeight: 0.95,
         maxWidth: 3.8,
-        credit: "Antique Katana 01 by Poly Haven (CC0)"
+        credit: "Katana Low-Poly by GoldbergR (CC BY 4.0)"
     }
 ];
 
 const demoProducts = [
     withModelCandidates(
         product("dragon-01", "Shenron Guardian Dragon", "dragon", 20000000000, "/models/rooms/decor/shenron-yanez.glb", null, 1, 0, 18, "signature", "10k", "#58d6a0", "#d8c782"),
-        ["/models/rooms/decor/shenron-yanez.glb", "/models/rooms/decor/shenron-yanez/scene.gltf"]
+        ["/models/rooms/decor/shenron-yanez.glb"]
     ),
     product("sofa-01", "Signature Modular Sofa", "sofa", 16900000, SHARETEXTURES.sofa22.model, SHARETEXTURES.sofa22.thumb, 1.02, 0, 0, "hero", "8k-10k feel", "#d8b48c", "#6e4a32"),
     product("sofa-02", "Brown Triple Sofa", "sofa", 14800000, SHARETEXTURES.sofa21.model, SHARETEXTURES.sofa21.thumb, 1, 0, -8, "hero", "8k-10k feel", "#e6d4c0", "#5c4636"),
@@ -119,6 +122,21 @@ const state = {
     cameraAnimation: null,
     detailViewer: null,
     detailProduct: null,
+    windowScare: {
+        triggerMeshes: [],
+        glassPanel: null,
+        scareGroup: null,
+        light: null,
+        voidPlane: null,
+        flashPlane: null,
+        darkOverlay: null,
+        screenHitbox: null,
+        active: false,
+        modelReady: false,
+        modelFailed: false,
+        startTime: 0,
+        cooldownUntil: 0
+    },
     animationFrame: null
 };
 
@@ -168,18 +186,37 @@ function initRoom3D() {
     createScene();
     createCamera();
     createRenderer();
+    createScareDarkOverlay();
     createLights();
     createRoomShell();
     createControls();
     renderCategoryFilters();
     renderProductList();
+    setRoomCartButtonLabel();
     bindEvents();
+    resumePendingRoomCart();
     updateInspector();
     updateTotal();
     handleResize();
     animate();
 
     window.setTimeout(() => dom.loadingOverlay?.classList.add("is-hidden"), 550);
+}
+
+function setRoomCartButtonLabel() {
+    const label = dom.buyRoomBtn?.querySelector("span");
+    if (label) label.textContent = "Thêm vào giỏ";
+}
+
+function createScareDarkOverlay() {
+    const stage = dom.canvas?.closest(".room3d-stage");
+    if (!stage || state.windowScare.darkOverlay) return;
+
+    const overlay = document.createElement("div");
+    overlay.className = "room-scare-overlay";
+    overlay.style.opacity = "0";
+    stage.appendChild(overlay);
+    state.windowScare.darkOverlay = overlay;
 }
 
 function createScene() {
@@ -294,22 +331,449 @@ function addFloorLines() {
 }
 
 function createWindow(trimMat) {
+    const panelWidth = 0.9425;
+    const panelHeight = 1.2;
+    const hingeX = -2.8425;
+    const panelY = 1.95;
+    const panelZ = -3.86;
+    const panelCenterX = panelWidth / 2;
     const glassMat = new THREE.MeshStandardMaterial({
         color: 0xdce9ee,
-        roughness: 0.2,
+        roughness: 0.28,
         transparent: true,
-        opacity: 0.62
+        opacity: 0.46
     });
 
-    const glass = createBox(1.75, 1.18, 0.025, glassMat, [-2.85, 1.95, -3.92]);
+    const fixedGlass = createBox(0.86, 1.06, 0.018, glassMat, [-3.35, panelY, panelZ - 0.012]);
+    fixedGlass.userData.type = "window-scare-trigger";
+    state.windowScare.triggerMeshes.push(fixedGlass);
+
+    const glassPanel = new THREE.Group();
+    glassPanel.position.set(hingeX, panelY, panelZ);
+    const glass = createBox(panelWidth - 0.08, panelHeight - 0.08, 0.012, glassMat, [panelCenterX, 0, -0.006]);
+    glass.userData.type = "window-scare-trigger";
+    glassPanel.add(glass);
+    glassPanel.add(createBox(panelWidth, 0.028, 0.022, trimMat, [panelCenterX, panelHeight / 2 - 0.014, -0.002]));
+    glassPanel.add(createBox(panelWidth, 0.028, 0.022, trimMat, [panelCenterX, -panelHeight / 2 + 0.014, -0.002]));
+    glassPanel.add(createBox(0.028, panelHeight, 0.022, trimMat, [0.014, 0, -0.002]));
+    glassPanel.add(createBox(0.028, panelHeight, 0.022, trimMat, [panelWidth - 0.014, 0, -0.002]));
+    glassPanel.userData.closedRotationY = 0;
+    state.windowScare.glassPanel = glassPanel;
+    state.windowScare.triggerMeshes.push(glass);
+
+    const scareHitbox = createBox(
+        2.35,
+        1.75,
+        0.04,
+        new THREE.MeshBasicMaterial({
+            color: 0xff0000,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false
+        }),
+        [-2.86, 1.95, -3.72]
+    );
+    scareHitbox.userData.type = "window-scare-trigger";
+    scareHitbox.visible = false;
+    state.windowScare.screenHitbox = scareHitbox;
+    state.windowScare.triggerMeshes.push(scareHitbox);
+
     const framePieces = [
         createBox(1.95, 0.06, 0.08, trimMat, [-2.85, 2.58, -3.86]),
         createBox(1.95, 0.06, 0.08, trimMat, [-2.85, 1.32, -3.86]),
         createBox(0.06, 1.28, 0.08, trimMat, [-3.83, 1.95, -3.86]),
         createBox(0.06, 1.28, 0.08, trimMat, [-1.87, 1.95, -3.86]),
-        createBox(0.05, 1.18, 0.08, trimMat, [-2.85, 1.95, -3.85])
+        createBox(0.026, 1.18, 0.052, trimMat, [-2.86, 1.95, -3.858])
     ];
-    state.scene.add(glass, ...framePieces);
+    const scare = createWindowScareActor();
+    state.windowScare.scareGroup = scare.group;
+    state.windowScare.light = scare.light;
+    state.windowScare.voidPlane = scare.voidPlane;
+    state.windowScare.flashPlane = scare.flashPlane;
+    state.scene.add(scare.voidPlane, scare.flashPlane, scare.group, fixedGlass, glassPanel, scareHitbox, ...framePieces);
+}
+
+function createWindowScareActor() {
+    const group = new THREE.Group();
+    group.position.set(-2.85, 1.95, -3.88);
+    group.scale.setScalar(0.08);
+    group.visible = false;
+
+    const hairMat = new THREE.MeshBasicMaterial({
+        color: 0x050607,
+        transparent: true,
+        opacity: 0.98,
+        side: THREE.DoubleSide
+    });
+    const faceMat = new THREE.MeshBasicMaterial({
+        color: 0xd8d2c7,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const deadSkinMat = new THREE.MeshBasicMaterial({
+        color: 0x8c837a,
+        transparent: true,
+        opacity: 0.42,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const clothMat = new THREE.MeshBasicMaterial({
+        color: 0xdedbd2,
+        transparent: true,
+        opacity: 0.94,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const eyeMat = new THREE.MeshBasicMaterial({
+        color: 0x030304,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const pupilMat = new THREE.MeshBasicMaterial({
+        color: 0xff1010,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const bloodMat = new THREE.MeshBasicMaterial({
+        color: 0x7d0303,
+        transparent: true,
+        opacity: 0.88,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const tearMat = new THREE.MeshBasicMaterial({
+        color: 0x010101,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide
+    });
+    const teethMat = new THREE.MeshBasicMaterial({
+        color: 0xf8edd8,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const redGlowMat = new THREE.MeshBasicMaterial({
+        color: 0xff0505,
+        transparent: true,
+        opacity: 0.34,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+    const voidPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.88, 1.26),
+        new THREE.MeshBasicMaterial({
+            color: 0x020203,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide
+        })
+    );
+    voidPlane.position.set(-2.85, 1.95, -3.905);
+    voidPlane.visible = false;
+
+    const flashPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.88, 1.26),
+        new THREE.MeshBasicMaterial({
+            color: 0xff1a12,
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            toneMapped: false
+        })
+    );
+    flashPlane.position.set(-2.85, 1.95, -3.872);
+    flashPlane.visible = false;
+
+    const bodyShape = new THREE.Shape();
+    bodyShape.moveTo(-0.2, 0.04);
+    bodyShape.lineTo(0.2, 0.04);
+    bodyShape.lineTo(0.62, -1.12);
+    bodyShape.lineTo(0.28, -1.02);
+    bodyShape.lineTo(0.08, -1.16);
+    bodyShape.lineTo(-0.08, -1.04);
+    bodyShape.lineTo(-0.28, -1.16);
+    bodyShape.lineTo(-0.62, -1.02);
+    bodyShape.lineTo(-0.2, 0.04);
+    const body = new THREE.Mesh(new THREE.ShapeGeometry(bodyShape), clothMat);
+    body.position.set(0, -0.28, 0.004);
+    group.add(body);
+
+    const hairBack = new THREE.Mesh(new THREE.CircleGeometry(0.62, 48), hairMat);
+    hairBack.position.set(0, 0.14, 0.012);
+    hairBack.scale.set(0.86, 1.72, 1);
+    group.add(hairBack);
+
+    const face = new THREE.Mesh(new THREE.CircleGeometry(0.34, 48), faceMat);
+    face.position.set(0, 0.2, 0.052);
+    face.scale.set(0.68, 1.24, 1);
+    group.add(face);
+
+    const cheekShadow = new THREE.Mesh(new THREE.CircleGeometry(0.22, 32), deadSkinMat);
+    cheekShadow.position.set(0, 0.02, 0.073);
+    cheekShadow.scale.set(1.15, 0.68, 1);
+    group.add(cheekShadow);
+
+    [-0.19, 0.19].forEach((x, index) => {
+        const sideCurtain = new THREE.Mesh(new THREE.PlaneGeometry(0.19, 1.08), hairMat);
+        sideCurtain.position.set(x, -0.14, 0.091 + index * 0.004);
+        sideCurtain.rotation.z = THREE.MathUtils.degToRad(x < 0 ? -8 : 8);
+        group.add(sideCurtain);
+    });
+
+    for (let i = 0; i < 19; i += 1) {
+        const x = -0.48 + i * 0.053;
+        const length = 0.68 + (i % 7) * 0.055;
+        const strand = new THREE.Mesh(new THREE.PlaneGeometry(0.068, length), hairMat);
+        strand.position.set(x, -0.08 - length * 0.12, 0.072 + (i % 2) * 0.006);
+        strand.rotation.z = THREE.MathUtils.degToRad(-10 + i * 1.1);
+        group.add(strand);
+    }
+
+    const brow = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.48, 0.09),
+        new THREE.MeshBasicMaterial({ color: 0x050506, transparent: true, opacity: 0.82, side: THREE.DoubleSide })
+    );
+    brow.position.set(0, 0.31, 0.082);
+    brow.rotation.z = THREE.MathUtils.degToRad(-2);
+    group.add(brow);
+
+    [-0.105, 0.105].forEach(x => {
+        const socketGlow = new THREE.Mesh(new THREE.CircleGeometry(0.12, 28), redGlowMat);
+        socketGlow.position.set(x, 0.18, 0.088);
+        socketGlow.scale.set(1.26, 0.9, 1);
+        group.add(socketGlow);
+
+        const socket = new THREE.Mesh(new THREE.CircleGeometry(0.098, 28), eyeMat);
+        socket.position.set(x, 0.18, 0.095);
+        socket.scale.set(1.45, 0.86, 1);
+        group.add(socket);
+
+        const pupil = new THREE.Mesh(new THREE.CircleGeometry(0.03, 18), pupilMat);
+        pupil.position.set(x, 0.18, 0.112);
+        pupil.scale.set(0.58, 1.35, 1);
+        pupil.userData.scarePulse = true;
+        group.add(pupil);
+
+        const tear = new THREE.Mesh(new THREE.PlaneGeometry(0.028, 0.26), tearMat);
+        tear.position.set(x * 0.92, 0.015, 0.104);
+        tear.rotation.z = THREE.MathUtils.degToRad(x < 0 ? -4 : 4);
+        group.add(tear);
+    });
+
+    const mouth = new THREE.Mesh(new THREE.CircleGeometry(0.092, 28), eyeMat);
+    mouth.position.set(0, -0.075, 0.106);
+    mouth.scale.set(0.78, 2.65, 1);
+    group.add(mouth);
+
+    for (let i = 0; i < 7; i += 1) {
+        const x = -0.072 + i * 0.024;
+        const upperTooth = createBox(0.016, 0.074 - Math.abs(i - 3) * 0.005, 0.008, teethMat, [x, -0.006, 0.118]);
+        upperTooth.rotation.z = THREE.MathUtils.degToRad(-7 + i * 2.4);
+        group.add(upperTooth);
+
+        const lowerTooth = createBox(0.014, 0.06 - Math.abs(i - 3) * 0.004, 0.008, teethMat, [x + 0.008, -0.152, 0.118]);
+        lowerTooth.rotation.z = THREE.MathUtils.degToRad(174 - i * 2.2);
+        group.add(lowerTooth);
+    }
+
+    const blood = new THREE.Mesh(new THREE.PlaneGeometry(0.08, 0.3), bloodMat);
+    blood.position.set(0.028, -0.2, 0.106);
+    blood.rotation.z = THREE.MathUtils.degToRad(7);
+    group.add(blood);
+
+    [-0.15, 0.04, 0.16].forEach((x, index) => {
+        const crack = new THREE.Mesh(new THREE.PlaneGeometry(0.018, 0.2 - index * 0.035), tearMat);
+        crack.position.set(x, 0.04 + index * 0.055, 0.108);
+        crack.rotation.z = THREE.MathUtils.degToRad(index % 2 === 0 ? -24 : 19);
+        group.add(crack);
+    });
+
+    const leftHand = new THREE.Mesh(new THREE.CircleGeometry(0.14, 24), faceMat);
+    leftHand.position.set(-0.55, -0.18, 0.088);
+    leftHand.scale.set(0.7, 1.08, 1);
+    leftHand.rotation.z = THREE.MathUtils.degToRad(-36);
+    group.add(leftHand);
+
+    [-0.18, -0.06, 0.06, 0.17].forEach((offset, index) => {
+        const finger = createBox(0.024, 0.34 - index * 0.025, 0.012, faceMat, [-0.55 + offset, -0.02, 0.102]);
+        finger.rotation.z = THREE.MathUtils.degToRad(-26 + index * 9);
+        group.add(finger);
+    });
+
+    const rightHand = new THREE.Mesh(new THREE.CircleGeometry(0.14, 24), faceMat);
+    rightHand.position.set(0.55, -0.2, 0.088);
+    rightHand.scale.set(0.7, 1.08, 1);
+    rightHand.rotation.z = THREE.MathUtils.degToRad(36);
+    group.add(rightHand);
+
+    [-0.17, -0.06, 0.06, 0.18].forEach((offset, index) => {
+        const finger = createBox(0.024, 0.33 - index * 0.025, 0.012, faceMat, [0.55 + offset, -0.06, 0.102]);
+        finger.rotation.z = THREE.MathUtils.degToRad(26 - index * 9);
+        group.add(finger);
+    });
+
+    const light = new THREE.PointLight(0xff2014, 0, 2.8, 2);
+    light.position.set(-2.85, 2.06, -3.42);
+    state.scene.add(light);
+
+    loadWindowScareModel(group);
+    group.userData.fallbackChildren = [...group.children];
+    if (WINDOW_SCARE_MODEL_URL) {
+        group.children.forEach(child => {
+            child.visible = false;
+        });
+        group.userData.waitingForModel = true;
+    }
+
+    return { group, light, voidPlane, flashPlane };
+}
+
+function loadWindowScareModel(group) {
+    if (!WINDOW_SCARE_MODEL_URL) return;
+
+    state.gltfLoader.load(
+        WINDOW_SCARE_MODEL_URL,
+        gltf => {
+            const wrapper = new THREE.Group();
+            const model = gltf.scene;
+            wrapper.add(model);
+            prepareObjectMeshes(wrapper);
+            normalizeScareModel(wrapper);
+            tintScareModel(wrapper);
+            addScareModelGore(wrapper);
+
+            group.clear();
+            group.add(wrapper);
+            group.userData.usingModel = true;
+            group.userData.waitingForModel = false;
+            state.windowScare.modelReady = true;
+        },
+        undefined,
+        error => {
+            console.warn("Window scare model fallback:", error);
+            group.clear();
+            group.userData.fallbackChildren?.forEach(child => {
+                child.visible = true;
+                group.add(child);
+            });
+            group.userData.usingModel = false;
+            group.userData.waitingForModel = false;
+            state.windowScare.modelFailed = true;
+        }
+    );
+}
+
+function normalizeScareModel(group) {
+    group.position.set(0, 0, 0);
+    group.rotation.set(0, 0, 0);
+    group.scale.set(1, 1, 1);
+    group.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(group);
+    if (box.isEmpty()) return;
+
+    const center = box.getCenter(new THREE.Vector3());
+    const size = box.getSize(new THREE.Vector3());
+    const targetHeight = 1.14;
+    const targetWidth = 0.74;
+    const scale = Math.min(
+        targetHeight / Math.max(size.y, 0.001),
+        targetWidth / Math.max(size.x, size.z, 0.001)
+    );
+    const content = group.children[0] || group;
+    const faceCenterY = center.y + size.y * 0.28;
+    content.position.x -= center.x;
+    content.position.y -= faceCenterY;
+    content.position.z -= center.z;
+    content.rotation.y = 0;
+    group.scale.setScalar(scale);
+}
+
+function addScareModelGore(group) {
+    const bloodMat = new THREE.MeshBasicMaterial({
+        color: 0xa00606,
+        transparent: true,
+        opacity: 0.5,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        toneMapped: false
+    });
+    const darkBloodMat = new THREE.MeshBasicMaterial({
+        color: 0x260101,
+        transparent: true,
+        opacity: 0.42,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    const glowMat = new THREE.MeshBasicMaterial({
+        color: 0xff1717,
+        transparent: true,
+        opacity: 0.18,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false
+    });
+
+    const gore = new THREE.Group();
+    gore.name = "scare-blood-face-layer";
+    gore.renderOrder = 40;
+
+    [
+        [-0.11, 0.28, 0.42, 0.055, 0.24, -18, bloodMat],
+        [0.07, 0.22, 0.43, 0.045, 0.18, 12, darkBloodMat],
+        [0.16, 0.06, 0.42, 0.07, 0.34, 7, bloodMat],
+        [-0.18, -0.02, 0.41, 0.05, 0.22, -9, darkBloodMat]
+    ].forEach(([x, y, z, w, h, rot, mat]) => {
+        const streak = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+        streak.position.set(x, y, z);
+        streak.rotation.z = THREE.MathUtils.degToRad(rot);
+        gore.add(streak);
+    });
+
+    [
+        [-0.12, 0.34, 0.44, 0.12],
+        [0.12, 0.34, 0.44, 0.12],
+        [0, 0.14, 0.45, 0.18]
+    ].forEach(([x, y, z, radius]) => {
+        const splat = new THREE.Mesh(new THREE.CircleGeometry(radius, 22), glowMat);
+        splat.position.set(x, y, z);
+        splat.scale.set(1.35, 0.72, 1);
+        splat.userData.scareGorePulse = true;
+        gore.add(splat);
+    });
+
+    group.add(gore);
+}
+
+function tintScareModel(group) {
+    group.traverse(child => {
+        if (!child.isMesh || !child.material) return;
+        const patch = material => {
+            const cloned = material.clone();
+            if (cloned.color) {
+                cloned.color.multiplyScalar(cloned.map ? 0.78 : 0.58);
+            }
+            if ("emissive" in cloned) {
+                cloned.emissive = new THREE.Color(0x1d0202);
+                cloned.emissiveIntensity = 0.1;
+            }
+            if ("roughness" in cloned) cloned.roughness = 0.92;
+            if ("metalness" in cloned) cloned.metalness = 0.02;
+            cloned.side = THREE.DoubleSide;
+            cloned.needsUpdate = true;
+            return cloned;
+        };
+        child.material = Array.isArray(child.material)
+            ? child.material.map(patch)
+            : patch(child.material);
+        child.castShadow = true;
+        child.receiveShadow = true;
+    });
 }
 
 function createSignatureGraffiti(trimMat) {
@@ -430,13 +894,13 @@ function createSignatureDecor() {
             });
     });
 
-    const katanaRim = new THREE.PointLight(0xffe5b6, 0.5, 2.8, 2);
-    katanaRim.position.set(-3.18, 2.1, 0);
+    const katanaRim = new THREE.PointLight(0xf6fbff, 0.95, 3.1, 2);
+    katanaRim.position.set(-3.12, 2.02, 0);
     state.scene.add(katanaRim);
 
-    const katanaAccent = new THREE.SpotLight(0xffd7a0, 0.92, 3.6, Math.PI / 8, 0.52, 1.7);
-    katanaAccent.position.set(-2.72, 2.36, 0);
-    katanaAccent.target.position.set(-3.82, 1.82, 0);
+    const katanaAccent = new THREE.SpotLight(0xf8fbff, 1.35, 3.8, Math.PI / 9, 0.42, 1.5);
+    katanaAccent.position.set(-2.72, 2.2, 0);
+    katanaAccent.target.position.set(-3.82, 1.72, 0);
     katanaAccent.castShadow = true;
     state.scene.add(katanaAccent, katanaAccent.target);
 }
@@ -470,6 +934,9 @@ function loadStaticDecorCandidate(config, candidates, index) {
                 group.add(gltf.scene);
                 prepareObjectMeshes(group);
                 normalizeStaticDecorModel(group, config);
+                if (config.fallback === "katana") {
+                    polishBrightKatanaMaterials(group);
+                }
                 applyStaticDecorMeta(group, config, false);
                 group.userData.sourceUrl = modelUrl;
                 resolve(group);
@@ -512,6 +979,11 @@ function normalizeStaticDecorModel(group, config) {
 
 function placeStaticDecor(object, config) {
     object.position.set(config.position[0], config.position[1], config.position[2]);
+    if (config.modelOffset) {
+        object.position.x += config.modelOffset[0] || 0;
+        object.position.y += config.modelOffset[1] || 0;
+        object.position.z += config.modelOffset[2] || 0;
+    }
     object.rotation.set(
         THREE.MathUtils.degToRad(config.rotation?.[0] || 0),
         THREE.MathUtils.degToRad(config.rotation?.[1] || 0),
@@ -580,6 +1052,37 @@ function createKatanaWallMount(config) {
     );
     group.name = "Katana wall rack";
     return group;
+}
+
+function polishBrightKatanaMaterials(object) {
+    object.traverse(child => {
+        if (!child.isMesh || !child.material) return;
+        const polish = material => {
+            if (!material.isMeshStandardMaterial) return material;
+            const enhanced = material.clone();
+            const brightness = enhanced.color ? enhanced.color.r + enhanced.color.g + enhanced.color.b : 0;
+            const hasEmissiveTexture = Boolean(enhanced.emissiveMap);
+            const isBladeLike = brightness > 2.15 || hasEmissiveTexture;
+            enhanced.metalness = isBladeLike ? 0.86 : Math.max(enhanced.metalness ?? 0, 0.18);
+            enhanced.roughness = isBladeLike ? 0.16 : Math.min(enhanced.roughness ?? 0.6, 0.48);
+            enhanced.emissive = isBladeLike ? new THREE.Color(0xdde8ff) : new THREE.Color(0x000000);
+            enhanced.emissiveIntensity = isBladeLike
+                ? (hasEmissiveTexture ? Math.max(enhanced.emissiveIntensity ?? 0, 1.85) : 0.16)
+                : 0;
+            enhanced.envMapIntensity = isBladeLike ? 2.8 : 1.15;
+            if (isBladeLike) {
+                enhanced.color = new THREE.Color(0xf6fbff);
+            }
+            enhanced.side = THREE.DoubleSide;
+            enhanced.toneMapped = false;
+            enhanced.needsUpdate = true;
+            return enhanced;
+        };
+
+        child.material = Array.isArray(child.material)
+            ? child.material.map(polish)
+            : polish(child.material);
+    });
 }
 
 function createShenronFallback() {
@@ -1097,26 +1600,85 @@ function createLampPlaceholder(productItem, fixed = false) {
 
 function createPlantPlaceholder(productItem, fixed = false) {
     const group = new THREE.Group();
-    const potMat = new THREE.MeshStandardMaterial({ color: 0x8d5639, roughness: 0.86 });
-    const stemMat = new THREE.MeshStandardMaterial({ color: 0x4b321f, roughness: 0.8 });
-    const leafMat = new THREE.MeshStandardMaterial({ color: 0x5f8d57, roughness: 0.82 });
-    group.add(createCylinder(0.28, 0.22, 0.38, potMat, [0, 0.19, 0]));
-    group.add(createCylinder(0.035, 0.035, 0.75, stemMat, [0, 0.72, 0]));
-    const leaves = [
-        [0.18, 1.1, 0.02, 0.36, 0.16, 0.24],
-        [-0.22, 0.98, 0.08, 0.32, 0.14, 0.22],
-        [0.02, 1.2, -0.18, 0.3, 0.14, 0.2],
-        [0.28, 0.9, -0.12, 0.28, 0.12, 0.2],
-        [-0.2, 1.18, -0.08, 0.34, 0.14, 0.22]
+    const potMat = new THREE.MeshStandardMaterial({ color: 0x7f4a31, roughness: 0.84, metalness: 0.02 });
+    const potRimMat = new THREE.MeshStandardMaterial({ color: 0xa66a42, roughness: 0.78, metalness: 0.04 });
+    const soilMat = new THREE.MeshStandardMaterial({ color: 0x2c1c13, roughness: 0.96 });
+    const stemMat = new THREE.MeshStandardMaterial({ color: 0x4a321f, roughness: 0.78 });
+    const leafDark = new THREE.MeshStandardMaterial({ color: 0x2f6a43, roughness: 0.72, side: THREE.DoubleSide });
+    const leafMid = new THREE.MeshStandardMaterial({ color: 0x4f9661, roughness: 0.76, side: THREE.DoubleSide });
+    const leafLight = new THREE.MeshStandardMaterial({
+        color: 0x79b46d,
+        roughness: 0.68,
+        emissive: 0x173b22,
+        emissiveIntensity: 0.035,
+        side: THREE.DoubleSide
+    });
+    const veinMat = new THREE.MeshBasicMaterial({ color: 0xd7e7b3, transparent: true, opacity: 0.46 });
+
+    group.add(createCylinder(0.31, 0.22, 0.4, potMat, [0, 0.2, 0]));
+    group.add(createCylinder(0.33, 0.33, 0.07, potRimMat, [0, 0.42, 0]));
+    group.add(createCylinder(0.24, 0.27, 0.045, soilMat, [0, 0.455, 0]));
+    group.add(createCylinder(0.28, 0.32, 0.055, potRimMat, [0, 0.045, 0]));
+
+    const stems = [
+        [0, 0.8, 0, 0, 0, 0],
+        [-0.1, 0.76, 0.05, 10, 0, 14],
+        [0.12, 0.82, -0.04, -8, 0, -16],
+        [0.02, 0.92, 0.08, 16, 0, -6]
     ];
-    leaves.forEach(([x, y, z, sx, sy, sz]) => {
-        const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.5, 18, 12), leafMat);
+    stems.forEach(([x, y, z, rx, ry, rz]) => {
+        const stem = createCylinder(0.018, 0.025, 0.8, stemMat, [x, y, z]);
+        stem.rotation.set(
+            THREE.MathUtils.degToRad(rx),
+            THREE.MathUtils.degToRad(ry),
+            THREE.MathUtils.degToRad(rz)
+        );
+        group.add(stem);
+    });
+
+    const leaves = [
+        [-0.34, 1.18, 0.04, 0.34, 0.74, leafDark, -16, -26, 34],
+        [0.33, 1.22, -0.06, 0.33, 0.76, leafMid, 14, 28, -35],
+        [-0.16, 1.42, -0.1, 0.28, 0.66, leafLight, 22, -10, 18],
+        [0.08, 1.52, 0.1, 0.3, 0.7, leafMid, -20, 12, -12],
+        [0.38, 1.02, 0.12, 0.26, 0.6, leafDark, -8, 38, -48],
+        [-0.38, 0.98, -0.12, 0.27, 0.62, leafMid, 12, -38, 44],
+        [0, 1.3, 0.18, 0.25, 0.58, leafLight, -28, 0, 0],
+        [0.18, 1.35, -0.22, 0.24, 0.56, leafDark, 30, 24, -24],
+        [-0.05, 1.08, 0.22, 0.22, 0.52, leafMid, -34, -8, 8]
+    ];
+    leaves.forEach(([x, y, z, width, height, material, rx, ry, rz]) => {
+        const leaf = createPlantLeaf(width, height, material, veinMat);
         leaf.position.set(x, y, z);
-        leaf.scale.set(sx, sy, sz);
-        leaf.castShadow = true;
+        leaf.rotation.set(
+            THREE.MathUtils.degToRad(rx),
+            THREE.MathUtils.degToRad(ry),
+            THREE.MathUtils.degToRad(rz)
+        );
         group.add(leaf);
     });
+
     if (productItem) applyRoomItemMeta(group, productItem, !fixed);
+    return group;
+}
+
+function createPlantLeaf(width, height, material, veinMat) {
+    const group = new THREE.Group();
+    const shape = new THREE.Shape();
+    shape.moveTo(0, height * 0.5);
+    shape.bezierCurveTo(width * 0.54, height * 0.24, width * 0.5, -height * 0.3, 0, -height * 0.5);
+    shape.bezierCurveTo(-width * 0.5, -height * 0.3, -width * 0.54, height * 0.24, 0, height * 0.5);
+
+    const leaf = new THREE.Mesh(new THREE.ShapeGeometry(shape, 24), material);
+    leaf.castShadow = true;
+    leaf.receiveShadow = true;
+    group.add(leaf);
+
+    const vein = createBox(width * 0.035, height * 0.82, 0.004, veinMat, [0, 0, 0.006]);
+    vein.castShadow = false;
+    vein.receiveShadow = false;
+    group.add(vein);
+
     return group;
 }
 
@@ -1249,6 +1811,12 @@ function setInspectorOpen(open) {
 
 function handlePointerDown(event) {
     setPointerFromEvent(event);
+    if (getWindowScareHit()) {
+        triggerWindowScare();
+        selectObject(null);
+        return;
+    }
+
     const hitObject = getRoomItemFromPointer();
 
     if (!hitObject) {
@@ -1267,6 +1835,47 @@ function handlePointerDown(event) {
         state.isDraggingObject = true;
         state.orbitControls.enabled = false;
     }
+}
+
+function getWindowScareHit() {
+    const triggers = state.windowScare.triggerMeshes;
+    if (!triggers.length) return false;
+    state.raycaster.setFromCamera(state.pointer, state.camera);
+    const hitbox = state.windowScare.screenHitbox;
+    if (hitbox) {
+        hitbox.visible = true;
+        const hit = state.raycaster.intersectObject(hitbox, false).length > 0;
+        hitbox.visible = false;
+        if (hit) return true;
+    }
+    return state.raycaster.intersectObjects(triggers.filter(mesh => mesh !== hitbox), true).length > 0;
+}
+
+function triggerWindowScare() {
+    const scare = state.windowScare;
+    const now = performance.now();
+    if (scare.active || now < scare.cooldownUntil) return;
+    if (scare.scareGroup?.userData.waitingForModel) {
+        showToast("Dang tai model doa...");
+        scare.cooldownUntil = now + 900;
+        return;
+    }
+
+    scare.active = true;
+    scare.startTime = now;
+    scare.cooldownUntil = now + 3600;
+    scare.controlsWereEnabled = state.orbitControls?.enabled !== false;
+    if (state.orbitControls) state.orbitControls.enabled = false;
+    if (scare.scareGroup) {
+        scare.scareGroup.visible = true;
+        scare.scareGroup.scale.setScalar(0.08);
+        scare.scareGroup.position.set(-2.85, 1.95, -3.88);
+        scare.scareGroup.userData.baseRotationZ = 0;
+    }
+    if (scare.voidPlane) scare.voidPlane.visible = true;
+    if (scare.flashPlane) scare.flashPlane.visible = true;
+    if (scare.darkOverlay) scare.darkOverlay.style.opacity = "0.18";
+    showToast("Coi chung!");
 }
 
 function handlePointerMove(event) {
@@ -1434,15 +2043,108 @@ function takeSnapshot() {
     showToast("Đã chụp ảnh showroom 3D.");
 }
 
-function buyRoom() {
+async function buyRoom() {
     if (!state.roomItems.length) {
         showToast("Hãy thêm ít nhất một sản phẩm vào phòng.");
         return;
     }
 
-    const total = state.roomItems.reduce((sum, item) => sum + item.price, 0);
-    showToast(`Đã chọn ${state.roomItems.length} sản phẩm, tổng ${currencyFormatter.format(total)}. Checkout bộ phòng sẽ được kết nối sau.`);
-    // TODO: Later POST roomItems to /Cart/AddRoomItems when the backend endpoint exists.
+    const items = state.roomItems.map(item => ({
+        productId: item.productId,
+        name: item.name,
+        category: item.category,
+        price: item.price || 0,
+        quantity: item.quantity || 1
+    }));
+
+    await addRoomItemsToCart(items, { button: dom.buyRoomBtn, saveOnLogin: true });
+}
+
+async function resumePendingRoomCart() {
+    const items = consumePendingRoomCart();
+    if (!items.length) return;
+
+    window.setTimeout(() => {
+        showToast("Dang tiep tuc them san pham vao gio hang...");
+        addRoomItemsToCart(items, { button: dom.buyRoomBtn, saveOnLogin: false });
+    }, 450);
+}
+
+async function addRoomItemsToCart(items, options = {}) {
+    const token = getAntiForgeryToken();
+    if (!token) {
+        showToast("Khong the xac thuc phien mua hang. Hay tai lai trang.");
+        return false;
+    }
+
+    const button = options.button;
+    button?.setAttribute("disabled", "disabled");
+    showToast("Dang them san pham vao gio hang...");
+
+    try {
+        const response = await fetch("/Cart/AddRoomItems", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "RequestVerificationToken": token
+            },
+            body: JSON.stringify({ items })
+        });
+        const result = await response.json().catch(() => null);
+
+        if (response.status === 401) {
+            if (options.saveOnLogin) savePendingRoomCart(items);
+            const loginUrl = result?.loginUrl || `/Account/Login?returnUrl=${encodeURIComponent(window.location.pathname)}`;
+            showToast("Can dang nhap de them phong 3D vao gio hang.");
+            window.setTimeout(() => {
+                window.location.href = loginUrl;
+            }, 650);
+            return false;
+        }
+
+        if (!response.ok || !result?.success) {
+            showToast(result?.message || "Chua the them bo phong vao gio hang.");
+            return false;
+        }
+
+        showToast(`Da them ${result.addedCount || items.length} mon vao gio hang.`);
+        window.location.href = result.redirectUrl || "/Cart";
+        return true;
+    } catch (error) {
+        console.error("Room cart add failed:", error);
+        showToast("Them bo phong vao gio hang dang bi loi ket noi.");
+        return false;
+    } finally {
+        button?.removeAttribute("disabled");
+    }
+
+}
+
+function savePendingRoomCart(items) {
+    try {
+        window.sessionStorage?.setItem(PENDING_ROOM_CART_KEY, JSON.stringify(items));
+    } catch (error) {
+        console.warn("Cannot save pending room cart:", error);
+    }
+}
+
+function consumePendingRoomCart() {
+    try {
+        const raw = window.sessionStorage?.getItem(PENDING_ROOM_CART_KEY);
+        if (!raw) return [];
+        window.sessionStorage?.removeItem(PENDING_ROOM_CART_KEY);
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+        console.warn("Cannot restore pending room cart:", error);
+        return [];
+    }
+}
+
+function getAntiForgeryToken() {
+    return document.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
 }
 
 async function toggleFullscreen() {
@@ -1636,6 +2338,7 @@ function animate() {
     state.animationFrame = requestAnimationFrame(animate);
     state.orbitControls?.update();
     animateCamera();
+    animateWindowScare();
     animateSpawnedItems();
     animateRotations();
     updateSelectionBox();
@@ -1665,6 +2368,124 @@ function animateCamera() {
     if (elapsed >= 1) {
         state.cameraAnimation = null;
     }
+}
+
+function animateWindowScare() {
+    const scare = state.windowScare;
+    const panel = scare.glassPanel;
+    const actor = scare.scareGroup;
+    if (!panel || !actor) return;
+
+    if (!scare.active) {
+        panel.rotation.y = THREE.MathUtils.lerp(panel.rotation.y, panel.userData.closedRotationY || 0, 0.12);
+        if (scare.darkOverlay) {
+            const currentOpacity = Number.parseFloat(scare.darkOverlay.style.opacity || "0") || 0;
+            scare.darkOverlay.style.opacity = `${THREE.MathUtils.lerp(currentOpacity, 0, 0.18)}`;
+        }
+        if (scare.light) scare.light.intensity = THREE.MathUtils.lerp(scare.light.intensity, 0, 0.16);
+        if (scare.voidPlane?.material) {
+            scare.voidPlane.material.opacity = THREE.MathUtils.lerp(scare.voidPlane.material.opacity, 0, 0.16);
+            scare.voidPlane.visible = scare.voidPlane.material.opacity > 0.01;
+        }
+        if (scare.flashPlane?.material) {
+            scare.flashPlane.material.opacity = THREE.MathUtils.lerp(scare.flashPlane.material.opacity, 0, 0.24);
+            scare.flashPlane.visible = scare.flashPlane.material.opacity > 0.01;
+        }
+        return;
+    }
+
+    const elapsed = performance.now() - scare.startTime;
+    const progress = THREE.MathUtils.clamp(elapsed / 2800, 0, 1);
+    const dread = easeOutCubic(THREE.MathUtils.clamp(progress / 0.05, 0, 1));
+    const reveal = progress > 0.018 ? 1 : 0;
+    const snap = easeOutCubic(THREE.MathUtils.clamp((progress - 0.018) / 0.04, 0, 1));
+    const retreat = easeOutCubic(THREE.MathUtils.clamp((progress - 0.76) / 0.16, 0, 1));
+    const hold = 1 - retreat;
+    const presence = Math.max(0, reveal * hold);
+    const closePresence = Math.max(0, snap * hold);
+    const tension = dread * (1 - closePresence);
+    const holdJitter = closePresence > 0.94 && retreat < 0.05 ? 0.018 : 0;
+    const shake = Math.sin(elapsed * 0.055) * 0.012 * (1 - closePresence) * (1 - retreat);
+    const doorOpen = easeOutCubic(THREE.MathUtils.clamp(progress / 0.08, 0, 1));
+
+    if (scare.darkOverlay) {
+        const flicker = Math.max(0, Math.sin(elapsed * 0.018) * Math.sin(elapsed * 0.073)) * 0.1;
+        scare.darkOverlay.style.opacity = `${Math.min(0.94, 0.16 + dread * 0.5 + presence * 0.16 + closePresence * 0.18 + flicker)}`;
+    }
+
+    panel.rotation.y = -1.02 * doorOpen * (1 - retreat * 0.72) + shake;
+    actor.visible = presence > 0.01;
+    const start = new THREE.Vector3(-2.85, 1.95, -3.88);
+    const doorway = new THREE.Vector3(
+        -2.85 + Math.sin(elapsed * 0.014) * 0.055 * presence,
+        1.91 + Math.sin(elapsed * 0.019) * 0.035 * presence - tension * 0.04,
+        -3.14
+    );
+    const cameraForward = new THREE.Vector3();
+    state.camera.getWorldDirection(cameraForward);
+    const cameraRight = new THREE.Vector3().crossVectors(cameraForward, state.camera.up).normalize();
+    const cameraUp = new THREE.Vector3().crossVectors(cameraRight, cameraForward).normalize();
+    const isLoadedModel = actor.userData.usingModel === true;
+    const pulse = Math.sin(elapsed * 0.035) * (0.02 + closePresence * 0.028) * presence;
+    const scale = 0.08 + presence * (0.92 + closePresence * (isLoadedModel ? 1.65 : 3.05)) + pulse;
+    const closeDistance = isLoadedModel ? 1.05 : 0.82;
+    const faceCenterOffset = isLoadedModel ? 0 : 0.46 + closePresence * 0.2;
+    const closeTarget = state.camera.position
+        .clone()
+        .add(cameraForward.clone().multiplyScalar(closeDistance))
+        .add(cameraUp.clone().multiplyScalar(-faceCenterOffset));
+    actor.position.copy(start.lerp(closeTarget, Math.max(reveal * 0.82, closePresence)));
+    actor.scale.set(scale, scale * (1 + 0.22 * presence + 0.22 * closePresence), scale);
+    actor.lookAt(state.camera.position);
+    actor.rotateZ(closePresence > 0.2 ? 0 : (actor.userData.baseRotationZ || 0));
+    actor.traverse(child => {
+        if (child.userData?.scarePulse) {
+            const eyePulse = 0.9 + Math.max(0, Math.sin(elapsed * 0.024)) * (0.65 + closePresence * 0.7);
+            child.scale.set(0.7 * eyePulse, 1.2 * eyePulse, 1);
+        }
+        if (child.userData?.scareGorePulse) {
+            const gorePulse = 1 + Math.max(0, Math.sin(elapsed * 0.045)) * (0.25 + closePresence * 0.35);
+            child.scale.set(1.35 * gorePulse, 0.72 * gorePulse, 1);
+            child.material.opacity = Math.min(0.38, 0.12 + closePresence * 0.16 + gorePulse * 0.04);
+        }
+    });
+
+    if (scare.light) {
+        scare.light.position.copy(actor.position).add(new THREE.Vector3(0, 0.12, 0.18));
+        scare.light.intensity = 0.12 + dread * 0.7 + presence * (2.4 + closePresence * 9.2 + Math.sin(elapsed * 0.041) * 1.25);
+    }
+
+    if (scare.voidPlane?.material) {
+        scare.voidPlane.visible = true;
+        scare.voidPlane.material.opacity = 0.22 + dread * 0.38 + presence * 0.4;
+    }
+
+    if (scare.flashPlane?.material) {
+        scare.flashPlane.visible = true;
+        const flash = Math.max(0, Math.sin(progress * Math.PI * 5)) * presence;
+        scare.flashPlane.material.opacity = Math.min(0.44, flash * 0.12 + closePresence * 0.2);
+    }
+
+    if (progress >= 1) {
+        scare.active = false;
+        actor.visible = false;
+        actor.scale.setScalar(0.08);
+        if (scare.light) scare.light.intensity = 0;
+        if (scare.voidPlane?.material) {
+            scare.voidPlane.material.opacity = 0;
+            scare.voidPlane.visible = false;
+        }
+        if (scare.flashPlane?.material) {
+            scare.flashPlane.material.opacity = 0;
+            scare.flashPlane.visible = false;
+        }
+        if (scare.darkOverlay) scare.darkOverlay.style.opacity = "0";
+        if (state.orbitControls) state.orbitControls.enabled = scare.controlsWereEnabled !== false;
+    }
+}
+
+function easeOutCubic(value) {
+    return 1 - Math.pow(1 - value, 3);
 }
 
 function animateSpawnedItems() {

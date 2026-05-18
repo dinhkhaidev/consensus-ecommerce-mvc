@@ -63,25 +63,42 @@ public class AdminProductController : AdminControllerBase
 
     public IActionResult Create()
     {
-        ViewBag.Categories = _context.Categories.OrderBy(c => c.CategoryName).ToList();
-        ViewBag.Suppliers = _context.Suppliers.OrderBy(s => s.CompanyName).ToList();
+        LoadProductLookups();
         return View();
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(Product product, List<IFormFile>? imageFiles, List<ProductVariantInput>? variants)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(Product product, List<IFormFile>? imageFiles, List<ProductVariantInput>? variants, int unitsInStock = 0)
     {
+        NormalizeProductModelState();
+        await ValidateProductInputAsync(product.ProductName, product.CategoryID, product.QuantityPerUnit, product.UnitPrice);
+
         if (ModelState.IsValid)
         {
+            product.ProductName = product.ProductName?.Trim() ?? string.Empty;
+            product.QuantityPerUnit = product.QuantityPerUnit?.Trim();
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
-            await SaveProductVariantsAsync(product.Id, variants);
+            var savedVariantCount = await SaveProductVariantsAsync(product.Id, variants);
+            if (savedVariantCount == 0 && unitsInStock > 0)
+            {
+                _context.ProductVariants.Add(new ProductVariant
+                {
+                    ProductId = product.Id,
+                    Size = "Standard",
+                    SKU = $"SKU-{product.Id}",
+                    PriceAdjustment = 0,
+                    StockQuantity = unitsInStock,
+                    IsActive = true
+                });
+                await _context.SaveChangesAsync();
+            }
             await SaveProductImagesAsync(product.Id, product.ProductName, imageFiles, hasMainImage: false);
             TempData["ToastSuccess"] = "Product created successfully!";
             return RedirectToAction(nameof(Index));
         }
-        ViewBag.Categories = _context.Categories.OrderBy(c => c.CategoryName).ToList();
-        ViewBag.Suppliers = _context.Suppliers.OrderBy(s => s.CompanyName).ToList();
+        LoadProductLookups();
         return View(product);
     }
 
@@ -92,21 +109,26 @@ public class AdminProductController : AdminControllerBase
             .Include(p => p.Variants)
             .FirstOrDefaultAsync(p => p.Id == id);
         if (product == null) return NotFound();
-        ViewBag.Categories = _context.Categories.OrderBy(c => c.CategoryName).ToList();
-        ViewBag.Suppliers = _context.Suppliers.OrderBy(s => s.CompanyName).ToList();
+        LoadProductLookups();
         return View(product);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Edit(Product product, List<IFormFile>? imageFiles, List<ProductVariantInput>? variants)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(ProductFormInput product, List<IFormFile>? imageFiles, List<ProductVariantInput>? variants)
     {
+        ModelState.Clear();
+        if (product.Id <= 0)
+            ModelState.AddModelError(nameof(ProductFormInput.Id), "Product id is invalid.");
+        await ValidateProductInputAsync(product.ProductName, product.CategoryID, product.QuantityPerUnit, product.UnitPrice);
+
         if (ModelState.IsValid)
         {
             var existingProduct = await _context.Products.FindAsync(product.Id);
             if (existingProduct == null) return NotFound();
 
-            existingProduct.ProductName = product.ProductName;
-            existingProduct.QuantityPerUnit = product.QuantityPerUnit;
+            existingProduct.ProductName = product.ProductName?.Trim() ?? string.Empty;
+            existingProduct.QuantityPerUnit = product.QuantityPerUnit?.Trim();
             existingProduct.UnitPrice = product.UnitPrice;
             existingProduct.CategoryID = product.CategoryID;
             existingProduct.SupplierID = product.SupplierID;
@@ -119,9 +141,10 @@ public class AdminProductController : AdminControllerBase
             TempData["ToastSuccess"] = "Product updated successfully!";
             return RedirectToAction(nameof(Index));
         }
-        ViewBag.Categories = _context.Categories.OrderBy(c => c.CategoryName).ToList();
-        ViewBag.Suppliers = _context.Suppliers.OrderBy(s => s.CompanyName).ToList();
-        return View(product);
+
+        LoadProductLookups();
+        var viewProduct = await BuildEditViewProductAsync(product);
+        return View(viewProduct);
     }
 
     public async Task<IActionResult> Delete(int id)
@@ -144,17 +167,90 @@ public class AdminProductController : AdminControllerBase
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task SaveProductVariantsAsync(int productId, List<ProductVariantInput>? variants)
+    private void NormalizeProductModelState()
+    {
+        var ignoredPrefixes = new[]
+        {
+            "Category",
+            "Supplier",
+            "Images",
+            "Variants",
+            "Reviews",
+            "Wishlists",
+            "product.Category",
+            "product.Supplier",
+            "product.Images",
+            "product.Variants",
+            "product.Reviews",
+            "product.Wishlists"
+        };
+
+        foreach (var key in ModelState.Keys
+            .Where(key => ignoredPrefixes.Any(prefix =>
+                key.Equals(prefix, StringComparison.OrdinalIgnoreCase)
+                || key.StartsWith($"{prefix}.", StringComparison.OrdinalIgnoreCase)))
+            .ToList())
+        {
+            ModelState.Remove(key);
+        }
+    }
+
+    private void LoadProductLookups()
+    {
+        ViewBag.Categories = _context.Categories.OrderBy(c => c.CategoryName).ToList();
+        ViewBag.Suppliers = _context.Suppliers.OrderBy(s => s.CompanyName).ToList();
+    }
+
+    private async Task<Product> BuildEditViewProductAsync(ProductFormInput input)
+    {
+        var product = await _context.Products
+            .Include(p => p.Images)
+            .Include(p => p.Variants)
+            .FirstOrDefaultAsync(p => p.Id == input.Id)
+            ?? new Product { Id = input.Id };
+
+        product.ProductName = input.ProductName ?? string.Empty;
+        product.QuantityPerUnit = input.QuantityPerUnit;
+        product.UnitPrice = input.UnitPrice;
+        product.CategoryID = input.CategoryID;
+        product.SupplierID = input.SupplierID;
+        product.Discontinued = input.Discontinued;
+
+        return product;
+    }
+
+    private async Task ValidateProductInputAsync(string? productName, int categoryId, string? quantityPerUnit, decimal unitPrice)
+    {
+        if (string.IsNullOrWhiteSpace(productName))
+            ModelState.AddModelError(nameof(Product.ProductName), "Product name is required.");
+
+        if (productName?.Length > 150)
+            ModelState.AddModelError(nameof(Product.ProductName), "Product name must be 150 characters or fewer.");
+
+        if (quantityPerUnit?.Length > 100)
+            ModelState.AddModelError(nameof(Product.QuantityPerUnit), "Description must be 100 characters or fewer.");
+
+        if (unitPrice < 0)
+            ModelState.AddModelError(nameof(Product.UnitPrice), "Price cannot be negative.");
+
+        var categoryExists = categoryId > 0
+            && await _context.Categories.AnyAsync(c => c.Id == categoryId);
+        if (!categoryExists)
+            ModelState.AddModelError(nameof(Product.CategoryID), "Please select a valid category.");
+    }
+
+    private async Task<int> SaveProductVariantsAsync(int productId, List<ProductVariantInput>? variants)
     {
         if (variants == null || variants.Count == 0)
-            return;
+            return 0;
 
+        var savedCount = 0;
         foreach (var input in variants)
         {
             var hasValue = !string.IsNullOrWhiteSpace(input.Color)
                 || !string.IsNullOrWhiteSpace(input.Size)
                 || !string.IsNullOrWhiteSpace(input.SKU)
-                || input.PriceAdjustment.HasValue
+                || (input.PriceAdjustment.HasValue && input.PriceAdjustment.Value != 0)
                 || input.StockQuantity > 0;
 
             if (!hasValue && input.Id <= 0)
@@ -180,6 +276,7 @@ public class AdminProductController : AdminControllerBase
                 existing.PriceAdjustment = input.PriceAdjustment ?? 0;
                 existing.StockQuantity = Math.Max(0, input.StockQuantity);
                 existing.IsActive = input.IsActive;
+                savedCount++;
                 continue;
             }
 
@@ -196,9 +293,11 @@ public class AdminProductController : AdminControllerBase
                 StockQuantity = Math.Max(0, input.StockQuantity),
                 IsActive = input.IsActive
             });
+            savedCount++;
         }
 
         await _context.SaveChangesAsync();
+        return savedCount;
     }
 
     private async Task SaveProductImagesAsync(int productId, string? productName, List<IFormFile>? imageFiles, bool hasMainImage)
@@ -277,4 +376,15 @@ public class ProductVariantInput
     public int StockQuantity { get; set; }
     public bool IsActive { get; set; } = true;
     public bool Remove { get; set; }
+}
+
+public class ProductFormInput
+{
+    public int Id { get; set; }
+    public string? ProductName { get; set; }
+    public int CategoryID { get; set; }
+    public int? SupplierID { get; set; }
+    public string? QuantityPerUnit { get; set; }
+    public decimal UnitPrice { get; set; }
+    public bool Discontinued { get; set; }
 }

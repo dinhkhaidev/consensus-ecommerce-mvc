@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebActionResults.Services;
+using WebActionResults.Utilities;
 
 namespace WebActionResults.Controllers;
 
@@ -17,7 +18,7 @@ public class LanguageController : Controller
         _localizationService.SetLanguage(lang);
 
         if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return Redirect(returnUrl);
+            return Redirect(RedirectUrlSanitizer.EscapeHeaderValue(returnUrl));
 
         return RedirectToAction("Index", "Home");
     }

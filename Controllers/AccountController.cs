@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebActionResults.Data.Entities;
 using WebActionResults.Data.Services;
 using WebActionResults.Services;
+using WebActionResults.Utilities;
 using WebActionResults.ViewModels;
 using WebActionResults.Models;
 
@@ -70,7 +71,7 @@ public class AccountController : Controller
 
             TempData["ToastSuccessKey"] = "Auth.LoginSuccessful";
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-                return Redirect(model.ReturnUrl);
+                return Redirect(RedirectUrlSanitizer.EscapeHeaderValue(model.ReturnUrl));
 
             // Check user role and redirect accordingly
             var userRole = HttpContext.Session.GetString("USER_ROLE");

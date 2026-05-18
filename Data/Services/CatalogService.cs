@@ -19,11 +19,11 @@ public interface ICatalogService
     Task<List<Product>> GetProductsByCategoryAsync(int categoryId);
     Task<List<Product>> GetFeaturedProductsAsync(int count = 8);
     Task<List<Product>> SearchProductsAsync(string keyword);
-    Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize);
+    Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
 
     // Variants & Images
     Task<List<ProductVariant>> GetProductVariantsAsync(int productId);
@@ -90,18 +90,18 @@ public class CatalogService : ICatalogService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize)
-        => await _productRepository.GetAllPaginatedAsync(page, pageSize);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize, string? sort = null)
+        => await _productRepository.GetAllPaginatedAsync(page, pageSize, sort);
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize)
-        => await _productRepository.GetByCategoryPaginatedAsync(categoryId, page, pageSize);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null)
+        => await _productRepository.GetByCategoryPaginatedAsync(categoryId, page, pageSize, sort);
 
-    public async Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize)
-        => await _productRepository.SearchPaginatedAsync(keyword, page, pageSize);
+    public async Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize, string? sort = null)
+        => await _productRepository.SearchPaginatedAsync(keyword, page, pageSize, sort);
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize)
-        => await _productRepository.GetByPriceRangeAsync(minPrice, maxPrice, page, pageSize);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
+        => await _productRepository.GetByPriceRangeAsync(minPrice, maxPrice, page, pageSize, sort);
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize)
-        => await _productRepository.GetByCategoryAndPriceRangeAsync(categoryId, minPrice, maxPrice, page, pageSize);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
+        => await _productRepository.GetByCategoryAndPriceRangeAsync(categoryId, minPrice, maxPrice, page, pageSize, sort);
 }

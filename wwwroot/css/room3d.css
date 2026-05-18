@@ -32,10 +32,25 @@ body:has(.room3d-page) {
 }
 
 #room3dCanvas {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: 100%;
     display: block;
     outline: none;
+}
+
+.room-scare-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        radial-gradient(circle at 50% 45%, rgba(120, 0, 0, 0.34), transparent 22%),
+        radial-gradient(circle at 50% 50%, transparent 12%, rgba(0, 0, 0, 0.78) 64%, rgba(0, 0, 0, 0.94) 100%),
+        rgba(0, 0, 0, 0.52);
+    transition: opacity 0.08s linear;
 }
 
 .room3d-topbar,
@@ -889,4 +904,145 @@ body:has(.room3d-page) {
         width: 100%;
         text-align: center;
     }
+}
+
+/* Dark mode has broad global text rules, so the 3D room needs scoped
+   overrides to keep its glass panels, badges, buttons, and prices readable. */
+[data-bs-theme="dark"] .room3d-page {
+    background:
+        radial-gradient(circle at 20% 16%, rgba(212, 127, 49, 0.2), transparent 32%),
+        radial-gradient(circle at 78% 12%, rgba(255, 255, 255, 0.08), transparent 30%),
+        linear-gradient(135deg, #191512 0%, #241c17 48%, #151210 100%) !important;
+    color: #f4eee6 !important;
+}
+
+[data-bs-theme="dark"] .room3d-page *,
+[data-bs-theme="dark"] .room3d-page *::before,
+[data-bs-theme="dark"] .room3d-page *::after {
+    color: inherit !important;
+}
+
+[data-bs-theme="dark"] .topbar-left,
+[data-bs-theme="dark"] .topbar-actions,
+[data-bs-theme="dark"] .room3d-sidebar,
+[data-bs-theme="dark"] .room3d-inspector,
+[data-bs-theme="dark"] .selection-toggle,
+[data-bs-theme="dark"] .room3d-bottom-toolbar,
+[data-bs-theme="dark"] .detail-actions {
+    background: rgba(29, 24, 20, 0.78) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 54px rgba(0, 0, 0, 0.34) !important;
+}
+
+[data-bs-theme="dark"] .room3d-topbar h1,
+[data-bs-theme="dark"] .panel-toolbar h2,
+[data-bs-theme="dark"] .product-meta h3,
+[data-bs-theme="dark"] .selected-info strong,
+[data-bs-theme="dark"] .detail-topbar h2 {
+    color: #fff8ef !important;
+}
+
+[data-bs-theme="dark"] .room3d-topbar p,
+[data-bs-theme="dark"] .panel-toolbar p,
+[data-bs-theme="dark"] .library-stats,
+[data-bs-theme="dark"] .selected-info,
+[data-bs-theme="dark"] .selected-info.empty,
+[data-bs-theme="dark"] .selected-info span,
+[data-bs-theme="dark"] .room3d-bottom-toolbar,
+[data-bs-theme="dark"] .detail-topbar p,
+[data-bs-theme="dark"] .detail-actions > span,
+[data-bs-theme="dark"] .product-line small {
+    color: rgba(244, 238, 230, 0.68) !important;
+}
+
+[data-bs-theme="dark"] .eyebrow,
+[data-bs-theme="dark"] .panel-kicker,
+[data-bs-theme="dark"] .product-price {
+    color: #f0a85b !important;
+}
+
+[data-bs-theme="dark"] .library-search,
+[data-bs-theme="dark"] .selected-info,
+[data-bs-theme="dark"] .room-product-card,
+[data-bs-theme="dark"] .category-chip {
+    background: rgba(255, 255, 255, 0.075) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-bs-theme="dark"] .library-search input {
+    color: #fff8ef !important;
+}
+
+[data-bs-theme="dark"] .library-search input::placeholder {
+    color: rgba(244, 238, 230, 0.48) !important;
+}
+
+[data-bs-theme="dark"] .category-chip {
+    color: rgba(244, 238, 230, 0.74) !important;
+}
+
+[data-bs-theme="dark"] .category-chip.is-active,
+[data-bs-theme="dark"] .room3d-page[data-has-selection="true"] .selection-toggle {
+    color: #21160f !important;
+    background: linear-gradient(135deg, #f0a85b, #d47f31) !important;
+    border-color: transparent !important;
+}
+
+[data-bs-theme="dark"] .product-thumb {
+    color: #f0a85b !important;
+    background:
+        linear-gradient(145deg, rgba(212, 127, 49, 0.25), rgba(255, 255, 255, 0.08)),
+        #2a211b !important;
+}
+
+[data-bs-theme="dark"] .product-line span {
+    color: #ffd59f !important;
+    background: rgba(212, 127, 49, 0.18) !important;
+}
+
+[data-bs-theme="dark"] .room3d-btn-primary,
+[data-bs-theme="dark"] .room3d-btn-primary *,
+[data-bs-theme="dark"] .room3d-btn-danger,
+[data-bs-theme="dark"] .room3d-btn-danger *,
+[data-bs-theme="dark"] .room-total,
+[data-bs-theme="dark"] .room-total strong,
+[data-bs-theme="dark"] .room-toast {
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .room3d-btn-light,
+[data-bs-theme="dark"] .room3d-icon-btn,
+[data-bs-theme="dark"] .room3d-icon-btn-soft {
+    color: #fff3e4 !important;
+    background: rgba(255, 255, 255, 0.09) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-bs-theme="dark"] .room3d-btn-light:hover,
+[data-bs-theme="dark"] .room3d-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+
+[data-bs-theme="dark"] .room-total {
+    background:
+        linear-gradient(135deg, rgba(16, 12, 9, 0.98), rgba(82, 49, 24, 0.94)),
+        #100c09 !important;
+}
+
+[data-bs-theme="dark"] .room-total span {
+    color: rgba(255, 255, 255, 0.64) !important;
+}
+
+[data-bs-theme="dark"] .loading-overlay {
+    color: #fff3e4 !important;
+    background:
+        radial-gradient(circle at center, rgba(51, 35, 22, 0.78), rgba(18, 14, 10, 0.82)),
+        rgba(18, 14, 10, 0.72) !important;
+}
+
+[data-bs-theme="dark"] .detail-viewer-shell {
+    background:
+        radial-gradient(circle at 25% 10%, rgba(255, 190, 105, 0.15), transparent 32%),
+        linear-gradient(135deg, #241c17, #151210) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
 }

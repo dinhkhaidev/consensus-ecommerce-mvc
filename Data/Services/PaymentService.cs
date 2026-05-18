@@ -107,11 +107,11 @@ public class PaymentService : IPaymentService
         }
         catch (Exception ex)
         {
-            return GetVNPayUrl() + $"?error={ex.Message}";
+            return GetVNPayUrl() + $"?error={Uri.EscapeDataString(ex.Message)}";
         }
     }
 
-    public string GenerateMoMoUrl(Payment payment, string returnUrl)
+    public string GenerateMoMoUrl(Payment payment, string? returnUrl)
     {
         var momoConfig = _configuration.GetSection("MoMo");
         var endpoint = GetMoMoUrl();

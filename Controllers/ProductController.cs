@@ -20,7 +20,7 @@ public class ProductController : Controller
         _settingsService = settingsService;
     }
 
-    public async Task<IActionResult> Index(int? categoryId, string? search, int? minPrice, int? maxPrice, string? priceRange, int page = 1, int pageSize = 12)
+    public async Task<IActionResult> Index(int? categoryId, string? search, int? minPrice, int? maxPrice, string? priceRange, string? sort, int page = 1, int pageSize = 12)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 12;
@@ -55,18 +55,18 @@ public class ProductController : Controller
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            (products, totalCount) = await _catalogService.SearchProductsPaginatedAsync(search, page, pageSize);
+            (products, totalCount) = await _catalogService.SearchProductsPaginatedAsync(search, page, pageSize, sort);
             ViewData["SearchTerm"] = search;
         }
         else if (categoryId.HasValue)
         {
             if (filterMinPrice.HasValue || filterMaxPrice.HasValue)
             {
-                (products, totalCount) = await _catalogService.GetProductsByCategoryAndPriceRangeAsync(categoryId.Value, filterMinPrice, filterMaxPrice, page, pageSize);
+                (products, totalCount) = await _catalogService.GetProductsByCategoryAndPriceRangeAsync(categoryId.Value, filterMinPrice, filterMaxPrice, page, pageSize, sort);
             }
             else
             {
-                (products, totalCount) = await _catalogService.GetProductsByCategoryPaginatedAsync(categoryId.Value, page, pageSize);
+                (products, totalCount) = await _catalogService.GetProductsByCategoryPaginatedAsync(categoryId.Value, page, pageSize, sort);
             }
             var category = await _catalogService.GetCategoryByIdAsync(categoryId.Value);
             ViewData["SelectedCategoryName"] = category?.CategoryName;
@@ -74,11 +74,11 @@ public class ProductController : Controller
         }
         else if (filterMinPrice.HasValue || filterMaxPrice.HasValue)
         {
-            (products, totalCount) = await _catalogService.GetProductsByPriceRangeAsync(filterMinPrice, filterMaxPrice, page, pageSize);
+            (products, totalCount) = await _catalogService.GetProductsByPriceRangeAsync(filterMinPrice, filterMaxPrice, page, pageSize, sort);
         }
         else
         {
-            (products, totalCount) = await _catalogService.GetProductsPaginatedAsync(page, pageSize);
+            (products, totalCount) = await _catalogService.GetProductsPaginatedAsync(page, pageSize, sort);
         }
 
         var viewModels = products.Select(p => new ProductListViewModel
@@ -99,6 +99,7 @@ public class ProductController : Controller
         ViewData["PageSize"] = pageSize;
         ViewData["TotalCount"] = totalCount;
         ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
+        ViewData["SortBy"] = sort;
 
         return View(viewModels);
     }

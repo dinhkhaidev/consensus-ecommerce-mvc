@@ -19,11 +19,11 @@ public interface IProductRepository
     Task<bool> RestoreStockAsync(int variantId, int quantity);
 
     // Paginated methods
-    Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize);
-    Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize);
+    Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
 }
 
 public class ProductRepository : IProductRepository
@@ -142,39 +142,37 @@ public class ProductRepository : IProductRepository
         return true;
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize)
+    public async Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize, string? sort = null)
     {
         var query = _context.Products.Where(p => !p.Discontinued);
         var totalCount = await query.CountAsync();
-        var items = await query
+        var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
-            .OrderBy(p => p.ProductName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize)
+    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null)
     {
         var query = _context.Products.Where(p => p.Category.Id == categoryId && !p.Discontinued);
         var totalCount = await query.CountAsync();
-        var items = await query
+        var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
-            .OrderBy(p => p.ProductName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize)
+    public async Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize, string? sort = null)
     {
         var lowerKeyword = keyword.ToLower();
         var query = _context.Products
@@ -182,19 +180,18 @@ public class ProductRepository : IProductRepository
                 (p.ProductName.ToLower().Contains(lowerKeyword) ||
                  (p.Category != null && p.Category.CategoryName.ToLower().Contains(lowerKeyword))));
         var totalCount = await query.CountAsync();
-        var items = await query
+        var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
-            .OrderBy(p => p.ProductName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize)
+    public async Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
     {
         var query = _context.Products.Where(p => !p.Discontinued);
 
@@ -204,19 +201,18 @@ public class ProductRepository : IProductRepository
             query = query.Where(p => p.UnitPrice <= maxPrice.Value);
 
         var totalCount = await query.CountAsync();
-        var items = await query
+        var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
-            .OrderBy(p => p.ProductName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize)
+    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
     {
         var query = _context.Products.Where(p => p.Category.Id == categoryId && !p.Discontinued);
 
@@ -226,15 +222,24 @@ public class ProductRepository : IProductRepository
             query = query.Where(p => p.UnitPrice <= maxPrice.Value);
 
         var totalCount = await query.CountAsync();
-        var items = await query
+        var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
-            .OrderBy(p => p.ProductName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
+
+    private static IQueryable<Product> ApplySort(IQueryable<Product> query, string? sort)
+        => sort switch
+        {
+            "price_asc" => query.OrderBy(p => p.UnitPrice).ThenBy(p => p.ProductName),
+            "price_desc" => query.OrderByDescending(p => p.UnitPrice).ThenBy(p => p.ProductName),
+            "name_desc" => query.OrderByDescending(p => p.ProductName),
+            "name_asc" => query.OrderBy(p => p.ProductName),
+            _ => query.OrderByDescending(p => p.Id)
+        };
 }

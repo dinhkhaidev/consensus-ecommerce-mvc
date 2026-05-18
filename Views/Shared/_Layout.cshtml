@@ -99,12 +99,10 @@
 </head>
 <body class="font-sans text-gray-800 @languageClass">
     @await Html.PartialAsync("_AnnouncementBar")
-
-<body class="font-sans text-gray-800">
     @await Html.PartialAsync("_Header")
 
     <main>
-        <div class= "container py-4">
+        <div class="container py-3">
             @await Html.PartialAsync("_Alerts")
         </div>
         @RenderBody()

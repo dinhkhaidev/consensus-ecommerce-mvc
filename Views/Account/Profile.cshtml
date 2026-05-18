@@ -89,7 +89,7 @@
                     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>@localizer.Get("Profile")</h5>
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="enableEdit()">
-                            <i class="bi bi-pencil"></i> @localizer.Get("EditAddress")
+                            <i class="bi bi-pencil"></i> @(localizer.CurrentLanguage == "vi" ? Html.Raw("S&#7917;a h&#7891; s&#417;") : Html.Raw("Edit Profile"))
                         </button>
                     </div>
                     <div class="card-body">
@@ -169,10 +169,10 @@
 
                             <div class="d-none" id="editActions">
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-check-lg me-2"></i>@localizer.Get("SaveAddress")
+                                    <i class="bi bi-check-lg me-2"></i>@localizer.Get("SaveProfile")
                                 </button>
                                 <button type="button" class="btn btn-outline-secondary ms-2" onclick="cancelEdit()">
-                                    <i class="bi bi-x-lg me-2"></i>@localizer.Get("BackToCart")
+                                    <i class="bi bi-x-lg me-2"></i>@localizer.Get("Cancel")
                                 </button>
                             </div>
                         </form>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebActionResults.Data.Services;
+using WebActionResults.Utilities;
 using WebActionResults.ViewModels;
 
 namespace WebActionResults.Controllers;
@@ -58,7 +59,7 @@ public class WishlistController : Controller
         TempData["ToastSuccess"] = "Added to wishlist.";
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return Redirect(returnUrl);
+            return Redirect(RedirectUrlSanitizer.EscapeHeaderValue(returnUrl));
 
         return RedirectToAction("Index", "Product");
     }

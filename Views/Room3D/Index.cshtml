@@ -5,6 +5,8 @@
 <link rel="stylesheet" href="~/css/room3d.css" asp-append-version="true" />
 
 <div id="room3dPage" class="room3d-page" data-library-open="false" data-inspector-open="false" data-detail-open="false">
+    @Html.AntiForgeryToken()
+
     <main class="room3d-stage" aria-label="Showroom nội thất 3D">
         <canvas id="room3dCanvas"></canvas>
 
@@ -43,7 +45,7 @@
             </button>
             <button id="buyRoomBtn" type="button" class="room3d-btn room3d-btn-primary">
                 <i class="bi bi-bag-check"></i>
-                <span>Mua cả bộ</span>
+                <span>Thêm vào giỏ</span>
             </button>
         </div>
     </header>
