@@ -1,0 +1,195 @@
+@{
+    ViewData["Title"] = "Trải nghiệm phòng 3D";
+}
+
+<link rel="stylesheet" href="~/css/room3d.css" asp-append-version="true" />
+
+<div id="room3dPage" class="room3d-page" data-library-open="false" data-inspector-open="false" data-detail-open="false">
+    @Html.AntiForgeryToken()
+
+    <main class="room3d-stage" aria-label="Showroom nội thất 3D">
+        <canvas id="room3dCanvas"></canvas>
+
+        <div id="loadingOverlay" class="loading-overlay">
+            <div class="loader"></div>
+            <p>Đang dựng showroom 3D...</p>
+        </div>
+
+        <div id="roomToast" class="room-toast" role="status" aria-live="polite"></div>
+    </main>
+
+    <header class="room3d-topbar">
+        <div class="topbar-left">
+            <button id="libraryToggleBtn" type="button" class="room3d-icon-btn" aria-controls="room3dLibrary" aria-expanded="false" title="Mở thư viện nội thất">
+                <i class="bi bi-grid-3x3-gap"></i>
+            </button>
+            <div>
+                <div class="eyebrow">Interactive 3D Room</div>
+                <h1>Trải nghiệm phòng 3D</h1>
+                <p>Xem thử combo nội thất trong showroom ảo.</p>
+            </div>
+        </div>
+
+        <div class="topbar-actions">
+            <button id="fullscreenBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-fullscreen"></i>
+                <span>Full màn hình</span>
+            </button>
+            <button id="resetCameraBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-camera-video"></i>
+                <span>Reset view</span>
+            </button>
+            <button id="snapshotBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-camera"></i>
+                <span>Chụp ảnh</span>
+            </button>
+            <button id="buyRoomBtn" type="button" class="room3d-btn room3d-btn-primary">
+                <i class="bi bi-bag-check"></i>
+                <span>Thêm vào giỏ</span>
+            </button>
+        </div>
+    </header>
+
+    <aside id="room3dLibrary" class="room3d-sidebar" aria-label="Thư viện nội thất 3D">
+        <div class="panel-toolbar">
+            <div>
+                <span class="panel-kicker">Furniture library</span>
+                <h2>Thư viện nội thất</h2>
+                <p>Chọn món để đặt vào phòng.</p>
+            </div>
+            <button id="libraryCloseBtn" type="button" class="room3d-icon-btn room3d-icon-btn-soft" title="Đóng thư viện">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="library-search">
+            <i class="bi bi-search"></i>
+            <input id="productSearchInput" type="search" placeholder="Tìm sofa, bàn, đèn..." autocomplete="off" />
+        </div>
+
+        <div class="library-stats">
+            <span id="libraryCount">0 models</span>
+            <span>Lazy load khi Add</span>
+        </div>
+
+        <div id="categoryFilters" class="category-filters" aria-label="Lọc danh mục"></div>
+
+        <div id="productList" class="product-list"></div>
+    </aside>
+
+    <aside id="room3dInspector" class="room3d-inspector" aria-label="Thông tin sản phẩm đang chọn">
+        <div class="panel-toolbar">
+            <div>
+                <span class="panel-kicker">Selection</span>
+                <h2>Đang chọn</h2>
+            </div>
+            <button id="inspectorCloseBtn" type="button" class="room3d-icon-btn room3d-icon-btn-soft" title="Thu gọn panel">
+                <i class="bi bi-chevron-down"></i>
+            </button>
+        </div>
+
+        <div id="selectedInfo" class="selected-info empty">Chưa chọn sản phẩm</div>
+
+        <div class="control-grid">
+            <button id="rotateLeftBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-counterclockwise"></i>
+                <span>Xoay trái</span>
+            </button>
+            <button id="rotateRightBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>Xoay phải</span>
+            </button>
+            <button id="pitchUpBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-up-right"></i>
+                <span>Nghiêng lên</span>
+            </button>
+            <button id="pitchDownBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-down-left"></i>
+                <span>Nghiêng xuống</span>
+            </button>
+            <button id="rollLeftBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-bar-left"></i>
+                <span>Lật trái</span>
+            </button>
+            <button id="rollRightBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-bar-right"></i>
+                <span>Lật phải</span>
+            </button>
+            <button id="focusSelectedBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-crosshair"></i>
+                <span>Focus</span>
+            </button>
+            <button id="resetRotationBtn" type="button" class="room3d-btn room3d-btn-light">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>Reset xoay</span>
+            </button>
+            <button id="deleteBtn" type="button" class="room3d-btn room3d-btn-danger">
+                <i class="bi bi-trash"></i>
+                <span>Xóa</span>
+            </button>
+        </div>
+
+        <div class="room-total">
+            <span>Tổng giá</span>
+            <strong id="totalPrice">0&nbsp;₫</strong>
+        </div>
+    </aside>
+
+    <section id="productDetailModal" class="product-detail-modal" aria-modal="true" aria-label="Xem chi tiết model 3D">
+        <div class="detail-viewer-shell">
+            <canvas id="productDetailCanvas"></canvas>
+
+            <div class="detail-loading" id="detailLoading">
+                <div class="loader"></div>
+                <p>Đang tải model chi tiết...</p>
+            </div>
+
+            <div class="detail-topbar">
+                <div>
+                    <span class="panel-kicker">Product viewer</span>
+                    <h2 id="detailProductName">Model nội thất</h2>
+                    <p id="detailProductMeta">Xoay, zoom và ngắm chi tiết sản phẩm.</p>
+                </div>
+                <button id="detailCloseBtn" type="button" class="room3d-icon-btn room3d-icon-btn-soft" title="Đóng xem chi tiết">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="detail-actions">
+                <button id="detailAutoRotateBtn" type="button" class="room3d-btn room3d-btn-light" aria-pressed="false">
+                    <i class="bi bi-arrow-repeat"></i>
+                    <span>Tự quay</span>
+                </button>
+                <button id="detailAddBtn" type="button" class="room3d-btn room3d-btn-primary">
+                    <i class="bi bi-plus-circle"></i>
+                    <span>Đặt vào phòng</span>
+                </button>
+                <span><i class="bi bi-mouse"></i> Kéo để xoay · Scroll để zoom</span>
+            </div>
+        </div>
+    </section>
+
+    <button id="inspectorToggleBtn" type="button" class="selection-toggle" aria-controls="room3dInspector" aria-expanded="false">
+        <i class="bi bi-sliders"></i>
+        <span>Selection</span>
+    </button>
+
+    <div class="room3d-bottom-toolbar">
+        <span><i class="bi bi-mouse"></i> Kéo để xoay</span>
+        <span>Scroll để zoom</span>
+        <span>Click sản phẩm để chỉnh</span>
+        <span>Kéo sản phẩm để di chuyển</span>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module" src="~/js/room3d.js" asp-append-version="true"></script>
+}

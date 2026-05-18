@@ -36,9 +36,21 @@
                     </a>
                 </li>
                 <li class="nav-item mb-2">
+                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Room3D") == true ? "active bg-primary text-white" : "")"
+                       asp-controller="Room3D" asp-action="Index">
+                        <i class="bi bi-badge-3d me-2"></i>@localizer.Get("Room3DNav")
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
                     <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Category") == true ? "active bg-primary text-white" : "")"
                        asp-controller="Category" asp-action="Index">
                         <i class="bi bi-grid-3x3-gap me-2"></i>@localizer.Get("Categories")
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Home/About") == true ? "active bg-primary text-white" : "")"
+                       asp-controller="Home" asp-action="About">
+                        <i class="bi bi-info-circle me-2"></i>@localizer.Get("AboutUs")
                     </a>
                 </li>
                 @if (Context.Session.GetInt32("USER_ID").HasValue)

@@ -27,7 +27,7 @@ GO
 CREATE TABLE Account (
     Id INT PRIMARY KEY IDENTITY(1,1),
     UserName NVARCHAR(20) NOT NULL,
-    FullName NVARCHAR(50) NOT NULL,
+    FullName NVARCHAR(100) NOT NULL,
     Password NVARCHAR(150) NOT NULL,
     Email NVARCHAR(50) NOT NULL,
     Phone NVARCHAR(50) NOT NULL,
@@ -35,12 +35,14 @@ CREATE TABLE Account (
     Sex NVARCHAR(10) NULL,
     Address NVARCHAR(255) NULL,
     Status INT DEFAULT 1,
+    Role NVARCHAR(20) DEFAULT 'Customer',
     Notes NVARCHAR(150) NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
     UpdatedAt DATETIME NULL,
     IsEmailVerified BIT NULL,
     EmailVerificationToken NVARCHAR(100) NULL,
-    EmailVerificationTokenExpiresAt DATETIME NULL
+    EmailVerificationTokenExpiresAt DATETIME NULL,
+    AvatarUrl NVARCHAR(500) NULL
 );
 CREATE UNIQUE INDEX IX_Account_UserName ON Account(UserName);
 CREATE UNIQUE INDEX IX_Account_Email ON Account(Email);
@@ -117,9 +119,10 @@ CREATE TABLE ProductVariants (
     ProductId INT NOT NULL,
     Size NVARCHAR(50) NULL,
     Color NVARCHAR(50) NULL,
-    SKU NVARCHAR(50) NULL,
+    SKU NVARCHAR(100) NULL,
     PriceAdjustment DECIMAL(18,2) NULL DEFAULT 0,
     StockQuantity INT NOT NULL DEFAULT 0,
+    IsActive BIT NOT NULL DEFAULT 1,
     CreatedAt DATETIME DEFAULT GETDATE(),
 
     FOREIGN KEY (ProductId) REFERENCES Products(Id) ON DELETE CASCADE
@@ -134,12 +137,13 @@ CREATE TABLE ProductImages (
     Id INT PRIMARY KEY IDENTITY(1,1),
     ProductId INT NOT NULL,
     VariantId INT NULL,
-    ImageUrl NVARCHAR(255) NOT NULL,
+    ImageUrl NVARCHAR(500) NOT NULL,
     AltText NVARCHAR(255) NULL,
+    DisplayOrder INT NOT NULL DEFAULT 0,
     IsMain BIT NOT NULL DEFAULT 0,
     CreatedAt DATETIME DEFAULT GETDATE(),
 
-    FOREIGN KEY (ProductId) REFERENCES Products(Id) ON DELETE CASCADE,
+    FOREIGN KEY (ProductId) REFERENCES Products(Id) ON DELETE NO ACTION,
     FOREIGN KEY (VariantId) REFERENCES ProductVariants(Id) ON DELETE SET NULL
 );
 CREATE INDEX IX_ProductImages_ProductId ON ProductImages(ProductId);
@@ -192,8 +196,8 @@ CREATE TABLE CartItems (
     VariantName NVARCHAR(100) NULL,
     ImageUrl NVARCHAR(255) NULL,
     UnitPrice DECIMAL(18,2) NOT NULL,
-    BasePrice DECIMAL(18,2) DEFAULT 0,
-    PriceAdjustment DECIMAL(18,2) DEFAULT 0,
+    BasePrice DECIMAL(18,2) NOT NULL DEFAULT 0,
+    PriceAdjustment DECIMAL(18,2) NOT NULL DEFAULT 0,
     PriceBreakdown NVARCHAR(255) NULL,
     Quantity INT NOT NULL DEFAULT 1,
 
@@ -232,6 +236,19 @@ CREATE TABLE Orders (
     UpdatedAt DATETIME NULL,
     ShippedAt DATETIME NULL,
     DeliveredAt DATETIME NULL,
+    CancelReason NVARCHAR(500) NULL,
+    CancelRequestedAt DATETIME2 NULL,
+    CancelRequestedFromStatus INT NULL,
+    CancelApproved BIT NULL,
+    CancelAdminNote NVARCHAR(500) NULL,
+    CancelReviewedAt DATETIME2 NULL,
+    ReturnReason NVARCHAR(1000) NULL,
+    ReturnImageUrl NVARCHAR(500) NULL,
+    ReturnRequestedAt DATETIME2 NULL,
+    ReturnRequestedFromStatus INT NULL,
+    ReturnApproved BIT NULL,
+    ReturnAdminNote NVARCHAR(500) NULL,
+    ReturnReviewedAt DATETIME2 NULL,
 
     FOREIGN KEY (UserId) REFERENCES Account(Id) ON DELETE CASCADE,
     FOREIGN KEY (AddressId) REFERENCES Addresses(Id) ON DELETE NO ACTION,
@@ -275,6 +292,8 @@ CREATE TABLE Payments (
     ReturnUrl NVARCHAR(500) NULL,
     ErrorMessage NVARCHAR(255) NULL,
     CreatedAt DATETIME DEFAULT GETDATE(),
+    CompletedAt DATETIME2 NULL,
+    ExpiresAt DATETIME2 NULL,
 
     FOREIGN KEY (OrderId) REFERENCES Orders(Id) ON DELETE CASCADE
 );
@@ -312,7 +331,9 @@ CREATE TABLE Reviews (
     UserId INT NOT NULL,
     Rating INT NOT NULL DEFAULT 5,
     Comment NVARCHAR(500) NOT NULL,
+    IsApproved BIT NOT NULL DEFAULT 0,
     CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME NULL,
 
     FOREIGN KEY (ProductId) REFERENCES Products(Id) ON DELETE CASCADE,
     FOREIGN KEY (UserId) REFERENCES Account(Id) ON DELETE CASCADE
@@ -343,7 +364,9 @@ GO
 CREATE TABLE WebSettings (
     Id INT PRIMARY KEY IDENTITY(1,1),
     SettingKey NVARCHAR(100) NOT NULL,
-    SettingValue NVARCHAR(500) NULL
+    SettingValue NVARCHAR(MAX) NULL,
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    UpdatedAt DATETIME NULL
 );
 CREATE UNIQUE INDEX IX_WebSettings_Key ON WebSettings(SettingKey);
 GO
@@ -355,6 +378,12 @@ CREATE TABLE __EFMigrationsHistory (
     MigrationId NVARCHAR(150) NOT NULL PRIMARY KEY,
     ProductVersion NVARCHAR(32) NOT NULL
 );
+GO
+
+INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES
+('20260510125916_InitialCreate', '8.0.25'),
+('20260510140146_AddCartItemPriceColumns', '8.0.25'),
+('20260515123000_AddOrderRequestFlow', '8.0.25');
 GO
 
 PRINT 'Furnish database schema created successfully!';

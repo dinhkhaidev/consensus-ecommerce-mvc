@@ -32,13 +32,14 @@ public partial class Account
     [RegularExpression(@"0[39875]\d{8}", ErrorMessage = "Mobile format invalid in Vietnam")]
     public string Phone { get; set; } = null!;
 
-    [Required(ErrorMessage = "*")]
     [DataType(DataType.Date, ErrorMessage = "Invalid birthday")]
     public DateTime? Birthday { get; set; }
 
     public int Status { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public string Role { get; set; } = "Customer";
+
+    public DateTime? CreatedAt { get; set; } = DateTime.UtcNow;
 
     public DateTime? UpdatedAt { get; set; }
 
@@ -47,6 +48,8 @@ public partial class Account
     public string? EmailVerificationToken { get; set; }
 
     public DateTime? EmailVerificationTokenExpiresAt { get; set; }
+
+    public string? AvatarUrl { get; set; }
 
     public string? Notes { get; set; }
 

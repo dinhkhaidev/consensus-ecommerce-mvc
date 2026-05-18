@@ -1,0 +1,301 @@
+@{
+    ViewData["Title"] = localizer.Get("AboutPageTitle");
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var storeName = settings.GetValueOrDefault("StoreName", "Furnish");
+    var footerAbout = settings.GetValueOrDefault("FooterShortAbout", "");
+    var shopDescription = !string.IsNullOrWhiteSpace(footerAbout)
+        ? footerAbout
+        : localizer.Get("AboutShopFallback", storeName);
+}
+
+<section class="about-page py-5">
+    <div class="container">
+        <div class="team-section mb-5">
+            <div class="text-center mb-4">
+                <p class="section-kicker mb-2">@localizer.Get("AboutTeamKicker")</p>
+                <h1 class="display-5 fw-bold mb-0">@localizer.Get("AboutTeamTitle", storeName)</h1>
+            </div>
+
+            <div class="row g-4 justify-content-center align-items-stretch">
+                <div class="col-md-4 col-lg-3 order-2 order-md-1">
+                    <article class="member-card h-100 text-center">
+                        <div class="member-avatar member-avatar-nhan mx-auto">N</div>
+                        <h3>Lê Thanh Nhân</h3>
+                    </article>
+                </div>
+
+                <div class="col-md-4 col-lg-3 order-1 order-md-2">
+                    <article class="member-card h-100 text-center">
+                        <div class="member-avatar member-avatar-khai mx-auto">K</div>
+                        <h3>Đinh Như Khải</h3>
+                    </article>
+                </div>
+
+                <div class="col-md-4 col-lg-3 order-3">
+                    <article class="member-card h-100 text-center">
+                        <div class="member-avatar member-avatar-tri mx-auto">T</div>
+                        <h3>Huỳnh Nguyễn Minh Trí</h3>
+                    </article>
+                </div>
+            </div>
+        </div>
+
+        <section class="about-story mb-5">
+            <div class="row g-0 align-items-stretch">
+                <div class="col-lg-5">
+                    <div class="story-main h-100">
+                        <p class="section-kicker mb-3">@localizer.Get("AboutShopTitle", storeName)</p>
+                        <h2>@localizer.Get("AboutStoryTitle")</h2>
+                        <p class="story-shop">@shopDescription</p>
+                        <p class="story-lead">@localizer.Get("AboutStoryLead")</p>
+                    </div>
+                </div>
+
+                <div class="col-lg-7">
+                    <div class="story-principles h-100">
+                        <p class="section-kicker mb-3">@localizer.Get("AboutStoryKicker")</p>
+                        <div class="principle-list">
+                            <article class="principle-item">
+                                <span class="story-index">01</span>
+                                <div>
+                                    <h3>@localizer.Get("AboutStoryPoint1Title")</h3>
+                                    <p>@localizer.Get("AboutStoryPoint1Body")</p>
+                                </div>
+                            </article>
+                            <article class="principle-item">
+                                <span class="story-index">02</span>
+                                <div>
+                                    <h3>@localizer.Get("AboutStoryPoint2Title")</h3>
+                                    <p>@localizer.Get("AboutStoryPoint2Body")</p>
+                                </div>
+                            </article>
+                            <article class="principle-item">
+                                <span class="story-index">03</span>
+                                <div>
+                                    <h3>@localizer.Get("AboutStoryPoint3Title")</h3>
+                                    <p>@localizer.Get("AboutStoryPoint3Body")</p>
+                                </div>
+                            </article>
+                            <article class="principle-item">
+                                <span class="story-index">04</span>
+                                <div>
+                                    <h3>@localizer.Get("AboutStoryPoint4Title")</h3>
+                                    <p>@localizer.Get("AboutStoryPoint4Body")</p>
+                                </div>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="service-strip row g-4">
+            <div class="col-md-4">
+                <div class="service-item text-center">
+                    <i class="bi bi-truck display-5 text-primary mb-3 d-block"></i>
+                    <h5 class="fw-bold">Fast Delivery</h5>
+                    <p class="text-muted small mb-0">We deliver nationwide with care and speed.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="service-item text-center">
+                    <i class="bi bi-shield-check display-5 text-success mb-3 d-block"></i>
+                    <h5 class="fw-bold">Quality Guaranteed</h5>
+                    <p class="text-muted small mb-0">All products are carefully inspected.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="service-item text-center">
+                    <i class="bi bi-headset display-5 text-warning mb-3 d-block"></i>
+                    <h5 class="fw-bold">24/7 Support</h5>
+                    <p class="text-muted small mb-0">Our team is here whenever you need help.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .about-page {
+        background:
+            linear-gradient(180deg, #f8f7f4 0%, #fff 42%, #f6f8fb 100%);
+    }
+
+    .section-kicker {
+        color: #8a8178;
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .member-card,
+    .service-item,
+    .about-story,
+    .principle-item {
+        border: 1px solid rgba(33, 31, 28, 0.1);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: 0 18px 48px rgba(25, 30, 38, 0.08);
+    }
+
+    .member-card {
+        position: relative;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 28px 22px;
+        transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(33, 31, 28, 0.22);
+        box-shadow: 0 26px 70px rgba(25, 30, 38, 0.14);
+    }
+
+    .member-avatar {
+        width: 76px;
+        height: 76px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 18px;
+        border-radius: 50%;
+        color: #fff;
+        font-size: 1.55rem;
+        font-weight: 900;
+    }
+
+    .member-avatar-khai {
+        color: #5f4512;
+        background: #f2c76e;
+    }
+
+    .member-avatar-nhan {
+        background: #2d6cdf;
+    }
+
+    .member-avatar-tri {
+        background: #16836a;
+    }
+
+    .member-card h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 800;
+    }
+
+    .about-story {
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 0% 0%, rgba(242, 199, 110, 0.24), transparent 34%),
+            linear-gradient(135deg, #fffaf0 0%, #ffffff 54%, #f5f7f9 100%);
+    }
+
+    .story-main,
+    .story-principles {
+        padding: 34px;
+    }
+
+    .story-main {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-right: 1px solid rgba(33, 31, 28, 0.1);
+        background: rgba(255, 255, 255, 0.36);
+    }
+
+    .story-main .section-kicker,
+    .story-principles .section-kicker {
+        color: #a16f1c;
+    }
+
+    .story-main h2 {
+        margin-bottom: 20px;
+        color: #25211c;
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        font-weight: 900;
+        line-height: 1.05;
+    }
+
+    .story-shop,
+    .story-lead {
+        margin: 0;
+        color: #655f57;
+        font-size: 1.02rem;
+        line-height: 1.8;
+    }
+
+    .story-shop {
+        padding-bottom: 18px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid rgba(33, 31, 28, 0.1);
+    }
+
+    .principle-list {
+        display: grid;
+        gap: 14px;
+    }
+
+    .principle-item {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 18px;
+        padding: 22px;
+        background: rgba(255, 255, 255, 0.78);
+        box-shadow: none;
+    }
+
+    .story-index {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        color: #2d2415;
+        background: #f2c76e;
+        font-size: 0.82rem;
+        font-weight: 900;
+        flex: 0 0 auto;
+    }
+
+    .principle-item h3 {
+        margin-bottom: 8px;
+        color: #29251f;
+        font-size: 1.08rem;
+        font-weight: 800;
+    }
+
+    .principle-item p {
+        margin: 0;
+        color: #6b655d;
+        line-height: 1.72;
+    }
+
+    .service-item {
+        height: 100%;
+        padding: 26px;
+    }
+
+    @@media (max-width: 767.98px) {
+        .story-main,
+        .story-principles {
+            padding: 24px 18px;
+        }
+
+        .story-main {
+            border-right: 0;
+            border-bottom: 1px solid rgba(33, 31, 28, 0.1);
+        }
+
+        .principle-item {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            padding: 20px;
+        }
+    }
+</style>

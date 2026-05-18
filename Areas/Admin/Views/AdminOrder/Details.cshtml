@@ -37,7 +37,11 @@
                             {
                                 <tr class="border-bottom">
                                     <td class="py-3 ps-4">
-                                        <strong>@item.Product?.ProductName</strong>
+                                        <strong>@item.ProductName</strong>
+                                        @if (!string.IsNullOrEmpty(item.VariantName))
+                                        {
+                                            <p class="text-muted small mb-0">@item.VariantName</p>
+                                        }
                                         @if (!string.IsNullOrEmpty(item.Product?.QuantityPerUnit))
                                         {
                                             <p class="text-muted small mb-0">@item.Product.QuantityPerUnit</p>
@@ -61,6 +65,7 @@
             </div>
             <div class="card-body">
                 <form asp-area="Admin" asp-controller="AdminOrder" asp-action="UpdateStatus" method="post">
+                    @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@Model.Id" />
                     <div class="row g-3 align-items-end">
                         <div class="col-md-8">
@@ -81,6 +86,66 @@
                 </form>
             </div>
         </div>
+
+        @if (Model.Status == WebActionResults.Data.Entities.OrderStatus.CancellationRequested)
+        {
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-warning-subtle py-3">
+                    <h5 class="mb-0">Cancellation Review</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">Requested at @(Model.CancelRequestedAt?.ToString("MMM dd, yyyy HH:mm"))</p>
+                    <div class="border rounded p-3 mb-3">@Model.CancelReason</div>
+                    <form asp-area="Admin" asp-controller="AdminOrder" asp-action="ReviewCancellation" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <label class="form-label">Admin note</label>
+                        <textarea name="adminNote" class="form-control mb-3" rows="3" maxlength="500" placeholder="Reason shown to customer"></textarea>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="approve" value="true" class="btn btn-success flex-fill">
+                                <i class="bi bi-check-lg me-2"></i>Approve Cancellation
+                            </button>
+                            <button type="submit" name="approve" value="false" class="btn btn-outline-danger flex-fill">
+                                <i class="bi bi-x-lg me-2"></i>Reject
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+
+        @if (Model.Status == WebActionResults.Data.Entities.OrderStatus.ReturnRequested)
+        {
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-warning-subtle py-3">
+                    <h5 class="mb-0">Return Review</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">Requested at @(Model.ReturnRequestedAt?.ToString("MMM dd, yyyy HH:mm"))</p>
+                    <div class="border rounded p-3 mb-3">@Model.ReturnReason</div>
+                    @if (!string.IsNullOrEmpty(Model.ReturnImageUrl))
+                    {
+                        <a href="@Model.ReturnImageUrl" target="_blank" class="d-block mb-3">
+                            <img src="@Model.ReturnImageUrl" alt="Return proof" class="img-fluid rounded border" style="max-height: 320px; object-fit: cover;" />
+                        </a>
+                    }
+                    <form asp-area="Admin" asp-controller="AdminOrder" asp-action="ReviewReturn" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <label class="form-label">Admin note</label>
+                        <textarea name="adminNote" class="form-control mb-3" rows="3" maxlength="500" placeholder="Reason shown to customer"></textarea>
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="approve" value="true" class="btn btn-success flex-fill">
+                                <i class="bi bi-check-lg me-2"></i>Approve Return
+                            </button>
+                            <button type="submit" name="approve" value="false" class="btn btn-outline-danger flex-fill">
+                                <i class="bi bi-x-lg me-2"></i>Reject
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
     </div>
 
     <!-- Order Summary -->
@@ -111,6 +176,51 @@
                 </p>
             </div>
         </div>
+
+        @if (!string.IsNullOrEmpty(Model.CancelReason) || !string.IsNullOrEmpty(Model.ReturnReason))
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Customer Requests</h5>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.CancelReason))
+                    {
+                        <div class="mb-3">
+                            <strong>Cancellation</strong>
+                            <p class="text-muted mb-1">@Model.CancelReason</p>
+                            @if (Model.CancelReviewedAt.HasValue)
+                            {
+                                <span class="badge bg-@(Model.CancelApproved == true ? "success" : "danger")">
+                                    @(Model.CancelApproved == true ? "Approved" : "Rejected")
+                                </span>
+                                @if (!string.IsNullOrEmpty(Model.CancelAdminNote))
+                                {
+                                    <p class="text-muted small mt-2 mb-0">@Model.CancelAdminNote</p>
+                                }
+                            }
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.ReturnReason))
+                    {
+                        <div>
+                            <strong>Return</strong>
+                            <p class="text-muted mb-1">@Model.ReturnReason</p>
+                            @if (Model.ReturnReviewedAt.HasValue)
+                            {
+                                <span class="badge bg-@(Model.ReturnApproved == true ? "success" : "danger")">
+                                    @(Model.ReturnApproved == true ? "Approved" : "Rejected")
+                                </span>
+                                @if (!string.IsNullOrEmpty(Model.ReturnAdminNote))
+                                {
+                                    <p class="text-muted small mt-2 mb-0">@Model.ReturnAdminNote</p>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
 
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-primary text-white py-3">
@@ -151,6 +261,10 @@
         WebActionResults.Data.Entities.OrderStatus.Shipped => "info",
         WebActionResults.Data.Entities.OrderStatus.Delivered => "success",
         WebActionResults.Data.Entities.OrderStatus.Cancelled => "danger",
+        WebActionResults.Data.Entities.OrderStatus.CancellationRequested => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.ReturnRequested => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.ReturnApproved => "success",
+        WebActionResults.Data.Entities.OrderStatus.ReturnRejected => "danger",
         _ => "secondary"
     };
 

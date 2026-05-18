@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Terms of Service";
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var content = settings.GetValueOrDefault("TermsOfServiceHtml", "");
+}
+
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-4">Terms of Service</h1>
+                @if (!string.IsNullOrWhiteSpace(content))
+                {
+                    <div class="policy-content">@Html.Raw(content)</div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>Terms of Service content has not been configured yet.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>

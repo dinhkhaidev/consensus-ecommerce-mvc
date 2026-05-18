@@ -219,6 +219,26 @@ namespace WebActionResults.Migrations
                     b.Property<int?>("AddressId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CancelAdminNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool?>("CancelApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("CancelRequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CancelRequestedFromStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CancelReviewedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("CouponId")
                         .HasColumnType("int");
 
@@ -245,6 +265,30 @@ namespace WebActionResults.Migrations
 
                     b.Property<int>("PaymentStatus")
                         .HasColumnType("int");
+
+                    b.Property<string>("ReturnAdminNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool?>("ReturnApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ReturnImageUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("ReturnReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("ReturnRequestedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ReturnRequestedFromStatus")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReturnReviewedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("ShippedAt")
                         .HasColumnType("datetime2");
@@ -424,8 +468,8 @@ namespace WebActionResults.Migrations
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<bool>("IsMain")
                         .HasColumnType("bit");
@@ -467,8 +511,8 @@ namespace WebActionResults.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("SKU")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Size")
                         .HasMaxLength(50)
@@ -594,8 +638,7 @@ namespace WebActionResults.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("SettingValue")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -639,11 +682,14 @@ namespace WebActionResults.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AvatarUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<DateTime?>("Birthday")
-                        .IsRequired()
                         .HasColumnType("datetime");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime");
 
                     b.Property<string>("Email")
@@ -683,6 +729,13 @@ namespace WebActionResults.Migrations
                         .HasMaxLength(50)
                         .IsUnicode(false)
                         .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)")
+                        .HasDefaultValue("Customer");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");

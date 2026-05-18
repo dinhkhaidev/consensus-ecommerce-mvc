@@ -65,6 +65,37 @@ public class Order
 
     public int? CouponId { get; set; }
 
+    [MaxLength(500)]
+    public string? CancelReason { get; set; }
+
+    public DateTime? CancelRequestedAt { get; set; }
+
+    public OrderStatus? CancelRequestedFromStatus { get; set; }
+
+    public bool? CancelApproved { get; set; }
+
+    [MaxLength(500)]
+    public string? CancelAdminNote { get; set; }
+
+    public DateTime? CancelReviewedAt { get; set; }
+
+    [MaxLength(1000)]
+    public string? ReturnReason { get; set; }
+
+    [MaxLength(500)]
+    public string? ReturnImageUrl { get; set; }
+
+    public DateTime? ReturnRequestedAt { get; set; }
+
+    public OrderStatus? ReturnRequestedFromStatus { get; set; }
+
+    public bool? ReturnApproved { get; set; }
+
+    [MaxLength(500)]
+    public string? ReturnAdminNote { get; set; }
+
+    public DateTime? ReturnReviewedAt { get; set; }
+
     [ForeignKey(nameof(UserId))]
     public virtual Account User { get; set; } = null!;
 
@@ -84,7 +115,11 @@ public enum OrderStatus
     Processing = 2,
     Shipped = 3,
     Delivered = 4,
-    Cancelled = 5
+    Cancelled = 5,
+    CancellationRequested = 6,
+    ReturnRequested = 7,
+    ReturnApproved = 8,
+    ReturnRejected = 9
 }
 
 public enum PaymentMethod

@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Edit Product";
     var categories = ViewBag.Categories as IEnumerable<WebActionResults.Models.Category>;
+    var suppliers = ViewBag.Suppliers as IEnumerable<WebActionResults.Models.Supplier>;
 }
 
 <div class="d-flex align-items-center gap-3 mb-4">
@@ -14,8 +15,10 @@
     </div>
 </div>
 
-<form asp-area="Admin" asp-controller="AdminProduct" asp-action="Edit" method="post">
+<form action="/Admin/AdminProduct/Edit" method="post" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
     <div class="row g-4">
         <div class="col-lg-8">
@@ -32,28 +35,108 @@
 
                     <div class="mb-3">
                         <label asp-for="QuantityPerUnit" class="form-label fw-semibold">Description</label>
-                        <textarea asp-for="QuantityPerUnit" class="form-control" rows="4"></textarea>
+                        <textarea asp-for="QuantityPerUnit" class="form-control" rows="4" maxlength="100"></textarea>
+                        <span asp-validation-for="QuantityPerUnit" class="text-danger"></span>
+                        <div class="form-text">Maximum 100 characters.</div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="UnitPrice" class="form-label fw-semibold">Price (VND)</label>
-                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1000" />
+                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1000" min="0" />
                             <span asp-validation-for="UnitPrice" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">Category</label>
-                            <select name="CategoryID" class="form-select form-select-lg">
+                            <select asp-for="CategoryID" class="form-select form-select-lg" required>
                                 @if (categories != null)
                                 {
                                     @foreach (var cat in categories)
                                     {
-                                        <option value="@cat.Id" selected="@(Model.CategoryID == cat.Id)">@cat.CategoryName</option>
+                                        <option value="@cat.Id">@cat.CategoryName</option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="CategoryID" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SupplierID" class="form-label fw-semibold">Supplier</label>
+                            <select asp-for="SupplierID" class="form-select form-select-lg">
+                                <option value="">No supplier</option>
+                                @if (suppliers != null)
+                                {
+                                    @foreach (var supplier in suppliers)
+                                    {
+                                        <option value="@supplier.Id">@supplier.CompanyName</option>
                                     }
                                 }
                             </select>
                         </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Discontinued" class="form-label fw-semibold">Discontinued</label>
+                            <select asp-for="Discontinued" class="form-select form-select-lg">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Variants</h5>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addVariantRow()">
+                        <i class="bi bi-plus-lg me-1"></i>Add Variant
+                    </button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table mb-0 align-middle" id="variantTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">Color</th>
+                                    <th>Size</th>
+                                    <th>SKU</th>
+                                    <th>Price Adj.</th>
+                                    <th>Stock</th>
+                                    <th>Active</th>
+                                    <th>Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variantRows">
+                                @{
+                                    var variantIndex = 0;
+                                }
+                                @foreach (var variant in Model.Variants.OrderBy(v => v.Id))
+                                {
+                                    <tr>
+                                        <td class="ps-3">
+                                            <input type="hidden" name="variants[@variantIndex].Id" value="@variant.Id" />
+                                            <input name="variants[@variantIndex].Color" class="form-control" value="@variant.Color" />
+                                        </td>
+                                        <td><input name="variants[@variantIndex].Size" class="form-control" value="@variant.Size" /></td>
+                                        <td><input name="variants[@variantIndex].SKU" class="form-control" value="@variant.SKU" /></td>
+                                        <td><input name="variants[@variantIndex].PriceAdjustment" class="form-control" type="number" step="1000" value="@(variant.PriceAdjustment ?? 0)" /></td>
+                                        <td><input name="variants[@variantIndex].StockQuantity" class="form-control" type="number" min="0" value="@variant.StockQuantity" /></td>
+                                        <td>
+                                            <input type="hidden" name="variants[@variantIndex].IsActive" value="false" />
+                                            <input name="variants[@variantIndex].IsActive" class="form-check-input" type="checkbox" value="true" checked="@variant.IsActive" />
+                                        </td>
+                                        <td>
+                                            <input type="hidden" name="variants[@variantIndex].Remove" value="false" />
+                                            <input name="variants[@variantIndex].Remove" class="form-check-input" type="checkbox" value="true" />
+                                        </td>
+                                    </tr>
+                                    variantIndex++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-muted small px-3 py-2 mb-0">Remove will deactivate the variant and set stock to 0, preserving old order history.</p>
                 </div>
             </div>
         </div>
@@ -64,10 +147,36 @@
                     <h5 class="mb-0">Product Images</h5>
                 </div>
                 <div class="card-body text-center">
-                    <div class="bg-light rounded p-5 mb-3">
-                        <i class="bi bi-image text-secondary" style="font-size: 3rem;"></i>
-                        <p class="text-muted small mt-2 mb-0">Product images can be managed later</p>
-                    </div>
+                    @if (Model.Images?.Any() == true)
+                    {
+                        <div class="row g-2 mb-3 text-start">
+                            @foreach (var img in Model.Images.OrderBy(i => i.IsMain ? 0 : 1).ThenBy(i => i.DisplayOrder))
+                            {
+                                <div class="col-6">
+                                    <div class="position-relative border rounded overflow-hidden">
+                                        <img src="@img.ImageUrl" alt="@img.AltText" class="w-100" style="height: 110px; object-fit: cover;" />
+                                        @if (img.IsMain)
+                                        {
+                                            <span class="badge bg-primary position-absolute top-0 start-0 m-2">Main</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bg-light rounded p-4 mb-3">
+                            <i class="bi bi-image text-secondary" style="font-size: 3rem;"></i>
+                            <p class="text-muted small mt-2 mb-0">No images yet</p>
+                        </div>
+                    }
+                    <input type="file"
+                           name="imageFiles"
+                           class="form-control"
+                           accept="image/jpeg,image/png,image/webp,image/gif"
+                           multiple />
+                    <p class="text-muted small mt-2 mb-0">New uploads will be added to this product. First image becomes main only when no main image exists.</p>
                 </div>
             </div>
 
@@ -83,8 +192,65 @@
     </div>
 </form>
 
+<template id="variantRowTemplate">
+    <tr>
+        <td class="ps-3">
+            <input data-name="Id" type="hidden" value="0" />
+            <input data-name="Color" class="form-control" placeholder="Brown" />
+        </td>
+        <td><input data-name="Size" class="form-control" placeholder="Large" /></td>
+        <td><input data-name="SKU" class="form-control" placeholder="SOFA-BR-L" /></td>
+        <td><input data-name="PriceAdjustment" class="form-control" type="number" step="1000" value="0" /></td>
+        <td><input data-name="StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
+        <td>
+            <input data-name="IsActiveHidden" type="hidden" value="false" />
+            <input data-name="IsActive" class="form-check-input" type="checkbox" value="true" checked />
+        </td>
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeNewVariantRow(this)">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+<script>
+    let variantIndex = @Model.Variants.Count;
+
+    function addVariantRow() {
+        const template = document.getElementById('variantRowTemplate');
+        const row = template.content.firstElementChild.cloneNode(true);
+
+        row.querySelectorAll('[data-name]').forEach(input => {
+            const field = input.dataset.name;
+            if (field === 'IsActiveHidden') {
+                input.name = `variants[${variantIndex}].IsActive`;
+                return;
+            }
+            input.name = `variants[${variantIndex}].${field}`;
+        });
+
+        document.getElementById('variantRows').appendChild(row);
+        variantIndex++;
+    }
+
+    function removeNewVariantRow(button) {
+        button.closest('tr')?.remove();
+    }
+</script>
+
 <style>
     .card {
         border-radius: 1rem;
+    }
+
+    #variantTable th {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        color: #6c757d;
+    }
+
+    .validation-summary-valid {
+        display: none;
     }
 </style>

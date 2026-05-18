@@ -37,20 +37,22 @@ public partial class ShopDbContext : DbContext
         modelBuilder.Entity<Account>(entity =>
         {
             entity.ToTable("Account");
-            entity.Property(e => e.Birthday).HasColumnType("datetime");
-            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.Birthday).HasColumnType("datetime").IsRequired(false);
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime").IsRequired(false);
             entity.Property(e => e.Email).HasMaxLength(50).IsUnicode(false);
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.Notes).HasMaxLength(150);
             entity.Property(e => e.Password).HasMaxLength(150).IsUnicode(false);
             entity.Property(e => e.Phone).HasMaxLength(50).IsUnicode(false);
             entity.Property(e => e.UserName).HasMaxLength(20).IsUnicode(false);
-            entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
+            entity.Property(e => e.UpdatedAt).HasColumnType("datetime").IsRequired(false);
             entity.Property(e => e.IsEmailVerified)
                 .HasColumnName("IsEmailVerified")
                 .IsRequired(false);
             entity.Property(e => e.EmailVerificationToken).HasMaxLength(100);
-            entity.Property(e => e.EmailVerificationTokenExpiresAt).HasColumnType("datetime");
+            entity.Property(e => e.EmailVerificationTokenExpiresAt).HasColumnType("datetime").IsRequired(false);
+            entity.Property(e => e.AvatarUrl).HasMaxLength(500);
+            entity.Property(e => e.Role).HasMaxLength(20).HasDefaultValue("Customer");
         });
 
         modelBuilder.Entity<Category>(entity =>
@@ -110,7 +112,7 @@ public partial class ShopDbContext : DbContext
             entity.ToTable("ProductVariants");
             entity.Property(e => e.Size).HasMaxLength(50);
             entity.Property(e => e.Color).HasMaxLength(50);
-            entity.Property(e => e.SKU).HasMaxLength(50);
+            entity.Property(e => e.SKU).HasMaxLength(100);
             entity.Property(e => e.PriceAdjustment).HasColumnType("decimal(18,2)");
 
             entity.HasOne(e => e.Product)
@@ -122,7 +124,7 @@ public partial class ShopDbContext : DbContext
         modelBuilder.Entity<ProductImage>(entity =>
         {
             entity.ToTable("ProductImages");
-            entity.Property(e => e.ImageUrl).HasMaxLength(255).IsRequired();
+            entity.Property(e => e.ImageUrl).HasMaxLength(500).IsRequired();
             entity.Property(e => e.AltText).HasMaxLength(255);
 
             entity.HasOne(e => e.Product)
@@ -182,6 +184,11 @@ public partial class ShopDbContext : DbContext
             entity.Property(e => e.ShippingDistrict).HasMaxLength(100);
             entity.Property(e => e.ShippingWard).HasMaxLength(100);
             entity.Property(e => e.Notes).HasMaxLength(500);
+            entity.Property(e => e.CancelReason).HasMaxLength(500);
+            entity.Property(e => e.CancelAdminNote).HasMaxLength(500);
+            entity.Property(e => e.ReturnReason).HasMaxLength(1000);
+            entity.Property(e => e.ReturnImageUrl).HasMaxLength(500);
+            entity.Property(e => e.ReturnAdminNote).HasMaxLength(500);
 
             entity.HasOne(e => e.User)
                 .WithMany()
@@ -261,7 +268,7 @@ public partial class ShopDbContext : DbContext
         {
             entity.ToTable("WebSettings");
             entity.Property(e => e.SettingKey).HasMaxLength(100).IsRequired();
-            entity.Property(e => e.SettingValue).HasMaxLength(500);
+            entity.Property(e => e.SettingValue).HasColumnType("nvarchar(max)");
         });
 
         modelBuilder.Entity<Cart>(entity =>

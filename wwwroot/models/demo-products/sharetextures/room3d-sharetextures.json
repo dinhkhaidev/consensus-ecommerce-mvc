@@ -1,0 +1,83 @@
+﻿[
+    {
+        "key":  "sofa-22",
+        "category":  "sofa",
+        "modelUrl":  "/models/demo-products/sharetextures/sofa-22/sofa-22.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/sofa-22/sofa-22-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/sofa-22",
+        "license":  "CC0"
+    },
+    {
+        "key":  "sofa-21",
+        "category":  "sofa",
+        "modelUrl":  "/models/demo-products/sharetextures/sofa-21/sofa-21.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/sofa-21/sofa-21-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/sofa-21",
+        "license":  "CC0"
+    },
+    {
+        "key":  "armchair-16",
+        "category":  "chair",
+        "modelUrl":  "/models/demo-products/sharetextures/armchair-16/armchair-16.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/armchair-16/armchair-16-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/armchair-16",
+        "license":  "CC0"
+    },
+    {
+        "key":  "armchair-15",
+        "category":  "chair",
+        "modelUrl":  "/models/demo-products/sharetextures/armchair-15/armchair-15.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/armchair-15/armchair-15-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/armchair-15",
+        "license":  "CC0"
+    },
+    {
+        "key":  "armchair-14",
+        "category":  "chair",
+        "modelUrl":  "/models/demo-products/sharetextures/armchair-14/armchair-14.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/armchair-14/armchair-14-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/armchair-14",
+        "license":  "CC0"
+    },
+    {
+        "key":  "armchair-13",
+        "category":  "chair",
+        "modelUrl":  "/models/demo-products/sharetextures/armchair-13/armchair-13.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/armchair-13/armchair-13-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/armchair-13",
+        "license":  "CC0"
+    },
+    {
+        "key":  "table-5",
+        "category":  "table",
+        "modelUrl":  "/models/demo-products/sharetextures/table-5/table-5.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/table-5/table-5-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/table-5",
+        "license":  "CC0"
+    },
+    {
+        "key":  "table-4",
+        "category":  "table",
+        "modelUrl":  "/models/demo-products/sharetextures/table-4/table-4.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/table-4/table-4-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/table-4",
+        "license":  "CC0"
+    },
+    {
+        "key":  "stool-9",
+        "category":  "chair",
+        "modelUrl":  "/models/demo-products/sharetextures/stool-9/stool-9.fbx",
+        "thumbnail":  "/models/demo-products/sharetextures/stool-9/stool-9-preview.webp",
+        "format":  "fbx",
+        "source":  "https://www.sharetextures.com/models/furniture/stool-9",
+        "license":  "CC0"
+    }
+]

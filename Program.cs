@@ -5,7 +5,9 @@ using WebActionResults.Mappings;
 using WebActionResults.Middleware;
 using WebActionResults.Models;
 using WebActionResults.Services;
+using WebActionResults.Filters;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.StaticFiles;
 using VNPAY.Extensions;
 
 // Load environment variables from .env file FIRST
@@ -14,7 +16,10 @@ DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<WebSettingsActionFilter>();
+});
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -93,7 +98,18 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+var staticFileContentTypes = new FileExtensionContentTypeProvider();
+staticFileContentTypes.Mappings[".gltf"] = "model/gltf+json";
+staticFileContentTypes.Mappings[".glb"] = "model/gltf-binary";
+staticFileContentTypes.Mappings[".fbx"] = "application/octet-stream";
+staticFileContentTypes.Mappings[".bin"] = "application/octet-stream";
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = staticFileContentTypes
+});
+
+app.UseMaintenanceMode();
 
 app.UseRouting();
 
@@ -103,11 +119,6 @@ app.UseSessionAuthentication();
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.MapControllerRoute(
-    name: "adminRoot",
-    pattern: "Admin",
-    defaults: new { area = "Admin", controller = "Dashboard", action = "Index" });
 
 app.MapAreaControllerRoute(
     name: "admin",

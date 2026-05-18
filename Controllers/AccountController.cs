@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using WebActionResults.Data.Entities;
 using WebActionResults.Data.Services;
 using WebActionResults.Services;
+using WebActionResults.Utilities;
 using WebActionResults.ViewModels;
 using WebActionResults.Models;
 
@@ -12,11 +13,17 @@ public class AccountController : Controller
 {
     private readonly IUserService _userService;
     private readonly IEmailService _emailService;
+    private readonly ILocalizationService _localizer;
+    private readonly IWebSettingsService _settingsService;
+    private readonly IWebHostEnvironment _environment;
 
-    public AccountController(IUserService userService, IEmailService emailService)
+    public AccountController(IUserService userService, IEmailService emailService, ILocalizationService localizer, IWebSettingsService settingsService, IWebHostEnvironment environment)
     {
         _userService = userService;
         _emailService = emailService;
+        _localizer = localizer;
+        _settingsService = settingsService;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -30,7 +37,15 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
+        model.UserName = model.UserName?.Trim() ?? string.Empty;
+        model.Password = model.Password ?? string.Empty;
         ViewData["ReturnUrl"] = model.ReturnUrl;
+
+        ModelState.Clear();
+        if (string.IsNullOrWhiteSpace(model.UserName))
+            AddModelErrorKey(nameof(model.UserName), "Auth.UsernameOrEmailRequired");
+        if (string.IsNullOrWhiteSpace(model.Password))
+            AddModelErrorKey(nameof(model.Password), "Auth.PasswordRequired");
 
         if (!ModelState.IsValid)
             return View(model);
@@ -39,32 +54,35 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
-            // Check email verification (skip for admin)
-            var user = await _userService.GetByUserNameAsync(model.UserName);
-            var isAdmin = user?.UserName?.ToLower() == "admin";
-            if (user != null && user.IsEmailVerified == false && !isAdmin)
+            // Check email verification (skip for admin, skip if disabled)
+            var user = await _userService.GetCurrentUserAsync();
+            var isAdmin = string.Equals(user?.Role, "Admin", StringComparison.OrdinalIgnoreCase);
+            var allSettings = await _settingsService.GetAllSettingsAsync();
+            var requireVerification = string.Equals(allSettings.GetValueOrDefault("RequireEmailVerification", "false"), "true", StringComparison.OrdinalIgnoreCase);
+            if (requireVerification && user != null && user.IsEmailVerified == false && !isAdmin)
             {
                 await _userService.LogoutAsync();
-                TempData["Warning"] = "Please verify your email first. A new verification link has been sent.";
+                TempData["ToastWarningKey"] = "Auth.VerifyEmailFirst";
                 var token = await _userService.GenerateEmailVerificationTokenAsync(user.Email);
                 await SendVerificationEmail(user.Email, token);
-                return RedirectToAction("Login");
+
+                return RedirectToAction("VerifyEmail", new { email = user.Email });
             }
 
-            TempData["ToastSuccess"] = "Login successful.";
+            TempData["ToastSuccessKey"] = "Auth.LoginSuccessful";
             if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
-                return Redirect(model.ReturnUrl);
+                return Redirect(RedirectUrlSanitizer.EscapeHeaderValue(model.ReturnUrl));
 
             // Check user role and redirect accordingly
-            var userName = user?.UserName?.ToLower() ?? "";
-            if (userName == "admin")
+            var userRole = HttpContext.Session.GetString("USER_ROLE");
+            if (string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase))
                 return RedirectToAction("Index", "Dashboard", new { area = "Admin" });
 
             // Default redirect for customers
             return RedirectToAction("Index", "Home");
         }
 
-        ModelState.AddModelError("", "Invalid username or password.");
+        AddModelErrorKey("", "Auth.InvalidLogin");
         return View(model);
     }
 
@@ -78,20 +96,27 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
+        model.UserName = model.UserName?.Trim() ?? string.Empty;
+        model.Email = model.Email?.Trim() ?? string.Empty;
+        model.FullName = model.FullName?.Trim() ?? string.Empty;
+        model.PhoneNumber = model.PhoneNumber?.Trim() ?? string.Empty;
+
+        ValidateRegister(model);
+
         if (!ModelState.IsValid)
             return View(model);
 
         var existingUser = await _userService.GetByUserNameAsync(model.UserName);
         if (existingUser != null)
         {
-            ModelState.AddModelError(nameof(model.UserName), "Username already exists.");
+            AddModelErrorKey(nameof(model.UserName), "Auth.UsernameExists");
             return View(model);
         }
 
         var existingEmail = await _userService.GetByEmailAsync(model.Email);
         if (existingEmail != null)
         {
-            ModelState.AddModelError(nameof(model.Email), "Email already in use.");
+            AddModelErrorKey(nameof(model.Email), "Auth.EmailInUse");
             return View(model);
         }
 
@@ -100,7 +125,7 @@ public class AccountController : Controller
             UserName = model.UserName,
             Email = model.Email,
             FullName = model.FullName,
-            Phone = model.PhoneNumber ?? "",
+            Phone = model.PhoneNumber,
             Birthday = model.Birthday
         };
 
@@ -108,16 +133,11 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
-            // Generate and send email verification
-            var token = await _userService.GenerateEmailVerificationTokenAsync(user.Email);
-            await SendVerificationEmail(user.Email, token);
-
-            TempData["ToastSuccess"] = "Registration successful! Please check your email to verify your account.";
-            return RedirectToAction("Index", "Home");
+            TempData["ToastSuccess"] = "Đăng ký thành công! Vui lòng chọn cách thức xác minh tài khoản của bạn.";
+            return RedirectToAction("VerifyEmail", new { email = user.Email });
         }
 
-        foreach (var error in result.Errors)
-            ModelState.AddModelError("", error);
+        AddModelErrorKey("", "Auth.RegisterFailed");
 
         return View(model);
     }
@@ -128,7 +148,7 @@ public class AccountController : Controller
     public async Task<IActionResult> Logout()
     {
         await _userService.LogoutAsync();
-        TempData["ToastSuccess"] = "You have been logged out.";
+        TempData["ToastSuccessKey"] = "Auth.LogoutSuccessful";
         return RedirectToAction("Index", "Home");
     }
 
@@ -150,7 +170,7 @@ public class AccountController : Controller
     [Authorize]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateProfile(ProfileViewModel model)
+    public async Task<IActionResult> UpdateProfile(ProfileViewModel model, IFormFile? avatarFile)
     {
         if (!ModelState.IsValid)
             return View("Profile", model);
@@ -162,12 +182,15 @@ public class AccountController : Controller
         user.FullName = model.FullName;
         user.Phone = model.PhoneNumber ?? "";
         user.Birthday = model.Birthday;
+        var avatarUrl = await SaveAvatarAsync(avatarFile);
+        if (!string.IsNullOrWhiteSpace(avatarUrl))
+            user.AvatarUrl = avatarUrl;
 
         var result = await _userService.UpdateUserAsync(user);
 
         if (result.Succeeded)
         {
-            TempData["ToastSuccess"] = "Profile updated successfully.";
+            TempData["ToastSuccessKey"] = "Auth.ProfileUpdated";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -216,7 +239,7 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
-            TempData["ToastSuccess"] = "Address added successfully.";
+            TempData["ToastSuccessKey"] = "Auth.AddressAdded";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -240,7 +263,7 @@ public class AccountController : Controller
         if (address == null)
             return RedirectToAction(nameof(Profile));
 
-        return View(address);
+        return View(AddressEditViewModel.FromEntity(address));
     }
 
     [Authorize]
@@ -274,7 +297,7 @@ public class AccountController : Controller
 
         if (result.Succeeded)
         {
-            TempData["ToastSuccess"] = "Address updated successfully.";
+            TempData["ToastSuccessKey"] = "Auth.AddressUpdated";
             return RedirectToAction(nameof(Profile));
         }
 
@@ -296,23 +319,89 @@ public class AccountController : Controller
         var result = await _userService.DeleteAddressAsync(userId.Value, id);
 
         if (result.Succeeded)
-            TempData["ToastSuccess"] = "Address deleted.";
+            TempData["ToastSuccessKey"] = "Auth.AddressDeleted";
         else
-            TempData["ToastError"] = "Failed to delete address.";
+            TempData["ToastErrorKey"] = "Auth.AddressDeleteFailed";
 
         return RedirectToAction(nameof(Profile));
     }
 
     [HttpGet]
-    public IActionResult VerifyEmail(string token)
+    public IActionResult VerifyEmail(string email, string? chosenMethod = null)
     {
-        if (string.IsNullOrEmpty(token))
+        if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+        var sessionKey = $"ResendOTP_{email}";
+        var resendCount = HttpContext.Session.GetInt32(sessionKey) ?? 0;
+        
+        ViewBag.RemainingResends = 3 - resendCount;
+        ViewBag.ChosenMethod = chosenMethod; // Ghi nhận khách chọn cách nào: "OTP" hoặc "Link"
+
+        return View("VerifyEmail", new VerifyEmailViewModel { Email = email });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendVerificationMethod(string email, string targetMethod)
+    {
+        if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+        var sessionKey = $"ResendOTP_{email}";
+        var resendCount = HttpContext.Session.GetInt32(sessionKey) ?? 0;
+
+        // Giới hạn cứng tối đa 3 lần gửi yêu cầu nhận mail chống spam
+        if (resendCount >= 3)
         {
-            TempData["ToastError"] = "Invalid verification link.";
-            return RedirectToAction("Login");
+            TempData["ToastError"] = "Bạn đã vượt quá số lần gửi mã (Tối đa 3 lần). Vui lòng kiểm tra kỹ hòm thư.";
+            return RedirectToAction("VerifyEmail", new { email = email, chosenMethod = targetMethod });
         }
 
-        return View("VerifyEmail", new VerifyEmailViewModel { Token = token });
+        // Tăng biến đếm trong Session
+        HttpContext.Session.SetInt32(sessionKey, resendCount + 1);
+
+        // Sinh Token từ DB
+        var token = await _userService.GenerateEmailVerificationTokenAsync(email);
+
+        // Kiểm tra khách bấm nút Cách 1 hay Cách 2 để gọi đúng hàm tương ứng
+        if (targetMethod == "OTP")
+        {
+            await _emailService.SendOtpOnlyEmailAsync(email, token);
+            TempData["ToastSuccess"] = "Mã OTP 6 số đã được gửi riêng đến email của bạn.";
+        }
+        else if (targetMethod == "Link")
+        {
+            await _emailService.SendLinkOnlyEmailAsync(email, token);
+            TempData["ToastSuccess"] = "Liên kết xác thực đã được gửi riêng đến email của bạn.";
+        }
+
+        return RedirectToAction("VerifyEmail", new { email = email, chosenMethod = targetMethod });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ResendOtp(string email)
+    {
+        if (string.IsNullOrEmpty(email)) return RedirectToAction("Login");
+
+        var sessionKey = $"ResendOTP_{email}";
+        var resendCount = HttpContext.Session.GetInt32(sessionKey) ?? 0;
+
+        // Kiểm tra nếu đã bấm gửi lại 3 lần
+        if (resendCount >= 3)
+        {
+            TempData["ToastError"] = "Bạn đã hết lượt gửi lại mã (Tối đa 3 lần). Vui lòng kiểm tra kỹ hộp thư hoặc Spam.";
+            return RedirectToAction("VerifyEmail", new { email = email });
+        }
+
+        // Tăng biến đếm lên 1 và lưu lại vào Session
+        HttpContext.Session.SetInt32(sessionKey, resendCount + 1);
+
+        // Tạo mã mới và gửi lại Email
+        var token = await _userService.GenerateEmailVerificationTokenAsync(email);
+        await SendVerificationEmail(email, token);
+
+        TempData["ToastSuccess"] = $"Đã gửi lại mã OTP. Bạn còn {2 - resendCount} lần gửi lại.";
+        return RedirectToAction("VerifyEmail", new { email = email });
     }
 
     [HttpPost]
@@ -322,20 +411,133 @@ public class AccountController : Controller
         if (!ModelState.IsValid)
             return View(model);
 
-        var success = await _userService.VerifyEmailAsync(model.Token);
+        var success = await _userService.VerifyEmailAsync(model.Email, model.Token);
 
         if (success)
         {
-            TempData["ToastSuccess"] = "Email verified successfully! You can now login.";
+            TempData["ToastSuccessKey"] = "Auth.EmailVerified";
             return RedirectToAction("Login");
         }
 
-        TempData["ToastError"] = "Invalid or expired verification link.";
+        TempData["ToastErrorKey"] = "Auth.VerificationLinkExpired";
         return View(model);
     }
 
     private async Task SendVerificationEmail(string email, string token)
     {
         await _emailService.SendVerificationEmailAsync(email, token);
+    }
+
+    private async Task<string?> SaveAvatarAsync(IFormFile? avatarFile)
+    {
+        if (avatarFile == null || avatarFile.Length == 0)
+            return null;
+
+        var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ".jpg", ".jpeg", ".png", ".webp", ".gif"
+        };
+
+        var extension = Path.GetExtension(avatarFile.FileName);
+        if (string.IsNullOrWhiteSpace(extension) || !allowedExtensions.Contains(extension))
+            return null;
+
+        if (avatarFile.Length > 3 * 1024 * 1024)
+            return null;
+
+        var folder = Path.Combine(_environment.WebRootPath, "uploads", "avatars");
+        Directory.CreateDirectory(folder);
+
+        var fileName = $"{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+        var path = Path.Combine(folder, fileName);
+
+        await using var stream = System.IO.File.Create(path);
+        await avatarFile.CopyToAsync(stream);
+
+        return $"/uploads/avatars/{fileName}";
+    }
+
+    private void ValidateRegister(RegisterViewModel model)
+    {
+        ModelState.Clear();
+
+        if (string.IsNullOrWhiteSpace(model.UserName))
+            AddModelErrorKey(nameof(model.UserName), "Auth.UsernameRequired");
+        else
+        {
+            if (model.UserName.Length < 3 || model.UserName.Length > 20)
+                AddModelErrorKey(nameof(model.UserName), "Auth.UsernameLength");
+            if (!System.Text.RegularExpressions.Regex.IsMatch(model.UserName, @"^[a-zA-Z0-9_]+$"))
+                AddModelErrorKey(nameof(model.UserName), "Auth.UsernameFormat");
+        }
+
+        if (string.IsNullOrWhiteSpace(model.Email))
+            AddModelErrorKey(nameof(model.Email), "Auth.EmailRequired");
+        else if (!new System.ComponentModel.DataAnnotations.EmailAddressAttribute().IsValid(model.Email))
+            AddModelErrorKey(nameof(model.Email), "Auth.EmailInvalid");
+
+        if (string.IsNullOrWhiteSpace(model.FullName))
+            AddModelErrorKey(nameof(model.FullName), "Auth.FullNameRequired");
+        else if (model.FullName.Length > 100)
+            AddModelErrorKey(nameof(model.FullName), "Auth.FullNameMaxLength");
+
+        if (string.IsNullOrWhiteSpace(model.Password))
+            AddModelErrorKey(nameof(model.Password), "Auth.PasswordRequired");
+        else if (model.Password.Length < 6)
+            AddModelErrorKey(nameof(model.Password), "Auth.PasswordMinLength");
+
+        if (string.IsNullOrWhiteSpace(model.ConfirmPassword))
+            AddModelErrorKey(nameof(model.ConfirmPassword), "Auth.ConfirmPasswordRequired");
+        else if (!string.Equals(model.Password, model.ConfirmPassword, StringComparison.Ordinal))
+            AddModelErrorKey(nameof(model.ConfirmPassword), "Auth.PasswordsDoNotMatch");
+
+        if (string.IsNullOrWhiteSpace(model.PhoneNumber))
+            AddModelErrorKey(nameof(model.PhoneNumber), "Auth.PhoneRequired");
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(model.PhoneNumber, @"^0[39875]\d{8}$"))
+            AddModelErrorKey(nameof(model.PhoneNumber), "Auth.PhoneInvalid");
+
+        if (!model.Birthday.HasValue)
+            AddModelErrorKey(nameof(model.Birthday), "Auth.BirthdayRequired");
+        else if (!IsAtLeast16(model.Birthday.Value))
+            AddModelErrorKey(nameof(model.Birthday), "Auth.MustBe16ToRegister");
+
+        if (!model.TermsAccepted)
+            AddModelErrorKey(nameof(model.TermsAccepted), "Auth.TermsRequired");
+    }
+
+    private void AddModelErrorKey(string field, string key)
+    {
+        ModelState.AddModelError(field, _localizer.Get(key));
+    }
+
+    private static bool IsAtLeast16(DateTime birthday)
+    {
+        var today = DateTime.UtcNow.Date;
+        var cutoff = today.AddYears(-16);
+        return birthday.Date <= cutoff;
+    }
+
+    
+
+    [HttpGet]
+    public async Task<IActionResult> VerifyEmailClick(string email, string token)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+        {
+            TempData["ToastError"] = "Đường dẫn xác thực không hợp lệ.";
+            return RedirectToAction("Login");
+        }
+
+        // Xác thực mã lấy từ link link
+        var success = await _userService.VerifyEmailAsync(email, token);
+
+        if (success)
+        {
+            // Tạo một file tên là VerifySuccess.cshtml trong thư mục Views/Account để hiển thị chúc mừng
+            return View("VerifySuccess"); 
+        }
+
+        TempData["ToastError"] = "Mã xác thực đã hết hạn hoặc không chính xác.";
+        return RedirectToAction("Login");
     }
 }

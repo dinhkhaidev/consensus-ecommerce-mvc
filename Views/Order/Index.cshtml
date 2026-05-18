@@ -97,6 +97,10 @@
         WebActionResults.Data.Entities.OrderStatus.Shipped => "info",
         WebActionResults.Data.Entities.OrderStatus.Delivered => "success",
         WebActionResults.Data.Entities.OrderStatus.Cancelled => "danger",
+        WebActionResults.Data.Entities.OrderStatus.CancellationRequested => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.ReturnRequested => "warning text-dark",
+        WebActionResults.Data.Entities.OrderStatus.ReturnApproved => "success",
+        WebActionResults.Data.Entities.OrderStatus.ReturnRejected => "danger",
         _ => "secondary"
     };
 }

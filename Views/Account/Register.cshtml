@@ -2,6 +2,12 @@
 @{
     ViewData["Title"] = localizer.Get("Register") + " - Furnish";
     var returnUrl = Context.Request.Query["returnUrl"].ToString();
+    var birthdayValue = Model.Birthday?.ToString("yyyy-MM-dd") ?? string.Empty;
+    var birthdayDay = Model.Birthday?.Day;
+    var birthdayMonth = Model.Birthday?.Month;
+    var birthdayYear = Model.Birthday?.Year;
+    var currentYear = DateTime.Today.Year;
+    var minBirthYear = currentYear - 120;
 }
 
 <section class="py-lg-8 py-5">
@@ -19,16 +25,17 @@
                         </div>
 
                         <form asp-action="Register" method="post">
+                            @Html.AntiForgeryToken()
                             <input type="hidden" name="returnUrl" value="@returnUrl" />
-                            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                            <div asp-validation-summary="All" class="alert alert-danger"></div>
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label asp-for="UserName" class="form-label fw-semibold">
-                                        <i class="bi bi-person me-1"></i>@localizer.Get("Email")
+                                        <i class="bi bi-person me-1"></i>@localizer.Get("Username")
                                     </label>
                                     <input asp-for="UserName" class="form-control form-control-lg"
-                                           placeholder="@localizer.Get("Email")" />
+                                           placeholder="@localizer.Get("Username")" />
                                     <span asp-validation-for="UserName" class="text-danger"></span>
                                 </div>
                                 <div class="col-md-6 mb-3">
@@ -80,20 +87,45 @@
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label asp-for="Birthday" class="form-label fw-semibold">
-                                        <i class="bi bi-calendar me-1"></i>Birthday
+                                        <i class="bi bi-calendar me-1"></i>@localizer.Get("Birthday")
                                     </label>
-                                    <input asp-for="Birthday" class="form-control form-control-lg"
-                                           type="date" />
+                                    <input asp-for="Birthday" type="hidden" value="@birthdayValue" data-birthday-value />
+                                    <div class="birthday-picker" data-birthday-picker>
+                                        <select class="form-select birthday-day-select" data-birthday-day aria-label="@localizer.Get("Day")">
+                                            <option value="">@localizer.Get("Day")</option>
+                                            @for (var day = 1; day <= 31; day++)
+                                            {
+                                                <option value="@day" selected="@(birthdayDay == day)">@day</option>
+                                            }
+                                        </select>
+                                        <select class="form-select birthday-month-select" data-birthday-month aria-label="@localizer.Get("Month")">
+                                            <option value="">@localizer.Get("Month")</option>
+                                            @for (var month = 1; month <= 12; month++)
+                                            {
+                                                <option value="@month" selected="@(birthdayMonth == month)">Th.@month</option>
+                                            }
+                                        </select>
+                                        <select class="form-select birthday-year-select" data-birthday-year aria-label="@localizer.Get("Year")">
+                                            <option value="">@localizer.Get("Year")</option>
+                                            @for (var year = currentYear; year >= minBirthYear; year--)
+                                            {
+                                                <option value="@year" selected="@(birthdayYear == year)">@year</option>
+                                            }
+                                        </select>
+                                    </div>
                                     <span asp-validation-for="Birthday" class="text-danger"></span>
                                 </div>
                             </div>
 
                             <div class="form-check mb-4">
-                                <input class="form-check-input" type="checkbox" id="termsCheck" required />
-                                <label class="form-check-label text-muted small" for="termsCheck">
-                                    I agree to the <a href="#" class="text-primary">Terms of Service</a>
-                                    and <a href="#" class="text-primary">Privacy Policy</a>
+                                <input asp-for="TermsAccepted" class="form-check-input" type="checkbox" id="termsCheck" />
+                                <label asp-for="TermsAccepted" class="form-check-label text-muted small" for="termsCheck">
+                                    @localizer.Get("IAgreeTo")
+                                    <a href="#" class="text-primary">@localizer.Get("TermsOfService")</a>
+                                    @localizer.Get("And")
+                                    <a href="#" class="text-primary">@localizer.Get("PrivacyPolicy")</a>
                                 </label>
+                                <span asp-validation-for="TermsAccepted" class="text-danger d-block small mt-1"></span>
                             </div>
 
                             <button type="submit" class="btn btn-primary btn-lg w-100">
@@ -119,6 +151,50 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll('[data-birthday-picker]').forEach(picker => {
+            const daySelect = picker.querySelector('[data-birthday-day]');
+            const monthSelect = picker.querySelector('[data-birthday-month]');
+            const yearSelect = picker.querySelector('[data-birthday-year]');
+            const valueInput = picker.parentElement.querySelector('[data-birthday-value]');
+
+            function daysInMonth(year, month) {
+                if (!year || !month) return 31;
+                return new Date(Number(year), Number(month), 0).getDate();
+            }
+
+            function syncDays() {
+                const selectedDay = Number(daySelect.value || 0);
+                const maxDays = daysInMonth(yearSelect.value, monthSelect.value);
+
+                Array.from(daySelect.options).forEach(option => {
+                    if (!option.value) return;
+                    option.hidden = Number(option.value) > maxDays;
+                });
+
+                if (selectedDay > maxDays) daySelect.value = '';
+            }
+
+            function syncBirthday() {
+                syncDays();
+
+                if (!daySelect.value || !monthSelect.value || !yearSelect.value) {
+                    valueInput.value = '';
+                    return;
+                }
+
+                const day = daySelect.value.padStart(2, '0');
+                const month = monthSelect.value.padStart(2, '0');
+                valueInput.value = `${yearSelect.value}-${month}-${day}`;
+            }
+
+            [daySelect, monthSelect, yearSelect].forEach(select => {
+                select.addEventListener('change', syncBirthday);
+            });
+
+            syncBirthday();
+        });
+    </script>
 }
 
 <style>
@@ -129,6 +205,34 @@
     .form-control:focus {
         border-color: #d47f31;
         box-shadow: 0 0 0 0.2rem rgba(212, 127, 49, 0.25);
+    }
+
+    .birthday-picker {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1.3fr;
+        gap: 0.5rem;
+    }
+
+    .birthday-picker .form-select {
+        min-width: 0;
+        width: 100%;
+        height: calc(3.5rem + 2px);
+        padding-left: 0.5rem;
+        padding-right: 1.6rem;
+        font-size: 0.9rem;
+        background-position: right 0.4rem center;
+        background-size: 12px;
+        text-overflow: ellipsis;
+    }
+
+    .validation-summary-valid {
+        display: none;
+    }
+
+    @@media (max-width: 575.98px) {
+        .birthday-picker {
+            grid-template-columns: 1fr;
+        }
     }
 
     .btn-primary {

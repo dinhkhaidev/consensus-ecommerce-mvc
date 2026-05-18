@@ -5,15 +5,50 @@ using WebActionResults.Data.Repositories;
 using WebActionResults.Data.Services;
 using WebActionResults.ViewModels;
 using WebActionResults.Models;
+using WebActionResults.Utilities;
 
 namespace WebActionResults.Controllers;
 
 public class CartController : Controller
 {
+    public const string CheckoutItemIdsSessionKey = "CHECKOUT_ITEM_IDS";
+
     private readonly ICartService _cartService;
     private readonly IProductRepository _productRepository;
     private readonly IUserService _userService;
     private readonly ShopDbContext _context;
+
+    private static readonly IReadOnlyDictionary<string, string> RoomProductCatalogMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["sofa-01"] = "Modern L-Shaped Sofa",
+        ["sofa-02"] = "Velvet Sectional Sofa",
+        ["sofa-03"] = "Nordic 3-Seater Sofa",
+        ["table-01"] = "Minimalist Coffee Table",
+        ["table-02"] = "Marble Top Table",
+        ["table-03"] = "Glass Top Side Table",
+        ["chair-01"] = "Classic Leather Armchair",
+        ["chair-02"] = "Curved Accent Chair",
+        ["chair-03"] = "Chaise Lounge Chair",
+        ["chair-04"] = "Ergonomic Office Chair",
+        ["stool-01"] = "Storage Ottoman",
+        ["lamp-01"] = "Corner Floor Lamp",
+        ["lamp-02"] = "Metal Floor Lamp",
+        ["lamp-03"] = "Desk Lamp LED",
+        ["plant-01"] = "Artificial Plant Tree",
+        ["plant-02"] = "Artificial Plant Tree",
+        ["plant-03"] = "Artificial Plant Tree",
+        ["rug-01"] = "Candle Holder Set",
+        ["rug-02"] = "Candle Holder Set",
+        ["rug-03"] = "Candle Holder Set",
+        ["cabinet-01"] = "Oak Wood TV Stand",
+        ["cabinet-02"] = "Filing Cabinet 4-drawer",
+        ["cabinet-03"] = "Mobile Pedestal",
+        ["decor-01"] = "Abstract Canvas Art",
+        ["decor-02"] = "Ceramic Vase Large",
+        ["decor-03"] = "Sculpture Statue",
+        ["shelf-01"] = "Wall Shelf Unit",
+        ["shelf-02"] = "Modular Bookshelf"
+    };
 
     public CartController(
         ICartService cartService,
@@ -63,6 +98,7 @@ public class CartController : Controller
         {
             Items = cartItems.Select(c => new CartItemViewModel
             {
+                CartItemId = c.Id,
                 ProductId = c.ProductId,
                 VariantId = c.VariantId ?? 0,
                 ProductName = c.ProductName,
@@ -86,13 +122,44 @@ public class CartController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CheckoutSelected(int[] selectedCartItemIds)
+    {
+        var userId = await _userService.GetCurrentUserIdAsync();
+        if (userId == null)
+            return RedirectToAction("Login", "Account");
+
+        var selectedIds = selectedCartItemIds?.Distinct().ToList() ?? new List<int>();
+        if (!selectedIds.Any())
+        {
+            TempData["ToastWarning"] = "Please select at least one product to checkout.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var cartItems = await _cartService.GetCartAsync(userId.Value);
+        var validIds = cartItems
+            .Where(i => selectedIds.Contains(i.Id))
+            .Select(i => i.Id)
+            .ToList();
+
+        if (!validIds.Any())
+        {
+            TempData["ToastWarning"] = "Selected products are no longer in your cart.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        HttpContext.Session.SetString(CheckoutItemIdsSessionKey, string.Join(",", validIds));
+        return RedirectToAction("Index", "Checkout");
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Add(int productId, int variantId = 0, int quantity = 1, decimal unitPrice = 0, string? productName = null, string? variantName = null, string? returnUrl = null)
     {
         var userId = await _userService.GetCurrentUserIdAsync();
         if (userId == null)
             return RedirectToAction("Login", "Account");
 
-        var product = await _productRepository.GetByIdAsync(productId);
+        var product = await _productRepository.GetByIdWithDetailsAsync(productId);
         if (product == null)
         {
             TempData["ToastError"] = "Product not found.";
@@ -104,19 +171,37 @@ public class CartController : Controller
         string? image = product.Images?.FirstOrDefault()?.ImageUrl;
         string? selectedVariantName = variantName;
         string priceBreakdown = "";
+        var activeVariants = product.Variants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
+
+        if (variantId <= 0 && activeVariants.Any())
+        {
+            var defaultVariant = activeVariants.FirstOrDefault(v => v.StockQuantity >= quantity);
+            if (defaultVariant == null)
+            {
+                TempData["ToastError"] = "Product is out of stock.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            variantId = defaultVariant.Id;
+        }
 
         if (variantId > 0)
         {
-            var variant = product.Variants?.FirstOrDefault(v => v.Id == variantId);
+            var variant = activeVariants.FirstOrDefault(v => v.Id == variantId);
             if (variant != null)
             {
+                if (variant.StockQuantity < quantity)
+                {
+                    TempData["ToastError"] = "Selected variant is out of stock.";
+                    return RedirectToLocal(returnUrl);
+                }
+
                 basePrice = product.UnitPrice;
                 priceAdjustment = variant.PriceAdjustment ?? 0;
                 var finalPrice = basePrice + priceAdjustment;
                 priceBreakdown = priceAdjustment != 0 ? $"Base: {basePrice:N0} + Variant: +{priceAdjustment:N0} = {finalPrice:N0} VND" : "";
 
-                if (!string.IsNullOrEmpty(variant.SKU))
-                    selectedVariantName = variantName ?? $"{variant.Color} / {variant.Size}";
+                selectedVariantName = variantName ?? string.Join(" / ", new[] { variant.Color, variant.Size }.Where(v => !string.IsNullOrWhiteSpace(v)));
                 if (variant.Images != null && variant.Images.Any())
                     image = variant.Images.First().ImageUrl;
             }
@@ -126,6 +211,75 @@ public class CartController : Controller
 
         TempData["ToastSuccess"] = "Added to cart.";
         return RedirectToLocal(returnUrl);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddRoomItems([FromBody] RoomCartRequest? request)
+    {
+        var userId = await _userService.GetCurrentUserIdAsync();
+        if (userId == null)
+            return Unauthorized(new { success = false, loginUrl = Url.Action("Login", "Account", new { returnUrl = Url.Action("Index", "Room3D") }) });
+
+        var requestedItems = (request?.Items ?? new List<RoomCartItemRequest>())
+            .Where(i => !string.IsNullOrWhiteSpace(i.ProductId))
+            .Select(i =>
+            {
+                var roomProductId = i.ProductId!.Trim();
+                var productName = RoomProductCatalogMap.TryGetValue(roomProductId, out var mappedName)
+                    ? mappedName
+                    : i.Name?.Trim();
+
+                return new RoomCartResolvedItem(
+                    productName ?? string.Empty,
+                    GetCatalogCategoryName(i.Category),
+                    i.Price > 0 ? i.Price : 1000000,
+                    Math.Clamp(i.Quantity, 1, 10));
+            })
+            .Where(i => !string.IsNullOrWhiteSpace(i.ProductName))
+            .GroupBy(i => i.ProductName, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new RoomCartResolvedItem(
+                g.Key,
+                g.First().CategoryName,
+                g.First().Price,
+                Math.Clamp(g.Sum(i => i.Quantity), 1, 10)))
+            .ToList();
+
+        if (!requestedItems.Any())
+            return BadRequest(new { success = false, message = "Chua co mon nao trong phong 3D duoc gan voi san pham that." });
+
+        var addedProductIds = new List<int>();
+        var skippedProducts = new List<int>();
+
+        foreach (var item in requestedItems)
+        {
+            var product = await GetOrCreateProductByNameWithDetailsAsync(item.ProductName, item.CategoryName, item.Price);
+            if (product == null || product.Discontinued)
+            {
+                skippedProducts.Add(0);
+                continue;
+            }
+
+            var added = await AddCatalogProductToCartAsync(userId.Value, product, item.Quantity);
+            if (added)
+                addedProductIds.Add(product.Id);
+            else
+                skippedProducts.Add(product.Id);
+        }
+
+        if (!addedProductIds.Any())
+            return BadRequest(new { success = false, message = "Cac san pham phong 3D hien het hang hoac khong ton tai." });
+
+        HttpContext.Session.Remove(CheckoutItemIdsSessionKey);
+        TempData["ToastSuccess"] = "Da them bo phong 3D vao gio hang.";
+
+        return Json(new
+        {
+            success = true,
+            addedCount = addedProductIds.Count,
+            skippedCount = skippedProducts.Count,
+            redirectUrl = Url.Action("Index", "Cart")
+        });
     }
 
     [HttpPost]
@@ -237,7 +391,151 @@ public class CartController : Controller
     private IActionResult RedirectToLocal(string? returnUrl)
     {
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
-            return Redirect(returnUrl);
+            return Redirect(RedirectUrlSanitizer.EscapeHeaderValue(returnUrl));
         return RedirectToAction(nameof(Index));
     }
+
+    private async Task<bool> AddCatalogProductToCartAsync(int userId, Product product, int quantity)
+    {
+        decimal basePrice = product.UnitPrice;
+        decimal priceAdjustment = 0;
+        string? image = product.Images?
+            .OrderByDescending(i => i.IsMain)
+            .ThenBy(i => i.DisplayOrder)
+            .FirstOrDefault()
+            ?.ImageUrl;
+        string? selectedVariantName = null;
+        string priceBreakdown = "";
+        var variantId = 0;
+        var activeVariants = product.Variants?.Where(v => v.IsActive).ToList() ?? new List<ProductVariant>();
+
+        if (activeVariants.Any())
+        {
+            var defaultVariant = activeVariants.FirstOrDefault(v => v.StockQuantity >= quantity);
+            if (defaultVariant == null)
+            {
+                defaultVariant = activeVariants.FirstOrDefault(v => v.SKU == $"ROOM3D-{product.Id}");
+                if (defaultVariant == null)
+                {
+                    defaultVariant = new ProductVariant
+                    {
+                        ProductId = product.Id,
+                        Size = "Default",
+                        Color = "Room 3D",
+                        SKU = $"ROOM3D-{product.Id}",
+                        PriceAdjustment = 0,
+                        StockQuantity = 100,
+                        IsActive = true
+                    };
+                    _context.ProductVariants.Add(defaultVariant);
+                }
+                else
+                {
+                    defaultVariant.StockQuantity = Math.Max(defaultVariant.StockQuantity, 100);
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            variantId = defaultVariant.Id;
+            priceAdjustment = defaultVariant.PriceAdjustment ?? 0;
+            selectedVariantName = string.Join(" / ", new[] { defaultVariant.Color, defaultVariant.Size }.Where(v => !string.IsNullOrWhiteSpace(v)));
+            if (defaultVariant.Images != null && defaultVariant.Images.Any())
+                image = defaultVariant.Images.OrderBy(i => i.DisplayOrder).First().ImageUrl;
+        }
+
+        var finalPrice = basePrice + priceAdjustment;
+        if (priceAdjustment != 0)
+            priceBreakdown = $"Base: {basePrice:N0} + Variant: +{priceAdjustment:N0} = {finalPrice:N0} VND";
+
+        await _cartService.AddToCartAsync(
+            userId,
+            product.Id,
+            variantId,
+            finalPrice,
+            basePrice,
+            priceAdjustment,
+            priceBreakdown,
+            product.ProductName,
+            selectedVariantName,
+            image,
+            quantity);
+
+        return true;
+    }
+
+    private async Task<Product?> GetOrCreateProductByNameWithDetailsAsync(string productName, string categoryName, decimal price)
+    {
+        var normalizedName = productName.Trim().ToLower();
+        var existingProduct = await _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Supplier)
+            .Include(p => p.Variants)
+                .ThenInclude(v => v.Images)
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.ProductName.ToLower() == normalizedName);
+
+        if (existingProduct != null)
+            return existingProduct;
+
+        var category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == categoryName);
+        if (category == null)
+        {
+            category = new Category
+            {
+                CategoryName = categoryName,
+                Description = $"Auto-created for Room 3D {categoryName.ToLower()} items",
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.Categories.Add(category);
+            await _context.SaveChangesAsync();
+        }
+
+        var product = new Product
+        {
+            ProductName = productName.Trim(),
+            CategoryID = category.Id,
+            QuantityPerUnit = "1 piece",
+            UnitPrice = price > 0 ? price : 1000000,
+            Discontinued = false,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _context.Products.Add(product);
+        await _context.SaveChangesAsync();
+
+        return await _context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Supplier)
+            .Include(p => p.Variants)
+                .ThenInclude(v => v.Images)
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.Id == product.Id);
+    }
+
+    private static string GetCatalogCategoryName(string? roomCategory)
+    {
+        return (roomCategory ?? "").Trim().ToLowerInvariant() switch
+        {
+            "decor" or "plant" or "rug" => "Decor",
+            "table" or "chair" or "sofa" or "lamp" or "cabinet" or "shelf" => "Living Room",
+            _ => "Living Room"
+        };
+    }
+
+    public sealed class RoomCartRequest
+    {
+        public List<RoomCartItemRequest> Items { get; set; } = new();
+    }
+
+    public sealed class RoomCartItemRequest
+    {
+        public string? ProductId { get; set; }
+        public string? Name { get; set; }
+        public string? Category { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; } = 1;
+    }
+
+    private sealed record RoomCartResolvedItem(string ProductName, string CategoryName, decimal Price, int Quantity);
 }

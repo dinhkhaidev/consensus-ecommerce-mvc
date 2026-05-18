@@ -1,21 +1,39 @@
 @{
     var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var storeName = settings.GetValueOrDefault("StoreName", localizer.Get("AppName"));
+    var tagline = settings.GetValueOrDefault("SiteTagline", "Premium Furniture");
+    var logoUrl = settings.GetValueOrDefault("LogoUrl", "");
     var contactEmail = settings.GetValueOrDefault("ContactEmail", "info@furnish.com");
+    var supportEmail = settings.GetValueOrDefault("SupportEmail", "");
     var contactPhone = settings.GetValueOrDefault("ContactPhone", "");
+    var hotline = settings.GetValueOrDefault("Hotline", "");
     var address = settings.GetValueOrDefault("Address", "");
-    var footerCopyright = settings.GetValueOrDefault("FooterCopyright", "");
+    var workingHours = settings.GetValueOrDefault("WorkingHours", "");
+    var footerAbout = settings.GetValueOrDefault("FooterShortAbout", "");
+    var footerCopyright = settings.GetValueOrDefault("FooterCopyright", storeName);
+    var facebookUrl = settings.GetValueOrDefault("FacebookUrl", "");
+    var instagramUrl = settings.GetValueOrDefault("InstagramUrl", "");
+    var youtubeUrl = settings.GetValueOrDefault("YouTubeUrl", "");
+    var tiktokUrl = settings.GetValueOrDefault("TikTokUrl", "");
+    var displayPhone = !string.IsNullOrWhiteSpace(hotline) ? hotline : contactPhone;
 }
+
 <footer class="footer py-lg-8 py-5" style="background: #1a1a1a;">
     <div class="container">
         <div class="row align-items-center mb-7">
             <div class="col-lg-4 mb-4 mb-lg-0">
                 <a asp-controller="Home" asp-action="Index" class="text-decoration-none d-inline-flex align-items-center gap-2">
                     <div class="brand-icon">
-                        <i class="bi bi-house-door-fill" style="color: #d47f31;"></i>
+                        @if (!string.IsNullOrWhiteSpace(logoUrl))
+                        {
+                            <img src="@logoUrl" alt="@storeName"
+                                 onerror="this.classList.add('d-none'); this.nextElementSibling.classList.remove('d-none');" />
+                        }
+                        <i class="bi bi-house-door-fill @(!string.IsNullOrWhiteSpace(logoUrl) ? "d-none" : "")"></i>
                     </div>
                     <div class="d-flex flex-column lh-sm">
-                        <span class="fw-bold text-uppercase text-white" style="letter-spacing: .15rem; font-size: 0.85rem;">@localizer.Get("AppName")</span>
-                        <span class="text-muted small">Premium Furniture</span>
+                        <span class="fw-bold text-uppercase text-white footer-brand-name">@storeName</span>
+                        <span class="text-muted small">@tagline</span>
                     </div>
                 </a>
             </div>
@@ -30,30 +48,73 @@
             </div>
         </div>
 
-        <div class="row align-items-center py-lg-8 border-top" style="border-color: #333 !important;">
+        <div class="row align-items-center py-lg-8 py-5 border-top footer-feature-row" style="border-color: #333 !important;">
             <div class="col-lg-6 mb-4 mb-lg-0">
                 <h2 class="display-4 text-white mb-3">We Design all over the world</h2>
-                <div class="d-flex gap-3">
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
-                        <i class="bi bi-facebook"></i>
-                    </a>
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
-                        <i class="bi bi-twitter"></i>
-                    </a>
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
-                        <i class="bi bi-instagram"></i>
-                    </a>
-                    <a href="#" class="btn btn-outline-light btn-sm rounded-circle p-2" style="width: 36px; height: 36px;">
-                        <i class="bi bi-linkedin"></i>
-                    </a>
+                @if (!string.IsNullOrWhiteSpace(footerAbout))
+                {
+                    <p class="text-white-50 mb-4 footer-about">@footerAbout</p>
+                }
+                <div class="d-flex gap-3 flex-wrap">
+                    @if (!string.IsNullOrWhiteSpace(facebookUrl))
+                    {
+                        <a href="@facebookUrl" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm rounded-circle footer-social-btn" aria-label="Facebook">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(instagramUrl))
+                    {
+                        <a href="@instagramUrl" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm rounded-circle footer-social-btn" aria-label="Instagram">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(youtubeUrl))
+                    {
+                        <a href="@youtubeUrl" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm rounded-circle footer-social-btn" aria-label="YouTube">
+                            <i class="bi bi-youtube"></i>
+                        </a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(tiktokUrl))
+                    {
+                        <a href="@tiktokUrl" target="_blank" rel="noopener" class="btn btn-outline-light btn-sm rounded-circle footer-social-btn" aria-label="TikTok">
+                            <i class="bi bi-tiktok"></i>
+                        </a>
+                    }
                 </div>
             </div>
             <div class="col-lg-6 d-flex justify-content-start justify-content-lg-end">
-                <div class="d-flex flex-column gap-3">
+                <div class="d-flex flex-column gap-3 footer-contact-box">
                     <div>
                         <span class="text-white-50 small">@localizer.Get("Email") Us</span>
-                        <span class="h5 text-white d-block">@contactEmail</span>
+                        <a href="mailto:@contactEmail" class="h5 text-white d-block text-decoration-none mb-0">@contactEmail</a>
                     </div>
+                    @if (!string.IsNullOrWhiteSpace(supportEmail) && supportEmail != contactEmail)
+                    {
+                        <div>
+                            <span class="text-white-50 small">Support</span>
+                            <a href="mailto:@supportEmail" class="text-white-50 text-decoration-none">@supportEmail</a>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(displayPhone))
+                    {
+                        <div>
+                            <span class="text-white-50 small">@localizer.Get("Phone")</span>
+                            <a href="tel:@displayPhone" class="text-white-50 text-decoration-none">@displayPhone</a>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(address) || !string.IsNullOrWhiteSpace(workingHours))
+                    {
+                        <div class="footer-mini-info">
+                            @if (!string.IsNullOrWhiteSpace(address))
+                            {
+                                <span class="d-block text-white-50">@address</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(workingHours))
+                            {
+                                <span class="d-block text-white-50">@workingHours</span>
+                            }
+                        </div>
+                    }
                     <a asp-controller="Home" asp-action="Contact" class="btn btn-outline-light btn-sm" style="width: fit-content;">@localizer.Get("Info")</a>
                 </div>
             </div>
@@ -64,34 +125,29 @@
         <div class="row align-items-center">
             <div class="col-md-6 text-center text-md-start">
                 <p class="mb-0 small text-white-50">
-                    &copy; @DateTime.Now.Year @if (!string.IsNullOrEmpty(footerCopyright))
-                    {
-                        @Html.Raw(footerCopyright)
-                    }
-                    else
-                    {
-                        <strong class="text-white">@localizer.Get("AppName")</strong>
-                    }. All rights reserved.
+                    &copy; @DateTime.Now.Year @Html.Raw(footerCopyright). All rights reserved.
                 </p>
             </div>
             <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
                 <a asp-controller="Home" asp-action="Privacy" class="ft-links text-decoration-none small text-white-50 me-3">Privacy Policy</a>
-                <a href="#" class="ft-links text-decoration-none small text-white-50">Terms of Service</a>
+                <a asp-controller="Home" asp-action="Terms" class="ft-links text-decoration-none small text-white-50 me-3">Terms of Service</a>
+                <a asp-controller="Home" asp-action="ShippingPolicy" class="ft-links text-decoration-none small text-white-50">Shipping Policy</a>
             </div>
         </div>
     </div>
 </footer>
 
 <style>
-    .ft-links {
+    .footer .ft-links {
         transition: color 0.2s;
     }
 
-    .ft-links:hover {
+    .footer .ft-links:hover,
+    .footer a.h5:hover {
         color: #d47f31 !important;
     }
 
-    .brand-icon {
+    .footer .brand-icon {
         width: 40px;
         height: 40px;
         background: rgba(212, 127, 49, 0.15);
@@ -99,9 +155,54 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        overflow: hidden;
+        flex: 0 0 40px;
     }
 
-    .brand-icon i {
+    .footer .brand-icon i {
+        color: #d47f31;
         font-size: 1.25rem;
+    }
+
+    .footer .brand-icon img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        padding: 5px;
+    }
+
+    .footer-brand-name {
+        letter-spacing: .15rem;
+        font-size: 0.85rem;
+    }
+
+    .footer-about {
+        max-width: 460px;
+        line-height: 1.7;
+    }
+
+    .footer-social-btn {
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .footer-contact-box {
+        max-width: 420px;
+    }
+
+    .footer-mini-info {
+        max-width: 360px;
+        line-height: 1.55;
+        font-size: 0.92rem;
+    }
+
+    @@media (max-width: 575.98px) {
+        .footer .display-4 {
+            font-size: 2.25rem;
+        }
     }
 </style>
