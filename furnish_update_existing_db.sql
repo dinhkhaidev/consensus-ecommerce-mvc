@@ -262,6 +262,18 @@ GO
 -- =============================================
 IF OBJECT_ID(N'dbo.Payments', N'U') IS NOT NULL
 BEGIN
+    IF COL_LENGTH(N'dbo.Payments', N'Method') IS NOT NULL
+    BEGIN
+        UPDATE dbo.Payments SET Method = 'COD' WHERE Method IS NULL OR LTRIM(RTRIM(Method)) = '';
+        ALTER TABLE dbo.Payments ALTER COLUMN Method NVARCHAR(50) NOT NULL;
+    END
+
+    IF COL_LENGTH(N'dbo.Payments', N'Status') IS NOT NULL
+    BEGIN
+        UPDATE dbo.Payments SET Status = 'Pending' WHERE Status IS NULL OR LTRIM(RTRIM(Status)) = '';
+        ALTER TABLE dbo.Payments ALTER COLUMN Status NVARCHAR(50) NOT NULL;
+    END
+
     IF COL_LENGTH(N'dbo.Payments', N'PaymentUrl') IS NULL
         ALTER TABLE dbo.Payments ADD PaymentUrl NVARCHAR(500) NULL;
 
@@ -291,6 +303,53 @@ GO
 
 IF OBJECT_ID(N'dbo.Shipments', N'U') IS NOT NULL
 BEGIN
+    IF COL_LENGTH(N'dbo.Shipments', N'Carrier') IS NOT NULL
+    BEGIN
+        UPDATE dbo.Shipments SET Carrier = '' WHERE Carrier IS NULL;
+        ALTER TABLE dbo.Shipments ALTER COLUMN Carrier NVARCHAR(100) NOT NULL;
+    END
+
+    IF COL_LENGTH(N'dbo.Shipments', N'Status') IS NOT NULL
+    BEGIN
+        IF EXISTS (
+            SELECT 1
+            FROM sys.columns c
+            INNER JOIN sys.types t ON c.user_type_id = t.user_type_id
+            WHERE c.object_id = OBJECT_ID(N'dbo.Shipments')
+              AND c.name = N'Status'
+              AND t.name IN (N'nvarchar', N'varchar', N'nchar', N'char')
+        )
+        BEGIN
+            IF COL_LENGTH(N'dbo.Shipments', N'StatusInt') IS NULL
+                ALTER TABLE dbo.Shipments ADD StatusInt INT NOT NULL CONSTRAINT DF_Shipments_StatusInt DEFAULT 0;
+
+            UPDATE dbo.Shipments
+            SET StatusInt = COALESCE(
+                TRY_CONVERT(INT, Status),
+                CASE LOWER(LTRIM(RTRIM(Status)))
+                    WHEN 'pickedup' THEN 1
+                    WHEN 'picked_up' THEN 1
+                    WHEN 'intransit' THEN 2
+                    WHEN 'in_transit' THEN 2
+                    WHEN 'outfordelivery' THEN 3
+                    WHEN 'out_for_delivery' THEN 3
+                    WHEN 'delivered' THEN 4
+                    WHEN 'failed' THEN 5
+                    WHEN 'returned' THEN 6
+                    ELSE 0
+                END
+            );
+
+            ALTER TABLE dbo.Shipments DROP COLUMN Status;
+            EXEC sp_rename N'dbo.Shipments.StatusInt', N'Status', N'COLUMN';
+        END
+        ELSE
+        BEGIN
+            UPDATE dbo.Shipments SET Status = 0 WHERE Status IS NULL;
+            ALTER TABLE dbo.Shipments ALTER COLUMN Status INT NOT NULL;
+        END
+    END
+
     IF COL_LENGTH(N'dbo.Shipments', N'UpdatedAt') IS NULL
         ALTER TABLE dbo.Shipments ADD UpdatedAt DATETIME2 NULL;
 END
@@ -415,6 +474,34 @@ INSERT INTO @DefaultSettings (SettingKey, SettingValue) VALUES
 ('EnableReviews', 'true'),
 ('AutoApproveReviews', 'false'),
 ('EnableWishlist', 'true'),
+('HideClosedPageLinks', 'false'),
+('ClosedPageEyebrow', N'Khu vực đặc biệt'),
+('ClosedPageTitle', N'Khu vực này đang tạm khóa'),
+('ClosedPageMessage', N'Quản trị viên đang giữ tính năng này ở chế độ bí mật. Vui lòng quay lại sau.'),
+('ClosedPageButtonText', N'Về trang chủ'),
+('ClosedPageBackgroundImageUrl', '/assets/images/sontungmtpmv.png'),
+('PageHomeEnabled', 'true'),
+('PageShopEnabled', 'true'),
+('PageCategoriesEnabled', 'true'),
+('PageRoom3DEnabled', 'true'),
+('PageCartEnabled', 'true'),
+('PageCheckoutEnabled', 'true'),
+('PageWishlistEnabled', 'true'),
+('PageOrdersEnabled', 'true'),
+('PageAboutEnabled', 'true'),
+('PageContactEnabled', 'true'),
+('PagePoliciesEnabled', 'true'),
+('PageHomeOpenAt', ''),
+('PageShopOpenAt', ''),
+('PageCategoriesOpenAt', ''),
+('PageRoom3DOpenAt', ''),
+('PageCartOpenAt', ''),
+('PageCheckoutOpenAt', ''),
+('PageWishlistOpenAt', ''),
+('PageOrdersOpenAt', ''),
+('PageAboutOpenAt', ''),
+('PageContactOpenAt', ''),
+('PagePoliciesOpenAt', ''),
 ('EnableNewsletterPopup', 'false'),
 ('EnableChatWidget', 'false'),
 ('ShowLowStockWarning', 'true'),
@@ -483,6 +570,11 @@ GO
 IF NOT EXISTS (SELECT 1 FROM dbo.__EFMigrationsHistory WHERE MigrationId = '20260515123000_AddOrderRequestFlow')
     INSERT INTO dbo.__EFMigrationsHistory (MigrationId, ProductVersion)
     VALUES ('20260515123000_AddOrderRequestFlow', '8.0.25');
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.__EFMigrationsHistory WHERE MigrationId = '20260517062015_AddAvatarUrl')
+    INSERT INTO dbo.__EFMigrationsHistory (MigrationId, ProductVersion)
+    VALUES ('20260517062015_AddAvatarUrl', '8.0.25');
 GO
 
 PRINT 'Furnish existing database update completed successfully.';

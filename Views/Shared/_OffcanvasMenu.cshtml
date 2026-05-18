@@ -1,3 +1,11 @@
+@{
+    var settings = ViewData["WebSettings"] as Dictionary<string, string> ?? new();
+    var currentPath = Context.Request.Path.Value ?? "/";
+    var hideClosedPageLinks = string.Equals(settings.GetValueOrDefault("HideClosedPageLinks", "false"), "true", StringComparison.OrdinalIgnoreCase);
+    bool PageEnabled(string key) => !string.Equals(settings.GetValueOrDefault(key, "true"), "false", StringComparison.OrdinalIgnoreCase);
+    bool ShowPageLink(string key) => !hideClosedPageLinks || PageEnabled(key);
+}
+
 <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasMenu" aria-labelledby="offcanvasMenuLabel">
     <div class="offcanvas-header bg-white py-3 px-4 border-bottom">
         <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
@@ -11,68 +19,95 @@
     </div>
     <div class="offcanvas-body px-4">
         <!-- Search -->
-        <form method="get" asp-controller="Product" asp-action="Index" class="mb-4">
-            <div class="input-group">
-                <input type="text" name="search" class="form-control" placeholder="@localizer.Get("SearchPlaceholder")" />
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-search"></i>
-                </button>
-            </div>
-        </form>
+        @if (ShowPageLink("PageShopEnabled"))
+        {
+            <form method="get" asp-controller="Product" asp-action="Index" class="mb-4">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="@localizer.Get("SearchPlaceholder")" />
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        }
 
         <!-- Main Nav -->
         <div class="navbar-custom mb-4">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                @if (ShowPageLink("PageHomeEnabled"))
+                {
                 <li class="nav-item mb-2">
-                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value == "/" ? "active bg-primary text-white" : "")"
+                    <a class="nav-link px-3 py-2 rounded @(currentPath == "/" ? "active bg-primary text-white" : "")"
                        asp-controller="Home" asp-action="Index">
                         <i class="bi bi-house me-2"></i>@localizer.Get("Home")
                     </a>
                 </li>
+                }
+                @if (ShowPageLink("PageShopEnabled"))
+                {
                 <li class="nav-item mb-2">
-                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Product") == true ? "active bg-primary text-white" : "")"
+                    <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Product", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
                        asp-controller="Product" asp-action="Index">
                         <i class="bi bi-bag me-2"></i>@localizer.Get("Shop")
                     </a>
                 </li>
+                }
+                @if (ShowPageLink("PageRoom3DEnabled"))
+                {
                 <li class="nav-item mb-2">
-                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Room3D") == true ? "active bg-primary text-white" : "")"
+                    <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Room3D", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
                        asp-controller="Room3D" asp-action="Index">
                         <i class="bi bi-badge-3d me-2"></i>@localizer.Get("Room3DNav")
                     </a>
                 </li>
+                }
+                @if (ShowPageLink("PageCategoriesEnabled"))
+                {
                 <li class="nav-item mb-2">
-                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Category") == true ? "active bg-primary text-white" : "")"
+                    <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Category", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
                        asp-controller="Category" asp-action="Index">
                         <i class="bi bi-grid-3x3-gap me-2"></i>@localizer.Get("Categories")
                     </a>
                 </li>
+                }
+                @if (ShowPageLink("PageAboutEnabled"))
+                {
                 <li class="nav-item mb-2">
-                    <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Home/About") == true ? "active bg-primary text-white" : "")"
+                    <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Home/About", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
                        asp-controller="Home" asp-action="About">
                         <i class="bi bi-info-circle me-2"></i>@localizer.Get("AboutUs")
                     </a>
                 </li>
+                }
                 @if (Context.Session.GetInt32("USER_ID").HasValue)
                 {
+                    @if (ShowPageLink("PageOrdersEnabled"))
+                    {
                     <li class="nav-item mb-2">
-                        <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Order") == true ? "active bg-primary text-white" : "")"
+                        <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Order", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
                            asp-controller="Order" asp-action="Index">
                             <i class="bi bi-box-seam me-2"></i>@localizer.Get("MyOrders")
                         </a>
                     </li>
+                    }
+                    @if (ShowPageLink("PageWishlistEnabled") && string.Equals(settings.GetValueOrDefault("EnableWishlist", "true"), "true", StringComparison.OrdinalIgnoreCase))
+                    {
                     <li class="nav-item mb-2">
-                        <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Wishlist") == true ? "active bg-primary text-white" : "")"
+                        <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Wishlist", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
                            asp-controller="Wishlist" asp-action="Index">
                             <i class="bi bi-heart me-2"></i>@localizer.Get("Wishlist")
                         </a>
                     </li>
+                    }
+                    @if (ShowPageLink("PageCartEnabled"))
+                    {
                     <li class="nav-item mb-2">
-                        <a class="nav-link px-3 py-2 rounded @(Context.Request.Path.Value?.StartsWith("/Cart") == true ? "active bg-primary text-white" : "")"
+                        <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Cart", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
                            asp-controller="Cart" asp-action="Index">
                             <i class="bi bi-cart3 me-2"></i>@localizer.Get("Cart")
                         </a>
                     </li>
+                    }
                 }
             </ul>
         </div>

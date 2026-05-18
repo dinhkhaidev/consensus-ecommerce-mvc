@@ -78,6 +78,9 @@ builder.Services.AddScoped<IFulfillmentService, FulfillmentService>();
 builder.Services.AddScoped<IWebSettingsService, WebSettingsService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
+// Activity Trace Log Service (Singleton - shared file lock)
+builder.Services.AddSingleton<ITraceLogService, TraceLogService>();
+
 // Background Services
 builder.Services.AddHostedService<TrackingBackgroundService>();
 
@@ -123,7 +126,11 @@ app.UseRouting();
 
 app.UseSession();
 
+app.UsePageAccessControl();
+
 app.UseSessionAuthentication();
+
+app.UseActivityTrace();
 
 app.UseAuthentication();
 app.UseAuthorization();

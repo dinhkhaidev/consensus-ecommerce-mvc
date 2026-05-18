@@ -60,7 +60,19 @@ public class AdminSettingsController : AdminControllerBase
             "ShowLowStockWarning",
             "RequireEmailVerification",
             "AnnouncementEnabled",
-            "PopupEnabled"
+            "PopupEnabled",
+            "HideClosedPageLinks",
+            "PageHomeEnabled",
+            "PageShopEnabled",
+            "PageCategoriesEnabled",
+            "PageRoom3DEnabled",
+            "PageCartEnabled",
+            "PageCheckoutEnabled",
+            "PageWishlistEnabled",
+            "PageOrdersEnabled",
+            "PageAboutEnabled",
+            "PageContactEnabled",
+            "PagePoliciesEnabled"
         };
 
         foreach (var key in booleanKeys)

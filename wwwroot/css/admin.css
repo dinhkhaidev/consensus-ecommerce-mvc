@@ -266,6 +266,20 @@ body.lang-vi {
     background: #fde2e5;
 }
 
+.page-access-icon {
+    flex: 0 0 auto;
+    width: 44px;
+    height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    color: #1f2933;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    font-size: 1.2rem;
+}
+
 /* Sidebar (if re-enabled) */
 .sidebar {
     position: fixed;

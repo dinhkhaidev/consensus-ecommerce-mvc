@@ -284,8 +284,8 @@ GO
 CREATE TABLE Payments (
     Id INT PRIMARY KEY IDENTITY(1,1),
     OrderId INT NOT NULL,
-    Method NVARCHAR(50) NULL,
-    Status NVARCHAR(50) NULL,
+    Method NVARCHAR(50) NOT NULL DEFAULT 'COD',
+    Status NVARCHAR(50) NOT NULL DEFAULT 'Pending',
     Amount DECIMAL(18,2) NOT NULL DEFAULT 0,
     TransactionId NVARCHAR(100) NULL,
     PaymentUrl NVARCHAR(500) NULL,
@@ -306,9 +306,9 @@ GO
 CREATE TABLE Shipments (
     Id INT PRIMARY KEY IDENTITY(1,1),
     OrderId INT NOT NULL,
-    Carrier NVARCHAR(100) NULL,
+    Carrier NVARCHAR(100) NOT NULL DEFAULT '',
     TrackingNumber NVARCHAR(100) NULL,
-    Status NVARCHAR(50) NULL,
+    Status INT NOT NULL DEFAULT 0,
     TrackingUrl NVARCHAR(500) NULL,
     LastUpdate NVARCHAR(500) NULL,
     EstimatedDelivery NVARCHAR(500) NULL,
@@ -383,7 +383,8 @@ GO
 INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion) VALUES
 ('20260510125916_InitialCreate', '8.0.25'),
 ('20260510140146_AddCartItemPriceColumns', '8.0.25'),
-('20260515123000_AddOrderRequestFlow', '8.0.25');
+('20260515123000_AddOrderRequestFlow', '8.0.25'),
+('20260517062015_AddAvatarUrl', '8.0.25');
 GO
 
 PRINT 'Furnish database schema created successfully!';
