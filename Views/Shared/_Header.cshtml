@@ -70,9 +70,25 @@
 
         <div class="d-flex align-items-center gap-2">
             
-            <button id="darkModeToggle" class="nav-link p-2 border-0 bg-transparent" type="button" title="Toggle Dark Mode">
-                <i id="darkModeIcon" class="bi bi-moon-stars fs-5"></i>
-            </button>
+            <div class="theme-mode-shell">
+                <button id="darkModeToggle" class="nav-link p-2 border-0 bg-transparent" type="button" title="Toggle Dark Mode" aria-haspopup="true" aria-expanded="false">
+                    <i id="darkModeIcon" class="bi bi-moon-stars fs-5"></i>
+                </button>
+                <div id="themeModeMenu" class="theme-mode-secret-menu" role="menu" aria-label="Theme mode">
+                    <button class="theme-mode-choice" type="button" data-theme-choice="light" role="menuitem">
+                        <i class="bi bi-sun"></i>
+                        <span>Sáng</span>
+                    </button>
+                    <button class="theme-mode-choice" type="button" data-theme-choice="dark" role="menuitem">
+                        <i class="bi bi-moon-stars"></i>
+                        <span>Tối</span>
+                    </button>
+                    <button class="theme-mode-choice theme-mode-choice-cosmos" type="button" data-theme-choice="cosmos" role="menuitem">
+                        <i class="bi bi-stars"></i>
+                        <span>???</span>
+                    </button>
+                </div>
+            </div>
 
             <div class="dropdown">
                 <a class="nav-link p-2 dropdown-toggle" href="#" data-bs-toggle="dropdown" title="@localizer.Get("Language")">
@@ -168,50 +184,6 @@
 </nav>
 
 <script>
-    // Initialize dark mode on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const isDarkMode = localStorage.getItem('darkMode') === 'true';
-        if (isDarkMode) {
-            document.documentElement.setAttribute('data-bs-theme', 'dark');
-            updateDarkModeIcon(true);
-        } else {
-            document.documentElement.removeAttribute('data-bs-theme');
-            updateDarkModeIcon(false);
-        }
-
-        // Dark Mode Toggle Handler
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', function() {
-                const html = document.documentElement;
-                const isDark = html.getAttribute('data-bs-theme') === 'dark';
-
-                if (isDark) {
-                    html.removeAttribute('data-bs-theme');
-                    localStorage.setItem('darkMode', 'false');
-                    updateDarkModeIcon(false);
-                } else {
-                    html.setAttribute('data-bs-theme', 'dark');
-                    localStorage.setItem('darkMode', 'true');
-                    updateDarkModeIcon(true);
-                }
-            });
-        }
-    });
-
-    function updateDarkModeIcon(isDarkMode) {
-        const icon = document.getElementById('darkModeIcon');
-        if (icon) {
-            if (isDarkMode) {
-                icon.classList.remove('bi-moon-stars');
-                icon.classList.add('bi-sun-fill');
-            } else {
-                icon.classList.remove('bi-sun-fill');
-                icon.classList.add('bi-moon-stars');
-            }
-        }
-    }
-
     async function updateCartBadge() {
         try {
             const res = await fetch('/Cart/GetCartCount');

@@ -11,3 +11,4 @@ node_modules
 .env
 docker-compose.override.yml
 deploy/ubuntu/publish
+App_Data/

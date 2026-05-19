@@ -1,0 +1,133 @@
+<svg width="1100" height="420" viewBox="0 0 1100 420" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Consensus interactive README console</title>
+  <desc id="desc">Animated dark console scene for Consensus MVC showing storefront, admin, Room3D and scene mode systems.</desc>
+  <style>
+    .mono { font-family: "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, monospace; }
+    .title { font: 900 58px "Inter", "Segoe UI", Arial, sans-serif; letter-spacing: 8px; }
+    .small { font-size: 14px; letter-spacing: 2px; }
+    .tiny { font-size: 11px; letter-spacing: 1.4px; }
+    .panel { fill: rgba(5, 9, 22, 0.76); stroke: rgba(151, 190, 255, 0.26); stroke-width: 1; }
+    .soft { fill: rgba(255,255,255,0.62); }
+    .muted { fill: rgba(218,229,255,0.58); }
+    .gold { fill: #E8B96A; }
+    .cyan { fill: #7FDBFF; }
+    .violet { fill: #B58AFF; }
+    .green { fill: #70F2C2; }
+    .scan { animation: scan 3.8s linear infinite; }
+    .pulse { animation: pulse 2.5s ease-in-out infinite; }
+    .floatA { animation: floatA 5.6s ease-in-out infinite; }
+    .floatB { animation: floatB 6.2s ease-in-out infinite; }
+    .blink { animation: blink 1.15s steps(2, start) infinite; }
+    .dash { stroke-dasharray: 8 13; animation: dash 9s linear infinite; }
+    .ring { transform-origin: 865px 198px; animation: rotate 18s linear infinite; }
+    .ring2 { transform-origin: 865px 198px; animation: rotateReverse 23s linear infinite; }
+    @keyframes scan { from { transform: translateY(-120px); } to { transform: translateY(460px); } }
+    @keyframes pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+    @keyframes floatA { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    @keyframes floatB { 0%,100% { transform: translate(0,0); } 50% { transform: translate(8px,6px); } }
+    @keyframes blink { 0%,45% { opacity:1; } 46%,100% { opacity:.18; } }
+    @keyframes dash { to { stroke-dashoffset: -240; } }
+    @keyframes rotate { to { transform: rotate(360deg); } }
+    @keyframes rotateReverse { to { transform: rotate(-360deg); } }
+  </style>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1100" y2="420" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#030510"/>
+      <stop offset="0.42" stop-color="#07162D"/>
+      <stop offset="0.74" stop-color="#160D37"/>
+      <stop offset="1" stop-color="#07040D"/>
+    </linearGradient>
+    <radialGradient id="planet" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(865 198) rotate(90) scale(88)">
+      <stop offset="0" stop-color="#F7FBFF"/>
+      <stop offset="0.18" stop-color="#73D6FF"/>
+      <stop offset="0.52" stop-color="#4C5DFF"/>
+      <stop offset="0.82" stop-color="#17104A"/>
+      <stop offset="1" stop-color="#050510"/>
+    </radialGradient>
+    <radialGradient id="blast" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(865 198) rotate(90) scale(185)">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.55"/>
+      <stop offset="0.22" stop-color="#8EDCFF" stop-opacity="0.22"/>
+      <stop offset="0.58" stop-color="#B58AFF" stop-opacity="0.13"/>
+      <stop offset="1" stop-color="#B58AFF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line" x1="80" y1="0" x2="1010" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7FDBFF" stop-opacity="0"/>
+      <stop offset="0.25" stop-color="#7FDBFF"/>
+      <stop offset="0.55" stop-color="#E8B96A"/>
+      <stop offset="1" stop-color="#B58AFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" stroke="rgba(255,255,255,0.045)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <rect width="1100" height="420" rx="28" fill="url(#bg)"/>
+  <rect width="1100" height="420" rx="28" fill="url(#grid)"/>
+  <rect x="1" y="1" width="1098" height="418" rx="27" stroke="rgba(255,255,255,0.12)"/>
+
+  <g opacity="0.62">
+    <circle class="pulse" cx="132" cy="80" r="2.5" fill="#FFFFFF"/>
+    <circle class="pulse" cx="224" cy="330" r="2" fill="#7FDBFF"/>
+    <circle class="pulse" cx="504" cy="72" r="2" fill="#B58AFF"/>
+    <circle class="pulse" cx="1010" cy="108" r="2.6" fill="#FFFFFF"/>
+    <circle class="pulse" cx="735" cy="342" r="1.8" fill="#E8B96A"/>
+    <circle class="pulse" cx="940" cy="324" r="1.6" fill="#7FDBFF"/>
+  </g>
+
+  <rect class="scan" x="0" y="0" width="1100" height="62" fill="url(#line)" opacity="0.12"/>
+
+  <g transform="translate(70 58)">
+    <text class="mono tiny muted" x="0" y="0">BOOTING CONSENSUS EXPERIENCE ENGINE</text>
+    <text class="title soft" x="0" y="74">CONSENSUS</text>
+    <text class="mono small gold" x="4" y="110">STORE     ROOM3D     ADMIN     CHECKOUT     ???</text>
+    <text class="mono tiny muted" x="4" y="145">Furniture commerce with one door that should probably have a warning label.</text>
+
+    <g transform="translate(0 184)">
+      <rect class="panel floatA" x="0" y="0" width="160" height="78" rx="14"/>
+      <text class="mono tiny muted" x="18" y="29">SURFACE</text>
+      <text class="mono small cyan" x="18" y="54">STOREFRONT</text>
+
+      <rect class="panel floatB" x="184" y="0" width="160" height="78" rx="14"/>
+      <text class="mono tiny muted" x="202" y="29">CONTROL</text>
+      <text class="mono small green" x="202" y="54">ADMIN</text>
+
+      <rect class="panel floatA" x="368" y="0" width="160" height="78" rx="14"/>
+      <text class="mono tiny muted" x="386" y="29">SPATIAL</text>
+      <text class="mono small violet" x="386" y="54">ROOM3D</text>
+    </g>
+
+    <text class="mono tiny muted" x="4" y="304">status: READY</text>
+    <rect class="blink" x="115" y="294" width="10" height="16" fill="#E8B96A"/>
+  </g>
+
+  <g filter="url(#glow)">
+    <path class="dash" d="M612 209C678 150 745 126 818 150C912 181 959 120 1024 84" stroke="url(#line)" stroke-width="2" fill="none" opacity="0.62"/>
+    <path class="dash" d="M612 258C695 306 781 318 873 278C932 252 970 268 1032 310" stroke="url(#line)" stroke-width="2" fill="none" opacity="0.42"/>
+  </g>
+
+  <g class="floatB">
+    <circle cx="865" cy="198" r="176" fill="url(#blast)" opacity="0.8"/>
+    <ellipse class="ring" cx="865" cy="198" rx="165" ry="54" stroke="#DCEBFF" stroke-opacity="0.5" stroke-width="2" fill="none"/>
+    <ellipse class="ring2" cx="865" cy="198" rx="128" ry="40" stroke="#B58AFF" stroke-opacity="0.42" stroke-width="2" fill="none"/>
+    <circle cx="865" cy="198" r="88" fill="url(#planet)"/>
+    <path d="M790 184C839 210 893 222 948 202" stroke="#F5F7FF" stroke-opacity="0.32" stroke-width="11" stroke-linecap="round"/>
+    <path d="M804 230C846 248 893 254 928 239" stroke="#7FDBFF" stroke-opacity="0.22" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="824" cy="158" r="18" fill="#FFFFFF" opacity="0.18"/>
+    <circle cx="1010" cy="155" r="12" fill="#E8B96A" opacity="0.9"/>
+    <circle cx="728" cy="270" r="9" fill="#7FDBFF" opacity="0.86"/>
+  </g>
+
+  <g transform="translate(735 330)">
+    <rect x="0" y="0" width="272" height="38" rx="19" fill="rgba(0,0,0,0.34)" stroke="rgba(255,255,255,0.12)"/>
+    <text class="mono tiny muted" x="24" y="24">SCENE MODE:</text>
+    <text class="mono tiny gold blink" x="128" y="24">??? ACTIVE</text>
+  </g>
+</svg>
