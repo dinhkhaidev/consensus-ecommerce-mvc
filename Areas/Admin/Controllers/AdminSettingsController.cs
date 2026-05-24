@@ -66,6 +66,7 @@ public class AdminSettingsController : AdminControllerBase
             "PageShopEnabled",
             "PageCategoriesEnabled",
             "PageRoom3DEnabled",
+            "PageAiStylistEnabled",
             "PageCartEnabled",
             "PageCheckoutEnabled",
             "PageWishlistEnabled",

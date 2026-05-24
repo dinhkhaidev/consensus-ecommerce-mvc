@@ -17,6 +17,7 @@ public class PageAccessMiddleware
         new("PageShopEnabled", "C\u1eeda h\u00e0ng", new[] { "/Product" }),
         new("PageCategoriesEnabled", "Danh m\u1ee5c", new[] { "/Category" }),
         new("PageRoom3DEnabled", "Ph\u00f2ng 3D", new[] { "/Room3D" }),
+        new("PageAiStylistEnabled", "T\u01b0 v\u1ea5n AI", new[] { "/Ai" }),
         new("PageCartEnabled", "Gi\u1ecf h\u00e0ng", new[] { "/Cart" }),
         new("PageCheckoutEnabled", "Thanh to\u00e1n", new[] { "/Checkout", "/Payment" }),
         new("PageWishlistEnabled", "Y\u00eau th\u00edch", new[] { "/Wishlist" }),

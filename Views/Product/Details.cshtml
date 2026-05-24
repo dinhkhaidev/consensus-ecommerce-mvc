@@ -27,6 +27,9 @@
     var freeShippingThreshold = decimal.TryParse(webSettings.GetValueOrDefault("FreeShippingThreshold", "500000"), out var ft) ? ft : 500000;
     var wishlistEnabled = string.Equals(webSettings.GetValueOrDefault("EnableWishlist", "true"), "true", StringComparison.OrdinalIgnoreCase);
     var room3DEnabled = string.Equals(webSettings.GetValueOrDefault("PageRoom3DEnabled", "true"), "true", StringComparison.OrdinalIgnoreCase);
+    var aiStylistEnabled = string.Equals(webSettings.GetValueOrDefault("PageAiStylistEnabled", "true"), "true", StringComparison.OrdinalIgnoreCase);
+    var hideClosedPageLinks = string.Equals(webSettings.GetValueOrDefault("HideClosedPageLinks", "false"), "true", StringComparison.OrdinalIgnoreCase);
+    var showAiStylistLink = aiStylistEnabled || !hideClosedPageLinks;
     var reviewsEnabled = string.Equals(webSettings.GetValueOrDefault("EnableReviews", "true"), "true", StringComparison.OrdinalIgnoreCase);
     var ratingCounts = Enumerable.Range(1, 5).ToDictionary(i => i, i => Model.Reviews.Count(r => r.Rating == i));
     var productImageJson = System.Text.Json.JsonSerializer.Serialize(galleryImages.Select(i => new
@@ -112,9 +115,12 @@
                             <i class="bi bi-badge-3d me-2"></i>@T("Thử trong phòng 3D", "Try in 3D room")
                         </button>
                     }
-                    <a asp-controller="Ai" asp-action="Stylist" asp-route-productId="@Model.ProductId" class="btn btn-outline-dark">
-                        <i class="bi bi-stars me-2"></i>@T("Nhờ AI phối cùng", "Ask AI to style it")
-                    </a>
+                    @if (showAiStylistLink)
+                    {
+                        <a asp-controller="Ai" asp-action="Stylist" asp-route-productId="@Model.ProductId" class="btn btn-outline-dark">
+                            <i class="bi bi-stars me-2"></i>@T("Nhờ AI phối cùng", "Ask AI to style it")
+                        </a>
+                    }
                 </div>
             </div>
 
