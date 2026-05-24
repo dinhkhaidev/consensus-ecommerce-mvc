@@ -18,6 +18,7 @@ public class AiController : Controller
     private const string AiStylistLastResultSessionKey = "AI_STYLIST_LAST_RESULT";
     private const string AiStylistChatHistorySessionKey = "AI_STYLIST_CHAT_HISTORY";
     private const string AiImageCatalogDetailsCachePrefix = "ai:image-catalog-details:";
+    private static readonly TimeSpan ProductAdvisorAiTimeout = TimeSpan.FromSeconds(10);
     private readonly IAiRecommendationService _recommendationService;
     private readonly IAiProductCandidateService _candidateService;
     private readonly IAiRecommendationValidator _validator;
@@ -391,7 +392,11 @@ public class AiController : Controller
             ? await BuildAiProductAdvisorResultAsync(product, request, alternatives, cancellationToken)
             : BuildFallbackProductAdvisorResult(product, request, alternatives);
 
-        return Json(new
+        return ProductAdvisorJson(result);
+    }
+
+    private IActionResult ProductAdvisorJson(ProductAdvisorResult result)
+        => Json(new
         {
             ok = true,
             result = new
@@ -417,7 +422,6 @@ public class AiController : Controller
                 hasRoom3DModel = p.HasRoom3DModel
             })
         });
-    }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -523,9 +527,31 @@ public class AiController : Controller
 
     private async Task<List<AdvisorScoredProduct>> LoadAdvisorAlternativesAsync(Product currentProduct, ProductAdvisorRequest request, CancellationToken cancellationToken)
     {
+        var currentCategory = currentProduct.Category?.CategoryName ?? string.Empty;
+        var filter = new AiCandidateFilter
+        {
+            UserDescription = string.Join(" ", request.NeedDescription, request.RoomType, currentProduct.ProductName, currentCategory, currentProduct.QuantityPerUnit),
+            RoomType = request.RoomType,
+            Budget = request.Budget,
+            MaxCandidates = 60
+        };
+        var candidateIds = (await _candidateService.GetCandidatesAsync(filter, cancellationToken))
+            .Select(candidate => candidate.ProductId)
+            .Where(id => id != currentProduct.Id)
+            .Distinct()
+            .Take(60)
+            .ToList();
+
+        if (!candidateIds.Any())
+            return new List<AdvisorScoredProduct>();
+
+        var rank = candidateIds
+            .Select((id, index) => new { id, index })
+            .ToDictionary(item => item.id, item => item.index);
+
         var candidates = await _context.Products
             .AsNoTracking()
-            .Where(p => p.Id != currentProduct.Id && !p.Discontinued)
+            .Where(p => candidateIds.Contains(p.Id) && !p.Discontinued)
             .Include(p => p.Category)
             .Include(p => p.Images)
             .Include(p => p.Variants)
@@ -533,7 +559,6 @@ public class AiController : Controller
             .Include(p => p.Reviews)
             .ToListAsync(cancellationToken);
 
-        var currentCategory = currentProduct.Category?.CategoryName ?? string.Empty;
         var currentScore = GetAdvisorScore(currentProduct, request);
         return candidates
             .Select(product =>
@@ -547,6 +572,7 @@ public class AiController : Controller
                 return new AdvisorScoredProduct(product, score, BuildAdvisorAlternativeReason(product, request, currentScore, score));
             })
             .OrderByDescending(item => item.Score)
+            .ThenBy(item => rank.GetValueOrDefault(item.Product.Id, int.MaxValue))
             .ThenByDescending(item => GetProductStock(item.Product))
             .ThenBy(item => item.Product.ProductName)
             .Take(8)
@@ -653,7 +679,9 @@ public class AiController : Controller
         try
         {
             var prompt = BuildProductAdvisorPrompt(product, request, alternatives);
-            var raw = await _aiProvider.GenerateJsonAsync(prompt, cancellationToken);
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(ProductAdvisorAiTimeout);
+            var raw = await _aiProvider.GenerateJsonAsync(prompt, timeout.Token);
             using var document = JsonDocument.Parse(ExtractJson(raw));
             var root = document.RootElement;
 
