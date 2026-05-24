@@ -246,3 +246,28 @@ a {
   }
 }
 */
+
+.money-estimate {
+    display: block;
+    margin-top: 0.12rem;
+    color: #6b7280;
+    font-size: 0.76rem;
+    font-weight: 650;
+    line-height: 1.25;
+}
+
+.money-estimate[hidden] {
+    display: none !important;
+}
+
+.currency-hint-icon {
+    color: #d47f31;
+    cursor: help;
+    font-size: 0.88rem;
+    margin-left: 0.35rem;
+    vertical-align: 0.05rem;
+}
+
+[data-bs-theme="dark"] .money-estimate {
+    color: #bdb3a8 !important;
+}

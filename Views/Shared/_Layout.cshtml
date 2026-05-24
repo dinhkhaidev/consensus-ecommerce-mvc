@@ -88,6 +88,7 @@
     <link rel="stylesheet" href="~/css/dark-mode.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/cosmos-mode.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    @await RenderSectionAsync("Styles", required: false)
     
     <script>
     const savedThemeMode = localStorage.getItem("themeMode");
@@ -124,6 +125,7 @@
 
     @await Html.PartialAsync("_Scripts")
     <script src="~/js/cosmos-mode.js" asp-append-version="true"></script>
+    <script src="~/js/currency-display.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
     @if (!string.IsNullOrWhiteSpace(customFooterCode))

@@ -222,7 +222,7 @@ public class PaymentController : Controller
                 return Ok();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Log error
         }

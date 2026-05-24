@@ -61,6 +61,12 @@
                     </a>
                 </li>
                 }
+                <li class="nav-item mb-2">
+                    <a class="nav-link px-3 py-2 rounded @(currentPath.StartsWith("/Ai", StringComparison.OrdinalIgnoreCase) ? "active bg-primary text-white" : "")"
+                       asp-controller="Ai" asp-action="Stylist">
+                        <i class="bi bi-stars me-2"></i>@localizer.Get("AiStylist:MenuTitle")
+                    </a>
+                </li>
                 @if (ShowPageLink("PageCategoriesEnabled"))
                 {
                 <li class="nav-item mb-2">

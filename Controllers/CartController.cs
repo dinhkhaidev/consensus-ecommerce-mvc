@@ -12,43 +12,12 @@ namespace WebActionResults.Controllers;
 public class CartController : Controller
 {
     public const string CheckoutItemIdsSessionKey = "CHECKOUT_ITEM_IDS";
+    private const string PendingCartAddSessionKey = "PENDING_CART_ADD";
 
     private readonly ICartService _cartService;
     private readonly IProductRepository _productRepository;
     private readonly IUserService _userService;
     private readonly ShopDbContext _context;
-
-    private static readonly IReadOnlyDictionary<string, string> RoomProductCatalogMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        ["sofa-01"] = "Modern L-Shaped Sofa",
-        ["sofa-02"] = "Velvet Sectional Sofa",
-        ["sofa-03"] = "Nordic 3-Seater Sofa",
-        ["table-01"] = "Minimalist Coffee Table",
-        ["table-02"] = "Marble Top Table",
-        ["table-03"] = "Glass Top Side Table",
-        ["chair-01"] = "Classic Leather Armchair",
-        ["chair-02"] = "Curved Accent Chair",
-        ["chair-03"] = "Chaise Lounge Chair",
-        ["chair-04"] = "Ergonomic Office Chair",
-        ["stool-01"] = "Storage Ottoman",
-        ["lamp-01"] = "Corner Floor Lamp",
-        ["lamp-02"] = "Metal Floor Lamp",
-        ["lamp-03"] = "Desk Lamp LED",
-        ["plant-01"] = "Artificial Plant Tree",
-        ["plant-02"] = "Artificial Plant Tree",
-        ["plant-03"] = "Artificial Plant Tree",
-        ["rug-01"] = "Candle Holder Set",
-        ["rug-02"] = "Candle Holder Set",
-        ["rug-03"] = "Candle Holder Set",
-        ["cabinet-01"] = "Oak Wood TV Stand",
-        ["cabinet-02"] = "Filing Cabinet 4-drawer",
-        ["cabinet-03"] = "Mobile Pedestal",
-        ["decor-01"] = "Abstract Canvas Art",
-        ["decor-02"] = "Ceramic Vase Large",
-        ["decor-03"] = "Sculpture Statue",
-        ["shelf-01"] = "Wall Shelf Unit",
-        ["shelf-02"] = "Modular Bookshelf"
-    };
 
     public CartController(
         ICartService cartService,
@@ -157,14 +126,52 @@ public class CartController : Controller
     {
         var userId = await _userService.GetCurrentUserIdAsync();
         if (userId == null)
-            return RedirectToAction("Login", "Account");
+        {
+            SavePendingCartAdd(productId, variantId, quantity, variantName, returnUrl);
+            TempData["ToastInfo"] = "Đăng nhập xong mình sẽ thêm sản phẩm này vào giỏ cho bạn.";
+            return RedirectToAction("Login", "Account", new { returnUrl = Url.Action(nameof(CompletePendingAdd), "Cart") });
+        }
+
+        var result = await AddProductToCartForUserAsync(userId.Value, productId, variantId, quantity, variantName);
+        if (!result.Success)
+        {
+            TempData["ToastError"] = result.Message;
+            return RedirectToLocal(returnUrl);
+        }
+
+        TempData["ToastSuccess"] = result.Message;
+        return RedirectToLocal(returnUrl);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CompletePendingAdd()
+    {
+        var userId = await _userService.GetCurrentUserIdAsync();
+        if (userId == null)
+            return RedirectToAction("Login", "Account", new { returnUrl = Url.Action(nameof(CompletePendingAdd), "Cart") });
+
+        var pending = ReadPendingCartAdd();
+        if (pending == null)
+            return RedirectToAction(nameof(Index));
+
+        HttpContext.Session.Remove(PendingCartAddSessionKey);
+
+        var result = await AddProductToCartForUserAsync(userId.Value, pending.ProductId, pending.VariantId, pending.Quantity, pending.VariantName);
+        if (result.Success)
+            TempData["ToastSuccess"] = result.Message;
+        else
+            TempData["ToastError"] = result.Message;
+
+        return RedirectToLocal(pending.ReturnUrl);
+    }
+
+    private async Task<CartAddResult> AddProductToCartForUserAsync(int userId, int productId, int variantId, int quantity, string? variantName)
+    {
+        quantity = Math.Clamp(quantity, 1, 99);
 
         var product = await _productRepository.GetByIdWithDetailsAsync(productId);
         if (product == null)
-        {
-            TempData["ToastError"] = "Product not found.";
-            return RedirectToLocal(returnUrl);
-        }
+            return new CartAddResult(false, "Product not found.");
 
         decimal basePrice = product.UnitPrice;
         decimal priceAdjustment = 0;
@@ -177,10 +184,7 @@ public class CartController : Controller
         {
             var defaultVariant = activeVariants.FirstOrDefault(v => v.StockQuantity >= quantity);
             if (defaultVariant == null)
-            {
-                TempData["ToastError"] = "Product is out of stock.";
-                return RedirectToLocal(returnUrl);
-            }
+                return new CartAddResult(false, "Product is out of stock.");
 
             variantId = defaultVariant.Id;
         }
@@ -191,10 +195,7 @@ public class CartController : Controller
             if (variant != null)
             {
                 if (variant.StockQuantity < quantity)
-                {
-                    TempData["ToastError"] = "Selected variant is out of stock.";
-                    return RedirectToLocal(returnUrl);
-                }
+                    return new CartAddResult(false, "Selected variant is out of stock.");
 
                 basePrice = product.UnitPrice;
                 priceAdjustment = variant.PriceAdjustment ?? 0;
@@ -207,10 +208,10 @@ public class CartController : Controller
             }
         }
 
-        await _cartService.AddToCartAsync(userId.Value, productId, variantId, unitPrice > 0 ? unitPrice : (basePrice + priceAdjustment), basePrice, priceAdjustment, priceBreakdown, product.ProductName, selectedVariantName, image, quantity);
+        var finalUnitPriceVnd = basePrice + priceAdjustment;
+        await _cartService.AddToCartAsync(userId, productId, variantId, finalUnitPriceVnd, basePrice, priceAdjustment, priceBreakdown, product.ProductName, selectedVariantName, image, quantity);
 
-        TempData["ToastSuccess"] = "Added to cart.";
-        return RedirectToLocal(returnUrl);
+        return new CartAddResult(true, "Added to cart.");
     }
 
     [HttpPost]
@@ -226,7 +227,7 @@ public class CartController : Controller
             .Select(i =>
             {
                 var roomProductId = i.ProductId!.Trim();
-                var productName = RoomProductCatalogMap.TryGetValue(roomProductId, out var mappedName)
+                var productName = Room3DProductCatalog.ProductNamesByRoomId.TryGetValue(roomProductId, out var mappedName)
                     ? mappedName
                     : i.Name?.Trim();
 
@@ -395,6 +396,39 @@ public class CartController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    private void SavePendingCartAdd(int productId, int variantId, int quantity, string? variantName, string? returnUrl)
+    {
+        var safeReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+            ? RedirectUrlSanitizer.EscapeHeaderValue(returnUrl)
+            : Url.Action("Details", "Product", new { id = productId });
+
+        var pending = new PendingCartAdd(
+            productId,
+            Math.Max(0, variantId),
+            Math.Clamp(quantity, 1, 99),
+            string.IsNullOrWhiteSpace(variantName) ? null : variantName.Trim(),
+            safeReturnUrl);
+
+        HttpContext.Session.SetString(PendingCartAddSessionKey, System.Text.Json.JsonSerializer.Serialize(pending));
+    }
+
+    private PendingCartAdd? ReadPendingCartAdd()
+    {
+        var raw = HttpContext.Session.GetString(PendingCartAddSessionKey);
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<PendingCartAdd>(raw);
+        }
+        catch
+        {
+            HttpContext.Session.Remove(PendingCartAddSessionKey);
+            return null;
+        }
+    }
+
     private async Task<bool> AddCatalogProductToCartAsync(int userId, Product product, int quantity)
     {
         decimal basePrice = product.UnitPrice;
@@ -537,5 +571,7 @@ public class CartController : Controller
         public int Quantity { get; set; } = 1;
     }
 
+    private sealed record PendingCartAdd(int ProductId, int VariantId, int Quantity, string? VariantName, string? ReturnUrl);
+    private sealed record CartAddResult(bool Success, string Message);
     private sealed record RoomCartResolvedItem(string ProductName, string CategoryName, decimal Price, int Quantity);
 }

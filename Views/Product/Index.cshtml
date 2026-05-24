@@ -276,7 +276,7 @@
                                                class="text-decoration-none text-dark product-name">@item.ProductName</a>
                                         </h3>
                                         <div class="price-wrapper mb-3">
-                                            <span class="fw-bold text-primary fs-5">@item.UnitPrice.ToString("N0") VND</span>
+                                            <span class="fw-bold text-primary fs-5 money-vnd" data-money-vnd="@item.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.UnitPrice.ToString("N0") VND</span>
                                         </div>
                                         <div class="d-flex gap-2">
                                             <form asp-controller="Cart" asp-action="Add" method="post" class="flex-grow-1">

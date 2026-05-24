@@ -6,9 +6,9 @@ namespace WebActionResults.ViewModels
     {
         [Required]
         [EmailAddress]
-        public string Email { get; set; } // Dòng bạn đang bị thiếu
+        public string Email { get; set; } = string.Empty;
 
         [Required]
-        public string Token { get; set; } // Thường dùng để chứa mã OTP/Token gửi qua email
+        public string Token { get; set; } = string.Empty;
     }
 }

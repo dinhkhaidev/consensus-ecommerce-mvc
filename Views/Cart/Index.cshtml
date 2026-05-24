@@ -106,10 +106,10 @@
 
                                         <!-- Price -->
                                         <div class="col-md-2 text-center">
-                                            <span class="fw-semibold">@item.UnitPrice.ToString("N0") VND</span>
+                                            <span class="fw-semibold money-vnd" data-money-vnd="@item.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.UnitPrice.ToString("N0") VND</span>
                                             @if (item.PriceAdjustment != 0)
                                             {
-                                                <br><small class="text-success">+@item.PriceAdjustment.ToString("N0") @localizer.Get("Variant")</small>
+                                                <br><small class="text-success money-vnd" data-money-vnd="@item.PriceAdjustment.ToString(System.Globalization.CultureInfo.InvariantCulture)">+@item.PriceAdjustment.ToString("N0") @localizer.Get("Variant")</small>
                                             }
                                             @if (!string.IsNullOrEmpty(item.PriceBreakdown))
                                             {
@@ -139,7 +139,7 @@
 
                                         <!-- Total -->
                                         <div class="col-md-2 text-end">
-                                            <span class="fw-bold text-primary">@item.Total.ToString("N0") VND</span>
+                                            <span class="fw-bold text-primary money-vnd" data-money-vnd="@item.Total.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.Total.ToString("N0") VND</span>
                                         </div>
 
                                         <!-- Remove -->
@@ -211,7 +211,7 @@
                             <!-- Summary -->
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">@localizer.Get("Subtotal")</span>
-                                <span id="selectedSubtotal">@Model.SubTotal.ToString("N0") VND</span>
+                                <span id="selectedSubtotal" class="money-vnd" data-money-vnd="@Model.SubTotal.ToString(System.Globalization.CultureInfo.InvariantCulture)">@Model.SubTotal.ToString("N0") VND</span>
                             </div>
                             @{
                                 var variantAdjustment = Model.Items.Where(i => i.PriceAdjustment != 0).Sum(i => i.PriceAdjustment * i.Quantity);
@@ -220,24 +220,27 @@
                             {
                                 <div class="d-flex justify-content-between mb-2 text-success" id="selectedVariantAdjustmentRow">
                                     <span>@localizer.Get("VariantAdjustments")</span>
-                                    <span id="selectedVariantAdjustment">+@variantAdjustment.ToString("N0") VND</span>
+                                    <span id="selectedVariantAdjustment" class="money-vnd" data-money-vnd="@variantAdjustment.ToString(System.Globalization.CultureInfo.InvariantCulture)">+@variantAdjustment.ToString("N0") VND</span>
                                 </div>
                             }
                             @if (Model.DiscountAmount > 0)
                             {
                                 <div class="d-flex justify-content-between mb-2 text-success">
                                     <span>@localizer.Get("Discount")</span>
-                                    <span>-@Model.DiscountAmount.ToString("N0") VND</span>
+                                    <span class="money-vnd" data-money-vnd="@Model.DiscountAmount.ToString(System.Globalization.CultureInfo.InvariantCulture)">-@Model.DiscountAmount.ToString("N0") VND</span>
                                 </div>
                             }
                             <div class="d-flex justify-content-between mb-2">
                                 <span class="text-muted">@localizer.Get("Shipping")</span>
-                                <span>@Model.ShippingFee.ToString("N0") VND</span>
+                                <span class="money-vnd" data-money-vnd="@Model.ShippingFee.ToString(System.Globalization.CultureInfo.InvariantCulture)">@Model.ShippingFee.ToString("N0") VND</span>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between fw-bold fs-5 mb-4">
-                                <span>@localizer.Get("Total")</span>
-                                <span class="text-primary" id="selectedTotal">@Model.Total.ToString("N0") VND</span>
+                                <span>
+                                    @localizer.Get("Total")
+                                    <i class="bi bi-info-circle currency-hint-icon" title="Giá ngoại tệ chỉ để tham khảo; khi thanh toán hệ thống luôn chốt bằng VND."></i>
+                                </span>
+                                <span class="text-primary money-vnd" id="selectedTotal" data-money-vnd="@Model.Total.ToString(System.Globalization.CultureInfo.InvariantCulture)">@Model.Total.ToString("N0") VND</span>
                             </div>
                             <p class="text-muted small mb-3" id="selectedCheckoutCount"></p>
 
@@ -368,9 +371,19 @@
                 count += 1;
             });
 
-            if (subtotalEl) subtotalEl.textContent = formatVnd(subtotal);
-            if (totalEl) totalEl.textContent = formatVnd(Math.max(0, subtotal - discount + (subtotal > 0 ? shipping : 0)));
-            if (variantEl) variantEl.textContent = '+' + formatVnd(variantAdjustment);
+            const total = Math.max(0, subtotal - discount + (subtotal > 0 ? shipping : 0));
+            if (subtotalEl) {
+                subtotalEl.textContent = formatVnd(subtotal);
+                subtotalEl.dataset.moneyVnd = String(subtotal);
+            }
+            if (totalEl) {
+                totalEl.textContent = formatVnd(total);
+                totalEl.dataset.moneyVnd = String(total);
+            }
+            if (variantEl) {
+                variantEl.textContent = '+' + formatVnd(variantAdjustment);
+                variantEl.dataset.moneyVnd = String(variantAdjustment);
+            }
             if (variantRow) variantRow.classList.toggle('d-none', variantAdjustment === 0);
             if (countEl) countEl.textContent = `${count} ${selectedProductsLabel}`;
             if (checkoutButton) checkoutButton.disabled = count === 0;
@@ -378,6 +391,7 @@
                 selectAll.checked = count === itemCheckboxes.length;
                 selectAll.indeterminate = count > 0 && count < itemCheckboxes.length;
             }
+            document.dispatchEvent(new CustomEvent('furnish:money-updated'));
         }
 
         if (selectAll) {

@@ -4,6 +4,7 @@ using WebActionResults.Data.Services;
 using WebActionResults.Data.Entities;
 using WebActionResults.ViewModels;
 using WebActionResults.Models;
+using WebActionResults.Utilities;
 
 namespace WebActionResults.Controllers;
 
@@ -127,8 +128,9 @@ public class ProductController : Controller
             ProductName = product.ProductName,
             Description = product.QuantityPerUnit,
             UnitPrice = product.UnitPrice,
+            CategoryId = product.CategoryID,
             CategoryName = product.Category?.CategoryName,
-            SupplierName = null,
+            SupplierName = product.Supplier?.CompanyName,
             Variants = product.Variants?.Select(v => new ProductVariantViewModel
             {
                 Id = v.Id,
@@ -163,7 +165,9 @@ public class ProductController : Controller
             }).ToList(),
             AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0,
             ReviewCount = reviews.Count,
-            IsInWishlist = isInWishlist
+            IsInWishlist = isInWishlist,
+            Room3DProductId = Room3DProductCatalog.TryGetRoomProductId(product, out var room3DProductId) ? room3DProductId : null,
+            RelatedProducts = await GetRelatedProductsAsync(product)
         };
 
         return View(viewModel);
@@ -184,8 +188,9 @@ public class ProductController : Controller
             ProductName = product.ProductName,
             Description = product.QuantityPerUnit,
             UnitPrice = product.UnitPrice,
+            CategoryId = product.CategoryID,
             CategoryName = product.Category?.CategoryName,
-            SupplierName = null,
+            SupplierName = product.Supplier?.CompanyName,
             Variants = product.Variants?.Select(v => new ProductVariantViewModel
             {
                 Id = v.Id,
@@ -221,6 +226,7 @@ public class ProductController : Controller
             AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0,
             ReviewCount = reviews.Count,
             IsInWishlist = false,
+            Room3DProductId = Room3DProductCatalog.TryGetRoomProductId(product, out var room3DProductId) ? room3DProductId : null,
             RelatedProducts = new List<ProductListViewModel>()
         };
 
@@ -240,8 +246,9 @@ public class ProductController : Controller
             ProductName = product.ProductName,
             Description = product.QuantityPerUnit,
             UnitPrice = product.UnitPrice,
+            CategoryId = product.CategoryID,
             CategoryName = product.Category?.CategoryName,
-            SupplierName = null,
+            SupplierName = product.Supplier?.CompanyName,
             Variants = product.Variants?.Select(v => new ProductVariantViewModel
             {
                 Id = v.Id,
@@ -269,10 +276,30 @@ public class ProductController : Controller
             AverageRating = 0,
             ReviewCount = 0,
             IsInWishlist = false,
+            Room3DProductId = Room3DProductCatalog.TryGetRoomProductId(product, out var room3DProductId) ? room3DProductId : null,
             RelatedProducts = new List<ProductListViewModel>()
         };
 
         return View("Details", viewModel);
+    }
+
+    private async Task<List<ProductListViewModel>> GetRelatedProductsAsync(Product product, int count = 8)
+    {
+        var related = await _catalogService.GetRecommendedProductsAsync(product, count);
+
+        return related
+            .Where(p => p.Id != product.Id)
+            .Select(p => new ProductListViewModel
+            {
+                ProductId = p.Id,
+                ProductName = p.ProductName,
+                UnitPrice = p.UnitPrice,
+                CategoryName = p.Category?.CategoryName,
+                MainImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? p.Images?.FirstOrDefault()?.ImageUrl,
+                HasVariants = p.Variants?.Any() ?? false,
+                MinPrice = p.Variants?.Any() == true ? p.Variants.Min(v => p.UnitPrice + (v.PriceAdjustment ?? 0)) : null
+            })
+            .ToList();
     }
 
     [HttpPost]

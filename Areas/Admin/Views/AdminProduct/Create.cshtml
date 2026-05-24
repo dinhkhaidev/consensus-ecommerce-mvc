@@ -40,7 +40,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="UnitPrice" class="form-label fw-semibold">Price (VND)</label>
-                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1000" min="0" required />
+                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1" min="0" inputmode="numeric" required />
                             <span asp-validation-for="UnitPrice" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -100,7 +100,7 @@
                                     <td class="ps-3"><input name="variants[0].Color" class="form-control" placeholder="Brown" /></td>
                                     <td><input name="variants[0].Size" class="form-control" placeholder="Large" /></td>
                                     <td><input name="variants[0].SKU" class="form-control" placeholder="SOFA-BR-L" /></td>
-                                    <td><input name="variants[0].PriceAdjustment" class="form-control" type="number" step="1000" value="0" /></td>
+                                    <td><input name="variants[0].PriceAdjustment" class="form-control" type="number" step="1" value="0" /></td>
                                     <td><input name="variants[0].StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
                                     <td>
                                         <input type="hidden" name="variants[0].IsActive" value="false" />
@@ -156,7 +156,7 @@
         <td class="ps-3"><input data-name="Color" class="form-control" placeholder="Brown" /></td>
         <td><input data-name="Size" class="form-control" placeholder="Large" /></td>
         <td><input data-name="SKU" class="form-control" placeholder="SOFA-BR-L" /></td>
-        <td><input data-name="PriceAdjustment" class="form-control" type="number" step="1000" value="0" /></td>
+        <td><input data-name="PriceAdjustment" class="form-control" type="number" step="1" value="0" /></td>
         <td><input data-name="StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
         <td>
             <input data-name="IsActiveHidden" type="hidden" value="false" />

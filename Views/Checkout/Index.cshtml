@@ -240,7 +240,10 @@
                                 </div>
                                 <hr />
                                 <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
-                                    <span>@localizer.Get("Total")</span>
+                                    <span>
+                                        @localizer.Get("Total")
+                                        <i class="bi bi-shield-check currency-hint-icon" title="Checkout luôn chốt và gửi sang cổng thanh toán bằng VND; tỉ giá ở trang trước chỉ là tham khảo."></i>
+                                    </span>
                                     <span class="text-primary">@Model.Total.ToString("N0") VND</span>
                                 </div>
 
