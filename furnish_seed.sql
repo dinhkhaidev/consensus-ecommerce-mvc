@@ -214,6 +214,11 @@ IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId = '20260515
     VALUES ('20260515123000_AddOrderRequestFlow', '8.0.25');
 GO
 
+IF NOT EXISTS (SELECT 1 FROM __EFMigrationsHistory WHERE MigrationId = '20260517062015_AddAvatarUrl')
+    INSERT INTO __EFMigrationsHistory (MigrationId, ProductVersion)
+    VALUES ('20260517062015_AddAvatarUrl', '8.0.25');
+GO
+
 -- =========================
 -- CREATE WebSettings TABLE
 -- =========================
@@ -300,6 +305,36 @@ INSERT INTO @DefaultSettings (SettingKey, SettingValue) VALUES
 ('EnableReviews', 'true'),
 ('AutoApproveReviews', 'false'),
 ('EnableWishlist', 'true'),
+('HideClosedPageLinks', 'false'),
+('ClosedPageEyebrow', N'Khu vực đặc biệt'),
+('ClosedPageTitle', N'Khu vực này đang tạm khóa'),
+('ClosedPageMessage', N'Quản trị viên đang giữ tính năng này ở chế độ bí mật. Vui lòng quay lại sau.'),
+('ClosedPageButtonText', N'Về trang chủ'),
+('ClosedPageBackgroundImageUrl', '/assets/images/sontungmtpmv.png'),
+('PageHomeEnabled', 'true'),
+('PageShopEnabled', 'true'),
+('PageCategoriesEnabled', 'true'),
+('PageRoom3DEnabled', 'true'),
+('PageAiStylistEnabled', 'true'),
+('PageCartEnabled', 'true'),
+('PageCheckoutEnabled', 'true'),
+('PageWishlistEnabled', 'true'),
+('PageOrdersEnabled', 'true'),
+('PageAboutEnabled', 'true'),
+('PageContactEnabled', 'true'),
+('PagePoliciesEnabled', 'true'),
+('PageHomeOpenAt', ''),
+('PageShopOpenAt', ''),
+('PageCategoriesOpenAt', ''),
+('PageRoom3DOpenAt', ''),
+('PageAiStylistOpenAt', ''),
+('PageCartOpenAt', ''),
+('PageCheckoutOpenAt', ''),
+('PageWishlistOpenAt', ''),
+('PageOrdersOpenAt', ''),
+('PageAboutOpenAt', ''),
+('PageContactOpenAt', ''),
+('PagePoliciesOpenAt', ''),
 ('EnableNewsletterPopup', 'false'),
 ('EnableChatWidget', 'false'),
 ('ShowLowStockWarning', 'true'),

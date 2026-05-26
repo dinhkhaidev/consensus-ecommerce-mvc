@@ -1,0 +1,3101 @@
+@model WebActionResults.ViewModels.Ai.AiStylistPageViewModel
+@{
+    ViewData["Title"] = localizer.Get("AiStylist:PageTitle");
+    var totalPrice = Model.Products.Sum(p => p.UnitPrice);
+    var room3DProducts = Model.Products.Where(p => p.HasRoom3DModel).ToList();
+    var currentUrl = Context.Request.Path + Context.Request.QueryString;
+}
+
+<section class="ai-stylist-page">
+    <div class="ai-stylist-hero">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <span class="ai-section-kicker">@localizer.Get("AiStylist:Kicker")</span>
+                    <h1>@localizer.Get("AiStylist:HeroTitle")</h1>
+                    <p>@localizer.Get("AiStylist:HeroDesc")</p>
+                    <div class="ai-hero-points">
+                        <span><i class="bi bi-check2"></i> @localizer.Get("AiStylist:Point1")</span>
+                        <span><i class="bi bi-check2"></i> @localizer.Get("AiStylist:Point2")</span>
+                        <span><i class="bi bi-check2"></i> @(Model.IsAiConfigured ? localizer.Get("AiStylist:Point3Active") : localizer.Get("AiStylist:Point3Fallback"))</span>
+                    </div>
+                    <button type="button" class="ai-hero-cta" id="btnHeroCta">
+                        <i class="bi bi-chat-dots-fill"></i>
+                        <span>@localizer.Get("AiStylist:StartCta")</span>
+                        <i class="bi bi-arrow-down-short ai-cta-arrow"></i>
+                        <span class="ai-hero-cta-shimmer"></span>
+                    </button>
+                </div>
+                <div class="col-lg-5">
+                    <div class="ai-hero-visual" aria-hidden="true">
+                        <img src="/assets/images/slider/slider-img-3.png" alt="" />
+                        <div class="ai-visual-note">
+                            <span>@localizer.Get("AiStylist:VisualLabel")</span>
+                            <strong>@localizer.Get("AiStylist:VisualNote")</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How it Works -->
+    <div class="ai-how-section">
+        <div class="container">
+            <div class="ai-how-header">
+                <span class="ai-section-kicker">@localizer.Get("AiStylist:HowKicker")</span>
+                <h2>@localizer.Get("AiStylist:HowTitle")</h2>
+            </div>
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-4">
+                    <div class="ai-how-card">
+                        <div class="ai-how-number">1</div>
+                        <h3>@localizer.Get("AiStylist:Step1Title")</h3>
+                        <p>@localizer.Get("AiStylist:Step1Desc")</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="ai-how-card">
+                        <div class="ai-how-number">2</div>
+                        <h3>@localizer.Get("AiStylist:Step2Title")</h3>
+                        <p>@localizer.Get("AiStylist:Step2Desc")</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="ai-how-card">
+                        <div class="ai-how-number">3</div>
+                        <h3>@localizer.Get("AiStylist:Step3Title")</h3>
+                        <p>@localizer.Get("AiStylist:Step3Desc")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid px-md-4 px-xl-5 ai-chat-container">
+
+        <div class="ai-chat-shell">
+            <div class="ai-chat-main">
+                <!-- Sidebar (Left Panel) -->
+                <aside class="offcanvas-lg offcanvas-start ai-sidebar" id="aiSidebar" aria-labelledby="aiSidebarLabel" tabindex="-1">
+                    <div class="offcanvas-header d-lg-none border-bottom pb-3 mb-2">
+                        <h5 class="offcanvas-title fw-bold" id="aiSidebarLabel">
+                            <i class="bi bi-sliders me-2"></i> @localizer.Get("AiStylist:SidebarLabel")
+                        </h5>
+                        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" data-bs-target="#aiSidebar" aria-label="Close"></button>
+                    </div>
+                    <div class="ai-sidebar-section">
+                        <h3 class="ai-sidebar-title"><i class="bi bi-stars"></i> @localizer.Get("AiStylist:SidebarStartSection")</h3>
+                        <p class="ai-sidebar-desc">@localizer.Get("AiStylist:SidebarStartDesc")</p>
+                        <div class="ai-mode-switcher-vertical">
+                            <button type="button" class="ai-mode-chip is-active" data-ai-mode="text" data-mode-label="Mô tả căn phòng">
+                                <i class="bi bi-chat-left-text"></i>
+                                <div>
+                                    <strong>@localizer.Get("AiStylist:ModeTextDesc")</strong>
+                                    <small data-mode-status>@localizer.Get("AiStylist:ModeActive")</small>
+                                </div>
+                            </button>
+                            <button type="button" class="ai-mode-chip" data-ai-mode="similar" data-mode-label="Tải ảnh để tìm">
+                                <i class="bi bi-camera"></i>
+                                <div>
+                                    <strong>@localizer.Get("AiStylist:ModeSimilar")</strong>
+                                    <small data-mode-status>Tải ảnh để tìm</small>
+                                </div>
+                            </button>
+                            <button type="button" class="ai-mode-chip" disabled>
+                                <i class="bi bi-image"></i>
+                                <div>
+                                    <strong>@localizer.Get("AiStylist:ModePhoto")</strong>
+                                    <small>@localizer.Get("AiStylist:ModeUpcoming")</small>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="ai-sidebar-section">
+                        <h3 class="ai-sidebar-title"><i class="bi bi-sliders"></i> @localizer.Get("AiStylist:SidebarCustomizeSection")</h3>
+                        <p class="ai-sidebar-desc">@localizer.Get("AiStylist:SidebarCustomizeDesc")</p>
+                        <div class="ai-sidebar-fields">
+                            <div class="ai-field-group">
+                                <label for="RoomTypeDraft">@localizer.Get("AiStylist:LabelRoomType")</label>
+                                <select id="RoomTypeDraft" class="form-select">
+                                    <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Request.RoomType))">@localizer.Get("AiStylist:OptNotSelected")</option>
+                                    <option value="living_room" selected="@(Model.Request.RoomType == "living_room")">@localizer.Get("AiStylist:OptLivingRoom")</option>
+                                    <option value="bedroom" selected="@(Model.Request.RoomType == "bedroom")">@localizer.Get("AiStylist:OptBedroom")</option>
+                                    <option value="office" selected="@(Model.Request.RoomType == "office")">@localizer.Get("AiStylist:OptOffice")</option>
+                                    <option value="dining_room" selected="@(Model.Request.RoomType == "dining_room")">@localizer.Get("AiStylist:OptDiningRoom")</option>
+                                    <option value="studio" selected="@(Model.Request.RoomType == "studio")">@localizer.Get("AiStylist:OptStudio")</option>
+                                </select>
+                            </div>
+                            <div class="ai-field-group">
+                                <label for="StyleDraft">@localizer.Get("AiStylist:LabelStyle")</label>
+                                <select id="StyleDraft" class="form-select">
+                                    <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Request.Style))">@localizer.Get("AiStylist:OptNotSelected")</option>
+                                    <option value="modern_warm" selected="@(Model.Request.Style == "modern_warm")">@localizer.Get("AiStylist:OptModernWarm")</option>
+                                    <option value="minimal_clean" selected="@(Model.Request.Style == "minimal_clean")">@localizer.Get("AiStylist:OptMinimalClean")</option>
+                                    <option value="japandi" selected="@(Model.Request.Style == "japandi")">@localizer.Get("AiStylist:OptJapandi")</option>
+                                    <option value="dark_premium" selected="@(Model.Request.Style == "dark_premium")">@localizer.Get("AiStylist:OptDarkPremium")</option>
+                                    <option value="cozy_natural" selected="@(Model.Request.Style == "cozy_natural")">@localizer.Get("AiStylist:OptCozyNatural")</option>
+                                    <option value="small_room_smart" selected="@(Model.Request.Style == "small_room_smart")">@localizer.Get("AiStylist:OptSmallRoomSmart")</option>
+                                </select>
+                            </div>
+                            <div class="ai-field-group">
+                                <label for="BudgetDraft">@localizer.Get("AiStylist:LabelBudget")</label>
+                                <input id="BudgetDraft" class="form-control" type="number" min="0" step="100000" value="@Model.Request.Budget" placeholder="15.000.000" />
+                            </div>
+                            <div class="ai-field-group">
+                                <label for="AreaDraft">@localizer.Get("AiStylist:LabelArea")</label>
+                                <input id="AreaDraft" class="form-control" value="@Model.Request.Area" placeholder='@localizer.Get("AiStylist:PlaceholderArea")' />
+                            </div>
+                            <div class="ai-field-group">
+                                <label for="PriorityDraft">@localizer.Get("AiStylist:LabelPriority")</label>
+                                <select id="PriorityDraft" class="form-select">
+                                    <option value="" selected="@(string.IsNullOrWhiteSpace(Model.Request.Priority))">@localizer.Get("AiStylist:OptNotSelected")</option>
+                                    <option value="cozy" selected="@(Model.Request.Priority == "cozy")">@localizer.Get("AiStylist:OptCozy")</option>
+                                    <option value="premium" selected="@(Model.Request.Priority == "premium")">@localizer.Get("AiStylist:OptPremium")</option>
+                                    <option value="space_saving" selected="@(Model.Request.Priority == "space_saving")">@localizer.Get("AiStylist:OptSpaceSaving")</option>
+                                    <option value="bright" selected="@(Model.Request.Priority == "bright")">@localizer.Get("AiStylist:OptBright")</option>
+                                    <option value="budget" selected="@(Model.Request.Priority == "budget")">@localizer.Get("AiStylist:OptBudgetValue")</option>
+                                </select>
+                            </div>
+                            <div class="ai-field-group">
+                                <label for="PreferredColorsDraft">@localizer.Get("AiStylist:LabelPreferredColors")</label>
+                                <input id="PreferredColorsDraft" class="form-control" value="@Model.Request.PreferredColors" placeholder='@localizer.Get("AiStylist:PlaceholderPreferredColors")' />
+                            </div>
+                            <div class="ai-field-group">
+                                <label for="AvoidColorsDraft">@localizer.Get("AiStylist:LabelAvoidColors")</label>
+                                <input id="AvoidColorsDraft" class="form-control" value="@Model.Request.AvoidColors" placeholder='@localizer.Get("AiStylist:PlaceholderAvoidColors")' />
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Chat Area (Right Panel) -->
+                <div class="ai-chat-area">
+                    <!-- Chat Header -->
+                    <div class="ai-chat-header">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <button class="btn ai-btn-sidebar-toggle btn-sm d-lg-none d-flex align-items-center gap-2 px-3 py-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#aiSidebar" aria-controls="aiSidebar" style="border-radius: 0.5rem; font-weight: 700; border-width: 1.5px;">
+                                <i class="bi bi-sliders"></i>
+                                <span>@localizer.Get("AiStylist:BtnOptions")</span>
+                            </button>
+                            <div class="ai-header-status-indicator d-none d-sm-block"></div>
+                            <div>
+                                <h2 class="ai-chat-title">@localizer.Get("AiStylist:ChatTitle")</h2>
+                                <span class="ai-chat-subtitle d-none d-md-inline">@localizer.Get("AiStylist:ChatSubtitle")</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm d-flex align-items-center gap-2 px-3 py-2" id="btnClearChat" title='@localizer.Get("AiStylist:ClearHistoryTooltip")'>
+                            <i class="bi bi-trash3"></i>
+                            <span>@localizer.Get("AiStylist:ClearHistory")</span>
+                        </button>
+                    </div>
+
+                    <!-- Chat Thread -->
+                    <div class="ai-chat-thread" aria-live="polite">
+                        @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                        {
+                            <div class="ai-chat-message ai-chat-message-assistant">
+                                <div class="ai-avatar"><i class="bi bi-exclamation-triangle"></i></div>
+                                <div class="ai-bubble ai-bubble-warning">@Model.ErrorMessage</div>
+                            </div>
+                        }
+
+                        @if (!Model.ChatHistory.Any())
+                        {
+                            <div class="ai-chat-message ai-chat-message-assistant">
+                                <div class="ai-avatar"><i class="bi bi-stars"></i></div>
+                                <div class="ai-bubble">
+                                    <strong>@localizer.Get("AiStylist:WelcomeStrong")</strong>
+                                    <p>@localizer.Get("AiStylist:WelcomeP")</p>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var message in Model.ChatHistory)
+                            {
+                                var isUser = string.Equals(message.Role, "user", StringComparison.OrdinalIgnoreCase);
+                                <div class="ai-chat-message @(isUser ? "ai-chat-message-user" : "ai-chat-message-assistant")">
+                                    @if (!isUser)
+                                    {
+                                        <div class="ai-avatar"><i class="bi bi-stars"></i></div>
+                                    }
+                                    <div class="ai-bubble">
+                                        <p>@message.Text</p>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (Model.Result != null && Model.Products.Any())
+                            {
+                                <div class="ai-chat-message ai-chat-message-assistant ai-chat-message-rich">
+                                    <div class="ai-avatar"><i class="bi bi-house-heart"></i></div>
+                                    <div class="ai-bubble ai-result-bubble">
+                                        <div class="ai-result-head">
+                                            <div>
+                                                <span class="ai-section-kicker">@localizer.Get("AiStylist:ResultConceptKicker")</span>
+                                                <h3>@Model.Result.ConceptName</h3>
+                                                <p>@Model.Result.Summary</p>
+                                            </div>
+                                            <div class="ai-result-stats">
+                                                <strong>@Model.CandidateCount</strong>
+                                                <span>@localizer.Get("AiStylist:ResultMonson")</span>
+                                                <em>@(Model.Result.UsedFallback ? localizer.Get("AiStylist:ResultFallback") : localizer.Get("AiStylist:ResultPersonalized"))</em>
+                                            </div>
+                                        </div>
+
+                                        @if (Model.Result.Palette.Any())
+                                        {
+                                            <div class="ai-palette-strip" aria-label='@localizer.Get("AiStylist:ResultPaletteLabel")'>
+                                                @foreach (var color in Model.Result.Palette)
+                                                {
+                                                    <span>@color</span>
+                                                }
+                                            </div>
+                                        }
+
+                                        <div class="ai-product-list">
+                                            @foreach (var product in Model.Products)
+                                            {
+                                                <article class="ai-product-card">
+                                                    <a asp-controller="Product" asp-action="Details" asp-route-id="@product.ProductId" class="ai-product-image">
+                                                        @if (!string.IsNullOrWhiteSpace(product.ImageUrl))
+                                                        {
+                                                            <img src="@product.ImageUrl" alt="@product.ProductName" />
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="ai-image-fallback"><i class="bi bi-box"></i></div>
+                                                        }
+                                                        <span>@product.Rank</span>
+                                                    </a>
+                                                    <div class="ai-product-body">
+                                                        <small>@product.CategoryName</small>
+                                                        <h3>@product.ProductName</h3>
+                                                        <p>@product.Reason</p>
+                                                        <div class="ai-product-bottom">
+                                                            <strong>@product.UnitPrice.ToString("N0") VND</strong>
+                                                            <span>@product.StockQuantity @localizer.Get("AiStylist:ProductStockLeft")</span>
+                                                        </div>
+                                                        <div class="d-flex gap-2 mt-2">
+                                                            <button type="button" class="btn ai-btn-add-cart btn-sm btn-outline-dark flex-grow-1" onclick="addSingleToCart(@product.ProductId, this)">
+                                                                <i class="bi bi-cart-plus"></i> @localizer.Get("AiStylist:AddSingleToCart")
+                                                            </button>
+                                                            @if (product.HasRoom3DModel)
+                                                            {
+                                                                <button type="button" class="btn ai-btn-try-3d btn-sm btn-outline-primary flex-grow-1" onclick="trySingleInRoom3D(@product.ProductId, this)">
+                                                                    <i class="bi bi-badge-3d"></i> @localizer.Get("AiStylist:TrySingle3D")
+                                                                </button>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            }
+                                        </div>
+
+                                        <div class="ai-actions" style="margin-top:1rem">
+                                            <form asp-controller="Ai" asp-action="AddComboToCart" method="post" style="display:inline;">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="returnUrl" value="@currentUrl" />
+                                                @foreach (var product in Model.Products)
+                                                {
+                                                    <input type="hidden" name="productIds" value="@product.ProductId" />
+                                                }
+                                                <button type="submit" class="btn ai-btn-add-combo">
+                                                    <i class="bi bi-cart-plus me-2"></i>@localizer.Get("AiStylist:AddComboToCart")
+                                                </button>
+                                            </form>
+                                            @if (room3DProducts.Any())
+                                            {
+                                                <form asp-controller="Ai" asp-action="TryInRoom3D" method="post" style="display:inline;">
+                                                    @Html.AntiForgeryToken()
+                                                    @foreach (var product in room3DProducts)
+                                                    {
+                                                        <input type="hidden" name="productIds" value="@product.ProductId" />
+                                                    }
+                                                    <button type="submit" class="btn ai-btn-try-combo">
+                                                        <i class="bi bi-badge-3d me-2"></i>@localizer.Get("AiStylist:TryCombo3D")
+                                                    </button>
+                                                </form>
+                                            }
+                                            <div class="ai-total">
+                                                <span>@localizer.Get("AiStylist:TotalEst")</span>
+                                                <strong>@totalPrice.ToString("N0") VND</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Chat Composer -->
+                    <div class="ai-image-search-panel" id="aiImageSearchPanel" hidden>
+                        <label class="ai-image-drop" for="AiStylistImage">
+                            <i class="bi bi-camera"></i>
+                            <span>Tải ảnh món đồ để AI tìm sản phẩm tương tự</span>
+                            <small>JPG, PNG, WEBP dưới 5MB</small>
+                        </label>
+                        <input id="AiStylistImage" type="file" accept="image/jpeg,image/png,image/webp" hidden />
+                        <div class="ai-image-preview" id="AiStylistImagePreview" hidden>
+                            <img alt="Ảnh món đồ cần tìm" />
+                            <div>
+                                <strong id="AiStylistImageName"></strong>
+                                <button type="button" id="btnClearStylistImage">
+                                    <i class="bi bi-x-lg"></i>
+                                    <span>Xóa ảnh</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-chat-composer" id="chatComposer">
+                        @Html.AntiForgeryToken()
+                        <label class="visually-hidden" for="UserDescription">@localizer.Get("AiStylist:LabelComposer")</label>
+                        <textarea id="UserDescription"
+                                  rows="2"
+                                  maxlength="1200"
+                                  placeholder='@localizer.Get("AiStylist:PlaceholderComposer")'></textarea>
+                        <button type="button" class="btn btn-primary" id="btnSendChat">
+                            <i class="bi bi-send"></i>
+                            <span>@localizer.Get("AiStylist:Send")</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating scroll-to-chat wrapper -->
+    <div class="ai-scroll-to-chat-wrapper" id="btnScrollToChatWrapper">
+        <button type="button" class="ai-scroll-to-chat" id="btnScrollToChat" title='@localizer.Get("AiStylist:ScrollButtonTooltip")'>
+            <i class="bi bi-chat-heart-fill"></i>
+            <span class="ai-scroll-to-chat-text">@localizer.Get("AiStylist:ScrollButtonText")</span>
+        </button>
+    </div>
+</section>
+
+<style>
+    .ai-stylist-page {
+        background: #f7f6f3;
+        color: #1f1d1a;
+        padding-bottom: 4rem;
+    }
+
+    #btnClearChat {
+        transition: all 0.2s ease;
+        border-color: rgba(220, 53, 69, 0.4);
+        color: #dc3545;
+        background: rgba(220, 53, 69, 0.03);
+    }
+    #btnClearChat:hover {
+        background: #dc3545;
+        color: #fff;
+        border-color: #dc3545;
+        box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+        transform: translateY(-1px);
+    }
+    #btnClearChat:active {
+        transform: translateY(0);
+    }
+
+    .ai-stylist-hero {
+        overflow: hidden;
+        background: #fff;
+        border-bottom: 1px solid rgba(31, 29, 26, .08);
+        padding: 4.5rem 0 3rem;
+    }
+
+    .ai-section-kicker {
+        display: inline-flex;
+        color: #5d6d51;
+        font-size: .78rem;
+        font-weight: 800;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+    }
+
+    .ai-stylist-hero h1 {
+        max-width: 760px;
+        margin: .65rem 0 0;
+        color: #151310;
+        font-size: 3.55rem;
+        line-height: 1;
+        letter-spacing: 0;
+    }
+
+
+    .ai-stylist-hero p,
+    .ai-chat-topbar p,
+    .ai-bubble p,
+    .ai-result-head p,
+    .ai-product-body p {
+        color: #6e6860;
+    }
+
+    .ai-stylist-hero p {
+        max-width: 660px;
+        margin: 1rem 0 0;
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    .ai-hero-points {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .7rem;
+        margin-top: 1.4rem;
+    }
+
+    .ai-hero-points span {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        border: 1px solid rgba(31, 29, 26, .12);
+        border-radius: 999px;
+        background: #fff;
+        color: #34302b;
+        padding: .45rem .75rem;
+        font-size: .86rem;
+        font-weight: 700;
+    }
+
+    .ai-hero-points i,
+    .ai-mode-chip i {
+        color: #6f7d5f;
+    }
+
+    /* ── Hero CTA Button ── */
+    .ai-hero-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        margin-top: 2rem;
+        padding: .75rem 1.65rem;
+        border-radius: .5rem;
+        border: none;
+        background: #1a1816;
+        color: #fff;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: .95rem;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+        transition:
+            background 0.3s ease,
+            transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+            box-shadow 0.3s ease;
+    }
+
+    .ai-hero-cta::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(180deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, 0) 50%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* Shimmer sweep — hover triggered */
+    .ai-hero-cta-shimmer {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 55%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.2),
+            transparent
+        );
+        transform: skewX(-20deg);
+        transition: left 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    /* ── Hover ── */
+    .ai-hero-cta:hover {
+        background: #d47f31;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(212, 127, 49, 0.3), 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .ai-hero-cta:hover .ai-hero-cta-shimmer {
+        left: 150%;
+    }
+
+    .ai-hero-cta:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    }
+
+    /* Chat icon */
+    .ai-hero-cta i.bi-chat-dots-fill {
+        font-size: 1.05rem;
+        color: #d47f31;
+        transition: color 0.3s ease, transform 0.3s ease;
+        z-index: 2;
+        position: relative;
+    }
+
+    .ai-hero-cta:hover i.bi-chat-dots-fill {
+        color: #fff;
+        transform: scale(1.1);
+    }
+
+    /* Arrow icon — slide down on hover */
+    .ai-hero-cta .ai-cta-arrow {
+        font-size: 1.15rem;
+        color: rgba(255, 255, 255, 0.5);
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.3s ease;
+        z-index: 2;
+        position: relative;
+    }
+
+    .ai-hero-cta:hover .ai-cta-arrow {
+        transform: translateY(3px);
+        color: #fff;
+    }
+
+    /* Button text z-index */
+    .ai-hero-cta > span:not(.ai-hero-cta-shimmer) {
+        position: relative;
+        z-index: 2;
+        color: #fff !important;
+    }
+
+    /* ── Dark Mode ── */
+    [data-bs-theme="dark"] .ai-hero-cta {
+        background: #f5ece2 !important;
+        color: #1a1816 !important;
+    }
+
+    [data-bs-theme="dark"] .ai-hero-cta > span:not(.ai-hero-cta-shimmer) {
+        color: #1a1816 !important;
+    }
+
+    [data-bs-theme="dark"] .ai-hero-cta i.bi-chat-dots-fill {
+        color: #d47f31 !important;
+    }
+
+    [data-bs-theme="dark"] .ai-hero-cta .ai-cta-arrow {
+        color: rgba(26, 24, 22, 0.6) !important;
+    }
+
+    [data-bs-theme="dark"] .ai-hero-cta:hover {
+        background: #d47f31 !important;
+        color: #fff !important;
+        box-shadow: 0 6px 20px rgba(212, 127, 49, 0.35), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    [data-bs-theme="dark"] .ai-hero-cta:hover > span:not(.ai-hero-cta-shimmer) {
+        color: #fff !important;
+    }
+
+    [data-bs-theme="dark"] .ai-hero-cta:hover i.bi-chat-dots-fill,
+    [data-bs-theme="dark"] .ai-hero-cta:hover .ai-cta-arrow {
+        color: #fff !important;
+    }
+
+    /* ── How it Works Section ── */
+    .ai-how-section {
+        padding: 3.5rem 0 3rem;
+        background: #f7f6f3;
+    }
+
+    .ai-how-header {
+        text-align: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .ai-how-header h2 {
+        margin-top: .5rem;
+        font-size: 1.85rem;
+        font-weight: 700;
+        color: #1a1816;
+        line-height: 1.2;
+    }
+
+    .ai-how-card {
+        background: #fff;
+        border: 1px solid rgba(31, 29, 26, .08);
+        border-radius: .75rem;
+        padding: 2rem 1.5rem;
+        text-align: center;
+        height: 100%;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .ai-how-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
+    }
+
+    .ai-how-number {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.6rem;
+        height: 2.6rem;
+        border-radius: 50%;
+        background: #d47f31;
+        color: #fff;
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .ai-how-card h3 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1a1816;
+        margin-bottom: .5rem;
+    }
+
+    .ai-how-card p {
+        font-size: .9rem;
+        color: #6e6860;
+        line-height: 1.65;
+        margin: 0;
+    }
+
+    [data-bs-theme="dark"] .ai-how-section {
+        background: #1a1816;
+    }
+
+    [data-bs-theme="dark"] .ai-how-header h2 {
+        color: #f5ece2;
+    }
+
+    [data-bs-theme="dark"] .ai-how-card {
+        background: #252220;
+        border-color: rgba(255, 255, 255, .06);
+    }
+
+    [data-bs-theme="dark"] .ai-how-card h3 {
+        color: #f5ece2;
+    }
+
+    [data-bs-theme="dark"] .ai-how-card p {
+        color: #a09890;
+    }
+
+    /* ── Dark Mode: Hero Section ── */
+    [data-bs-theme="dark"] .ai-stylist-page {
+        background: #151310;
+    }
+
+    [data-bs-theme="dark"] .ai-stylist-hero {
+        background: #1a1816;
+        border-bottom-color: rgba(255, 255, 255, .06);
+    }
+
+    [data-bs-theme="dark"] .ai-section-kicker {
+        color: #8fa67e;
+    }
+
+    [data-bs-theme="dark"] .ai-stylist-hero h1 {
+        color: #f5ece2;
+    }
+
+    [data-bs-theme="dark"] .ai-stylist-hero p {
+        color: #a09890;
+    }
+
+    [data-bs-theme="dark"] .ai-hero-points span {
+        background: #252220;
+        color: #d9d2ca;
+        border-color: rgba(255, 255, 255, .08);
+    }
+
+    [data-bs-theme="dark"] .ai-hero-points i {
+        color: #8fa67e;
+    }
+
+    [data-bs-theme="dark"] .ai-visual-note {
+        background: rgba(37, 34, 32, .92);
+        border-color: rgba(255, 255, 255, .08);
+    }
+
+    [data-bs-theme="dark"] .ai-visual-note span {
+        color: #8b8378;
+    }
+
+    [data-bs-theme="dark"] .ai-visual-note strong {
+        color: #f5ece2;
+    }
+
+    .ai-hero-visual {
+        position: relative;
+        min-height: 300px;
+        display: grid;
+        place-items: center;
+    }
+
+    .ai-hero-visual img {
+        width: min(100%, 420px);
+        max-height: 315px;
+        object-fit: contain;
+        filter: drop-shadow(0 22px 34px rgba(20, 18, 14, .16));
+    }
+
+    .ai-visual-note {
+        position: absolute;
+        right: .75rem;
+        bottom: .5rem;
+        border: 1px solid rgba(31, 29, 26, .1);
+        border-radius: .5rem;
+        background: rgba(255, 255, 255, .92);
+        padding: .8rem .95rem;
+        box-shadow: 0 16px 40px rgba(20, 18, 14, .1);
+    }
+
+    .ai-visual-note span {
+        display: block;
+        color: #8b8378;
+        font-size: .72rem;
+        text-transform: uppercase;
+    }
+
+    .ai-visual-note strong {
+        color: #181511;
+        font-size: .98rem;
+    }
+
+    /* ── Animated gradient border via spinning pseudo-element ── */
+    @@keyframes spinGradient {
+        0%   { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .ai-chat-container {
+        margin-top: 2rem;
+    }
+
+    .ai-chat-shell {
+        max-width: 1520px;
+        margin: 0 auto;
+        scroll-margin-top: calc(var(--ai-sticky-offset, 72px) + 10px);
+        position: relative;
+        padding: 3px;
+        border-radius: 1.1rem;
+        overflow: hidden;
+        box-shadow:
+            0 0 24px rgba(111, 125, 95, .18),
+            0 0 64px rgba(111, 125, 95, .08),
+            0 12px 48px rgba(20, 18, 14, .12);
+        animation: pulseGlow 4s ease-in-out infinite;
+    }
+
+    .ai-chat-shell::before {
+        content: '';
+        position: absolute;
+        inset: -50%;
+        background: conic-gradient(
+            #6f7d5f 0deg,
+            #a3b08e 60deg,
+            #c9b87a 120deg,
+            #e0a85e 180deg,
+            #c9b87a 240deg,
+            #a3b08e 300deg,
+            #6f7d5f 360deg
+        );
+        animation: spinGradient 5s linear infinite;
+        z-index: 0;
+    }
+
+    .ai-chat-main {
+        position: relative;
+        z-index: 1;
+        border: none;
+        border-radius: .95rem;
+        background: #fff;
+        box-shadow: none;
+        height: var(--ai-chat-viewport-height, calc(100vh - 96px));
+        min-height: min(560px, var(--ai-chat-viewport-height, calc(100vh - 96px)));
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Extra keyframes */
+    @@keyframes pulseGlow {
+        0%, 100% {
+            box-shadow:
+                0 0 24px rgba(111, 125, 95, .18),
+                0 0 64px rgba(111, 125, 95, .08),
+                0 12px 48px rgba(20, 18, 14, .12);
+        }
+        50% {
+            box-shadow:
+                0 0 36px rgba(111, 125, 95, .30),
+                0 0 80px rgba(111, 125, 95, .14),
+                0 16px 56px rgba(20, 18, 14, .16);
+        }
+    }
+    @@keyframes shimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    @@keyframes avatarBreath {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(93, 109, 81, .30); }
+        50%      { transform: scale(1.06); box-shadow: 0 0 14px 4px rgba(93, 109, 81, .18); }
+    }
+    @@keyframes floatIn {
+        0%   { opacity: 0; transform: translateY(16px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes dotBounce {
+        0%, 80%, 100% { transform: translateY(0); opacity: .4; }
+        40% { transform: translateY(-6px); opacity: 1; }
+    }
+
+    .ai-typing-indicator {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 0;
+    }
+    .ai-typing-indicator span {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: #6f7d5f;
+        animation: dotBounce 1.2s ease-in-out infinite;
+    }
+    .ai-typing-indicator span:nth-child(2) { animation-delay: .15s; }
+    .ai-typing-indicator span:nth-child(3) { animation-delay: .3s; }
+
+    #btnSendChat:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+    #btnSendChat .bi-arrow-repeat {
+        animation: spin 1s linear infinite;
+    }
+
+    .ai-chat-topbar {
+        max-width: 1520px;
+        margin: 0 auto 1.2rem;
+        border: 1px solid rgba(31, 29, 26, .10);
+        border-radius: .85rem;
+        background:
+            linear-gradient(168deg, rgba(239, 244, 232, .55) 0%, rgba(253, 252, 249, .7) 50%, #fff 100%),
+            url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='.6' fill='%236f7d5f' opacity='.06'/%3E%3C/svg%3E");
+        padding: 1.15rem 1.25rem 1rem;
+        position: relative;
+        box-shadow: 0 4px 20px rgba(20, 18, 14, .06);
+    }
+
+    .ai-chat-topbar::after {
+        content: '';
+        position: absolute;
+        bottom: 0; left: 1rem; right: 1rem;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, rgba(111, 125, 95, .4), rgba(201, 184, 122, .3), transparent);
+        border-radius: 0 0 .85rem .85rem;
+    }
+
+    .ai-chat-topbar h2 {
+        margin: .15rem 0 0;
+        color: #1a1714;
+        font-weight: 900;
+        font-size: 1.35rem;
+        letter-spacing: -.01em;
+    }
+
+    .ai-result-head h3,
+    .ai-product-body h3 {
+        margin: .25rem 0 0;
+        color: #181511;
+        font-weight: 800;
+        letter-spacing: 0;
+    }
+
+    .ai-mode-switcher {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: .55rem;
+        margin-top: .7rem;
+    }
+
+    .ai-chat-hint {
+        margin: .6rem 0 0;
+        color: #57524b;
+        font-size: .84rem;
+        line-height: 1.5;
+        padding: .45rem .75rem;
+        background: rgba(111, 125, 95, .06);
+        border-left: 3px solid rgba(111, 125, 95, .35);
+        border-radius: 0 .4rem .4rem 0;
+    }
+
+    .ai-chat-options {
+        margin-top: .9rem;
+        border: 1px solid rgba(31, 29, 26, .1);
+        border-radius: .55rem;
+        background: #fbfaf8;
+    }
+
+    .ai-chat-options summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        cursor: pointer;
+        padding: .85rem 1rem;
+        color: #2a2621;
+        list-style: none;
+    }
+
+    .ai-chat-options summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .ai-chat-options summary span {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        font-weight: 800;
+    }
+
+    .ai-chat-options summary small {
+        color: #81786f;
+        font-size: .78rem;
+        font-weight: 700;
+    }
+
+    .ai-chat-options[open] summary {
+        border-bottom: 1px solid rgba(31, 29, 26, .08);
+    }
+
+    .ai-mode-chip {
+        min-height: 0;
+        border: 1.5px solid rgba(31, 29, 26, .13);
+        border-radius: .55rem;
+        background: #fafaf8;
+        color: #2a2621;
+        padding: .6rem .75rem;
+        text-align: left;
+        transition: all .22s ease;
+        cursor: pointer;
+    }
+
+    .ai-mode-chip:hover:not(:disabled) {
+        border-color: rgba(111, 125, 95, .35);
+        background: #f4f6f0;
+        box-shadow: 0 4px 16px rgba(111, 125, 95, .10);
+        transform: translateY(-1px);
+    }
+
+    .ai-mode-chip.is-active {
+        border-color: rgba(111, 125, 95, .55);
+        background: linear-gradient(145deg, #eef2e8, #f4f7f0);
+        box-shadow: 0 4px 18px rgba(111, 125, 95, .14), inset 0 1px 0 rgba(255,255,255,.7);
+    }
+
+    .ai-mode-chip.is-active i {
+        color: #4d5e3d;
+    }
+
+    .ai-mode-chip.is-active small {
+        color: #5d6d51;
+        font-weight: 800;
+    }
+
+    .ai-mode-chip:disabled {
+        opacity: .58;
+        cursor: not-allowed;
+    }
+
+    .ai-mode-chip span,
+    .ai-mode-chip small {
+        display: block;
+    }
+
+    .ai-mode-chip span {
+        margin-top: .2rem;
+        font-weight: 800;
+        font-size: .88rem;
+        color: #24221e;
+    }
+
+    .ai-mode-chip small {
+        color: #81786f;
+        font-size: .76rem;
+        font-weight: 600;
+    }
+
+    .ai-chat-thread {
+        flex: 1 1 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1.5rem 1.75rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        background:
+            radial-gradient(ellipse at 20% 0%, rgba(111, 125, 95, .06) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 100%, rgba(201, 184, 122, .05) 0%, transparent 50%),
+            linear-gradient(180deg, rgba(255, 255, 255, .90), rgba(247, 246, 243, .98)),
+            repeating-linear-gradient(0deg, rgba(31, 29, 26, .03) 0, rgba(31, 29, 26, .03) 1px, transparent 1px, transparent 32px);
+    }
+
+    .ai-chat-message {
+        display: flex;
+        gap: .75rem;
+        align-items: flex-start;
+        max-width: min(96%, 1180px);
+    }
+
+    .ai-chat-message-user {
+        align-self: flex-end;
+        justify-content: flex-end;
+    }
+
+    .ai-chat-message-rich {
+        max-width: 100%;
+    }
+
+    .ai-avatar {
+        display: grid;
+        place-items: center;
+        flex: 0 0 42px;
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        background: linear-gradient(145deg, #c8d4bb, #dfe6d7);
+        color: #4d5e3d;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 14px rgba(93, 109, 81, .22);
+        animation: avatarBreath 3s ease-in-out infinite;
+    }
+
+    .ai-bubble {
+        border: 1px solid rgba(31, 29, 26, .12);
+        border-radius: .85rem;
+        background: #fff;
+        padding: 1rem 1.15rem;
+        box-shadow: 0 6px 18px rgba(20, 18, 14, .06), 0 14px 34px rgba(20, 18, 14, .08);
+        animation: floatIn .4s ease-out both;
+    }
+
+    .ai-bubble strong {
+        color: #1a1714;
+    }
+
+    /* Shimmer on welcome / first assistant bubble */
+    .ai-chat-message-assistant:first-child .ai-bubble {
+        position: relative;
+        overflow: hidden;
+        border-color: rgba(111, 125, 95, .22);
+        background: linear-gradient(135deg, #f9fbf6, #fff, #fdfcf5);
+    }
+    .ai-chat-message-assistant:first-child .ai-bubble::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+            110deg,
+            transparent 25%,
+            rgba(111, 125, 95, .08) 37%,
+            rgba(201, 184, 122, .06) 50%,
+            transparent 62%
+        );
+        background-size: 200% 100%;
+        animation: shimmer 4s ease-in-out infinite;
+        pointer-events: none;
+        border-radius: inherit;
+    }
+
+    .ai-chat-message-user .ai-bubble {
+        border-color: rgba(29, 26, 22, .9);
+        background: #1d1a16;
+        color: #fff;
+        box-shadow: 0 14px 34px rgba(20, 18, 14, .18);
+    }
+
+    .ai-bubble small {
+        display: block;
+        margin-bottom: .25rem;
+        color: #81786f;
+        font-size: .74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .ai-chat-message-user .ai-bubble small,
+    .ai-chat-message-user .ai-bubble p {
+        color: rgba(255, 255, 255, .76);
+    }
+
+    .ai-bubble p {
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    .ai-bubble-warning {
+        border-color: rgba(196, 125, 34, .22);
+        background: #fff7e9;
+        color: #6b4a16;
+    }
+
+    .ai-result-bubble {
+        width: 100%;
+        border-color: rgba(111, 125, 95, .24);
+        box-shadow: 0 18px 42px rgba(111, 125, 95, .12);
+    }
+
+    .ai-result-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+    }
+
+    .ai-result-head p {
+        margin: .5rem 0 0;
+        line-height: 1.7;
+    }
+
+    .ai-result-stats {
+        flex: 0 0 138px;
+        border-left: 1px solid rgba(31, 29, 26, .1);
+        padding-left: 1rem;
+        text-align: right;
+    }
+
+    .ai-result-stats strong {
+        display: block;
+        color: #181511;
+        font-size: 2rem;
+        line-height: 1;
+    }
+
+    .ai-result-stats span,
+    .ai-result-stats em,
+    .ai-total span {
+        display: block;
+        color: #81786f;
+        font-size: .78rem;
+        font-style: normal;
+    }
+
+    .ai-palette-strip {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .55rem;
+        margin: 1rem 0;
+    }
+
+    .ai-palette-strip span {
+        border: 1px solid rgba(31, 29, 26, .1);
+        border-radius: 999px;
+        background: #efede8;
+        color: #34302b;
+        padding: .38rem .72rem;
+        font-size: .86rem;
+        font-weight: 700;
+    }
+
+    .ai-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .75rem;
+        border: 1px solid rgba(31, 29, 26, .08);
+        border-radius: .55rem;
+        background: #faf9f6;
+        padding: .9rem;
+        margin-bottom: 1rem;
+    }
+
+    .ai-total {
+        margin-left: auto;
+        text-align: right;
+    }
+
+    .ai-total strong {
+        color: #181511;
+        font-size: 1.05rem;
+    }
+
+    .ai-product-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+    }
+
+    .ai-product-card {
+        overflow: hidden;
+        border: 1px solid rgba(31, 29, 26, .08);
+        border-radius: .55rem;
+        background: #fff;
+    }
+
+    .ai-product-image {
+        position: relative;
+        display: block;
+        aspect-ratio: 4 / 3;
+        background: #eeece6;
+        color: inherit;
+    }
+
+    .ai-product-image img,
+    .ai-image-fallback {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .ai-image-fallback {
+        display: grid;
+        place-items: center;
+        color: #81786f;
+        font-size: 2rem;
+    }
+
+    .ai-product-image span {
+        position: absolute;
+        top: .55rem;
+        left: .55rem;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: rgba(24, 21, 17, .86);
+        color: #fff;
+        font-size: .82rem;
+        font-weight: 800;
+    }
+
+    .ai-product-body {
+        padding: .9rem;
+    }
+
+    .ai-product-body small {
+        color: #6f7d5f;
+        font-size: .72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .ai-product-body h3 {
+        min-height: 2.6em;
+        margin: .3rem 0 .45rem;
+        font-size: .98rem;
+        line-height: 1.3;
+    }
+
+    .ai-product-body p {
+        min-height: 4.5em;
+        margin-bottom: .9rem;
+        font-size: .88rem;
+        line-height: 1.55;
+    }
+
+    .ai-product-bottom {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: .75rem;
+    }
+
+    .ai-product-bottom strong {
+        color: #181511;
+    }
+
+    .ai-product-bottom span {
+        color: #81786f;
+        font-size: .8rem;
+    }
+
+    .ai-btn-add-cart {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        margin-top: .55rem;
+        padding: .4rem .85rem;
+        border: 1.5px solid rgba(111, 125, 95, .35);
+        border-radius: .45rem;
+        background: rgba(111, 125, 95, .06);
+        color: #4d5e3d;
+        font-size: .8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .2s ease;
+    }
+    .ai-btn-add-cart:hover {
+        background: rgba(111, 125, 95, .15);
+        border-color: rgba(111, 125, 95, .55);
+        transform: translateY(-1px);
+    }
+    .ai-btn-add-cart.added {
+        background: #e8f5e2;
+        border-color: #6f7d5f;
+        color: #3a5a2a;
+        pointer-events: none;
+    }
+
+    .ai-chat-composer {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: .85rem;
+        border-top: 1.5px solid rgba(111, 125, 95, .22);
+        background: linear-gradient(0deg, #f3f6ee 0%, #fafcf7 40%, #fff 100%);
+        padding: 1.15rem 1.25rem;
+        box-shadow: 0 -6px 20px rgba(111, 125, 95, .06);
+        position: relative;
+    }
+
+    .ai-image-search-panel {
+        border-top: 1.5px solid rgba(111, 125, 95, .16);
+        background: #fbfaf7;
+        display: grid;
+        gap: .75rem;
+        padding: .95rem 1.25rem 0;
+    }
+
+    .ai-image-search-panel[hidden] {
+        display: none;
+    }
+
+    .ai-image-drop {
+        align-items: center;
+        border: 1.5px dashed rgba(111, 125, 95, .38);
+        border-radius: .75rem;
+        color: #2a2621;
+        cursor: pointer;
+        display: grid;
+        gap: .18rem .7rem;
+        grid-template-columns: 42px minmax(0, 1fr);
+        min-height: 76px;
+        padding: .8rem .95rem;
+        transition: border-color .22s ease, background .22s ease, transform .22s ease;
+    }
+
+    .ai-image-drop:hover {
+        background: #f4f6f0;
+        border-color: #6f7d5f;
+        transform: translateY(-1px);
+    }
+
+    .ai-image-drop i {
+        align-items: center;
+        background: #eef2e8;
+        border-radius: 50%;
+        color: #5d6d51;
+        display: inline-flex;
+        font-size: 1.15rem;
+        grid-row: span 2;
+        height: 42px;
+        justify-content: center;
+        width: 42px;
+    }
+
+    .ai-image-drop span {
+        font-weight: 900;
+    }
+
+    .ai-image-drop small {
+        color: #81786f;
+        font-weight: 700;
+    }
+
+    .ai-image-preview {
+        align-items: center;
+        border: 1px solid rgba(31, 29, 26, .1);
+        border-radius: .75rem;
+        display: flex;
+        gap: .75rem;
+        padding: .6rem;
+    }
+
+    .ai-image-preview[hidden] {
+        display: none;
+    }
+
+    .ai-image-preview img {
+        aspect-ratio: 1;
+        border-radius: .55rem;
+        object-fit: cover;
+        width: 64px;
+    }
+
+    .ai-image-preview strong,
+    .ai-image-preview button {
+        display: block;
+    }
+
+    .ai-image-preview button {
+        background: transparent;
+        border: 0;
+        color: #6f7d5f;
+        font-size: .82rem;
+        font-weight: 800;
+        padding: .2rem 0;
+    }
+
+    .ai-chat-composer::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 1.5rem; right: 1.5rem;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(111, 125, 95, .35), rgba(201, 184, 122, .25), transparent);
+    }
+
+    .ai-chat-composer textarea {
+        width: 100%;
+        min-height: 78px;
+        max-height: 180px;
+        resize: vertical;
+        border: 2px solid rgba(111, 125, 95, .25);
+        border-radius: .75rem;
+        color: #1a1714;
+        padding: .9rem 1.1rem;
+        background: #fffefa;
+        font-size: .95rem;
+        line-height: 1.55;
+        transition: border-color .25s, box-shadow .25s, transform .15s;
+    }
+
+    .ai-chat-composer textarea::placeholder {
+        color: #9e968c;
+    }
+
+    .ai-chat-composer textarea:focus,
+    .ai-quick-fields .form-control:focus,
+    .ai-quick-fields .form-select:focus {
+        outline: 0;
+        border-color: #6f7d5f;
+        box-shadow:
+            0 0 0 .3rem rgba(111, 125, 95, .12),
+            0 0 20px rgba(111, 125, 95, .08);
+    }
+
+    .ai-chat-composer .btn {
+        min-width: 100px;
+        align-self: stretch;
+        font-weight: 800;
+        font-size: .95rem;
+        border-radius: .7rem;
+        background: linear-gradient(145deg, #6f7d5f, #5a6b4c);
+        border: none;
+        color: #fff;
+        box-shadow:
+            0 4px 14px rgba(93, 109, 81, .30),
+            0 1px 3px rgba(0,0,0,.1);
+        transition: all .22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ai-chat-composer .btn::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,.18) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .ai-chat-composer .btn:hover {
+        background: linear-gradient(145deg, #5a6b4c, #4a5b3e);
+        box-shadow:
+            0 6px 22px rgba(93, 109, 81, .40),
+            0 0 12px rgba(111, 125, 95, .20);
+        transform: translateY(-2px);
+    }
+
+    .ai-chat-composer .btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 8px rgba(93, 109, 81, .30);
+    }
+
+    .ai-quick-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .9rem;
+        padding: 1rem;
+    }
+
+    .ai-quick-fields label {
+        display: grid;
+        gap: .35rem;
+    }
+
+    .ai-quick-fields label > span {
+        color: #2a2621;
+        font-size: .86rem;
+        font-weight: 800;
+    }
+
+    .ai-quick-fields .form-control,
+    .ai-quick-fields .form-select {
+        border-color: rgba(31, 29, 26, .14);
+        border-radius: .45rem;
+        min-height: 42px;
+        background-color: #fffdf9;
+    }
+
+    [data-bs-theme="dark"] .ai-stylist-page {
+        background: #11100f;
+    }
+    
+    [data-bs-theme="dark"] .ai-chat-thread {
+        background:
+            radial-gradient(ellipse at 20% 0%, rgba(143, 166, 126, .08) 0%, transparent 50%),
+            radial-gradient(ellipse at 80% 100%, rgba(160, 145, 90, .06) 0%, transparent 50%),
+            linear-gradient(180deg, rgba(25, 24, 22, .92), rgba(17, 16, 15, .98)),
+            repeating-linear-gradient(0deg, rgba(255, 255, 255, .02) 0, rgba(255, 255, 255, .02) 1px, transparent 1px, transparent 32px) !important;
+        color: #f4f0ea;
+    }
+
+    /* ── Smooth cinematic mode transition ── */
+    .ai-stylist-page,
+    .ai-stylist-hero,
+    .ai-chat-main,
+    .ai-sidebar,
+    .ai-chat-topbar,
+    .ai-bubble,
+    .ai-chat-thread,
+    .ai-chat-composer,
+    .ai-mode-chip,
+    .ai-sidebar-title,
+    .ai-sidebar-desc,
+    .ai-quick-fields label > span,
+    .ai-chat-options summary,
+    .ai-chat-options summary small,
+    h1, h2, h3, p, strong, span, i {
+        transition: background 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease !important;
+    }
+
+    /* ── Dark Mode: Text overrides for bubbles and fields ── */
+    [data-bs-theme="dark"] .ai-bubble strong {
+        color: #f8f4ed !important;
+    }
+    [data-bs-theme="dark"] .ai-quick-fields label > span {
+        color: #f4f0ea !important;
+    }
+    [data-bs-theme="dark"] .ai-chat-options summary {
+        color: #eee7dd !important;
+    }
+    [data-bs-theme="dark"] .ai-chat-options summary small {
+        color: #a09890 !important;
+    }
+    [data-bs-theme="dark"] .btn-close {
+        filter: invert(1) grayscale(1) brightness(2);
+    }
+
+    /* ── Custom Premium Sidebar Toggler ── */
+    .ai-btn-sidebar-toggle {
+        border: 1.5px solid rgba(31, 29, 26, .15) !important;
+        background: transparent !important;
+        color: #1f1d1a !important;
+        transition: all 0.2s ease !important;
+    }
+    .ai-btn-sidebar-toggle:hover {
+        background: rgba(31, 29, 26, .05) !important;
+        border-color: rgba(31, 29, 26, .25) !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-sidebar-toggle {
+        border-color: rgba(255, 255, 255, .15) !important;
+        color: #f4f0ea !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-sidebar-toggle:hover {
+        background: rgba(255, 255, 255, .05) !important;
+        border-color: rgba(255, 255, 255, .25) !important;
+    }
+
+    /* ── Modern Premium Product Buttons (Add to Cart / 3D) ── */
+    .ai-btn-add-cart, .ai-btn-try-3d {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .35rem;
+        padding: .5rem 1rem;
+        border-radius: .5rem;
+        font-weight: 700;
+        font-size: .82rem;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+    }
+
+    /* Light Mode */
+    .ai-btn-add-cart {
+        border: 1.5px solid rgba(111, 125, 95, .35) !important;
+        background: rgba(111, 125, 95, .05) !important;
+        color: #4d5e3d !important;
+    }
+    .ai-btn-add-cart:hover {
+        background: #6f7d5f !important;
+        color: #fff !important;
+        border-color: #6f7d5f !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(111, 125, 95, 0.15);
+    }
+    .ai-btn-add-cart.added {
+        background: #e8f5e2 !important;
+        border-color: #6f7d5f !important;
+        color: #3a5a2a !important;
+        pointer-events: none;
+    }
+
+    .ai-btn-try-3d {
+        border: 1.5px solid rgba(212, 127, 49, .35) !important;
+        background: rgba(212, 127, 49, .05) !important;
+        color: #b05c14 !important;
+    }
+    .ai-btn-try-3d:hover {
+        background: #d47f31 !important;
+        color: #fff !important;
+        border-color: #d47f31 !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(212, 127, 49, 0.15);
+    }
+
+    /* Dark Mode overrides */
+    [data-bs-theme="dark"] .ai-btn-add-cart {
+        border-color: rgba(179, 196, 158, .35) !important;
+        background: rgba(179, 196, 158, .08) !important;
+        color: #b5c8a4 !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-add-cart:hover {
+        background: #8fa67e !important;
+        color: #151310 !important;
+        border-color: #8fa67e !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-add-cart.added {
+        background: rgba(143, 166, 126, .15) !important;
+        border-color: #8fa67e !important;
+        color: #c5d8ba !important;
+    }
+
+    [data-bs-theme="dark"] .ai-btn-try-3d {
+        border-color: rgba(243, 156, 78, .35) !important;
+        background: rgba(243, 156, 78, .08) !important;
+        color: #f5b075 !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-try-3d:hover {
+        background: #e08e45 !important;
+        color: #fff !important;
+        border-color: #e08e45 !important;
+    }
+
+    /* ── Custom Combo Buttons (Add combo / Try combo in Room 3D) ── */
+    .ai-btn-add-combo {
+        background: #1a1816 !important;
+        border: 1px solid #1a1816 !important;
+        color: #fff !important;
+        font-weight: 700 !important;
+        font-size: .88rem !important;
+        padding: .6rem 1.25rem !important;
+        border-radius: .5rem !important;
+        transition: all 0.2s ease !important;
+    }
+    .ai-btn-add-combo:hover {
+        background: #d47f31 !important;
+        border-color: #d47f31 !important;
+        box-shadow: 0 4px 14px rgba(212, 127, 49, 0.3) !important;
+        transform: translateY(-1px);
+    }
+    .ai-btn-try-combo {
+        background: transparent !important;
+        border: 1.5px solid rgba(212, 127, 49, .4) !important;
+        color: #b05c14 !important;
+        font-weight: 700 !important;
+        font-size: .88rem !important;
+        padding: .6rem 1.25rem !important;
+        border-radius: .5rem !important;
+        transition: all 0.2s ease !important;
+    }
+    .ai-btn-try-combo:hover {
+        background: rgba(212, 127, 49, .08) !important;
+        border-color: #d47f31 !important;
+        color: #d47f31 !important;
+        transform: translateY(-1px);
+    }
+
+    /* Dark Mode overrides for combos */
+    [data-bs-theme="dark"] .ai-btn-add-combo {
+        background: #f5ece2 !important;
+        border-color: #f5ece2 !important;
+        color: #1a1816 !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-add-combo:hover {
+        background: #d47f31 !important;
+        border-color: #d47f31 !important;
+        color: #fff !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-try-combo {
+        border-color: rgba(243, 156, 78, .4) !important;
+        color: #f5b075 !important;
+    }
+    [data-bs-theme="dark"] .ai-btn-try-combo:hover {
+        background: rgba(243, 156, 78, .08) !important;
+        border-color: #e08e45 !important;
+        color: #fff !important;
+    }
+
+    /* ── Custom active switcher chip overrides ── */
+    [data-bs-theme="dark"] .ai-mode-chip.is-active,
+    [data-bs-theme="dark"] .ai-mode-switcher-vertical .ai-mode-chip.is-active {
+        border-color: rgba(143, 166, 126, .6) !important;
+        background: linear-gradient(145deg, #2a3524, #1d2518) !important;
+        color: #eef2e8 !important;
+        box-shadow: 0 4px 18px rgba(111, 125, 95, .25), inset 0 1px 0 rgba(255,255,255,.05) !important;
+    }
+    [data-bs-theme="dark"] .ai-mode-chip.is-active i,
+    [data-bs-theme="dark"] .ai-mode-switcher-vertical .ai-mode-chip.is-active i {
+        color: #b5c8a4 !important;
+    }
+    [data-bs-theme="dark"] .ai-mode-chip.is-active strong,
+    [data-bs-theme="dark"] .ai-mode-switcher-vertical .ai-mode-chip.is-active strong {
+        color: #eef2e8 !important;
+    }
+    [data-bs-theme="dark"] .ai-mode-chip.is-active small,
+    [data-bs-theme="dark"] .ai-mode-switcher-vertical .ai-mode-chip.is-active small {
+        color: #8fa67e !important;
+    }
+
+    /* ── Force AI Chat Composer Send button theme and custom color safety ── */
+    #btnSendChat, .ai-chat-composer .btn {
+        background: linear-gradient(145deg, #6f7d5f, #5a6b4c) !important;
+        border: none !important;
+        color: #fff !important;
+    }
+    #btnSendChat:hover, .ai-chat-composer .btn:hover {
+        background: linear-gradient(145deg, #5a6b4c, #4a5b3e) !important;
+    }
+
+    [data-bs-theme="dark"] #btnClearChat {
+        border-color: rgba(248, 113, 113, 0.3);
+        color: #f87171;
+        background: rgba(248, 113, 113, 0.05);
+    }
+    [data-bs-theme="dark"] #btnClearChat:hover {
+        background: #f87171;
+        color: #11100f;
+        border-color: #f87171;
+        box-shadow: 0 4px 12px rgba(248, 113, 113, 0.25);
+    }
+
+    [data-bs-theme="dark"] .ai-chat-shell::before {
+        background: conic-gradient(
+            #3a4a30 0deg,
+            #5a6b4c 60deg,
+            #8a7a4a 120deg,
+            #6f7d5f 180deg,
+            #8a7a4a 240deg,
+            #5a6b4c 300deg,
+            #3a4a30 360deg
+        );
+    }
+
+    [data-bs-theme="dark"] .ai-stylist-hero,
+    [data-bs-theme="dark"] .ai-chat-main,
+    [data-bs-theme="dark"] .ai-chat-options,
+    [data-bs-theme="dark"] .ai-chat-composer,
+    [data-bs-theme="dark"] .ai-bubble,
+    [data-bs-theme="dark"] .ai-product-card {
+        border-color: rgba(255, 255, 255, .12);
+        background: #191816;
+    }
+
+    [data-bs-theme="dark"] .ai-chat-topbar {
+        border-color: rgba(255, 255, 255, .10);
+        background:
+            linear-gradient(168deg, rgba(35, 40, 30, .6) 0%, rgba(25, 24, 22, .9) 100%),
+            url("data:image/svg+xml,%3Csvg width='40' height='40' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='1' cy='1' r='.6' fill='%236f7d5f' opacity='.08'/%3E%3C/svg%3E");
+    }
+
+    [data-bs-theme="dark"] .ai-chat-topbar::after {
+        background: linear-gradient(90deg, transparent, rgba(111, 125, 95, .35), rgba(160, 145, 90, .25), transparent);
+    }
+
+    [data-bs-theme="dark"] .ai-stylist-hero h1,
+    [data-bs-theme="dark"] .ai-chat-topbar h2,
+    [data-bs-theme="dark"] .ai-result-head h3,
+    [data-bs-theme="dark"] .ai-result-stats strong,
+    [data-bs-theme="dark"] .ai-total strong,
+    [data-bs-theme="dark"] .ai-product-body h3,
+    [data-bs-theme="dark"] .ai-product-bottom strong {
+        color: #f8f4ed;
+    }
+
+    [data-bs-theme="dark"] .ai-stylist-hero p,
+    [data-bs-theme="dark"] .ai-bubble p,
+    [data-bs-theme="dark"] .ai-result-head p,
+    [data-bs-theme="dark"] .ai-product-body p {
+        color: #c8c0b6;
+    }
+
+    [data-bs-theme="dark"] .ai-mode-chip,
+    [data-bs-theme="dark"] .ai-actions,
+    [data-bs-theme="dark"] .ai-palette-strip span {
+        border-color: rgba(255, 255, 255, .12);
+        background: #23211f;
+        color: #eee7dd;
+    }
+
+    [data-bs-theme="dark"] .ai-avatar {
+        background: linear-gradient(145deg, #3a4a30, #4d5e3d);
+        color: #b5c8a4;
+    }
+
+    [data-bs-theme="dark"] .ai-chat-message-assistant:first-child .ai-bubble {
+        background: linear-gradient(135deg, #1e2218, #191816, #1c1a17);
+        border-color: rgba(111, 125, 95, .28);
+    }
+
+    [data-bs-theme="dark"] .ai-chat-message-assistant:first-child .ai-bubble::before {
+        background: linear-gradient(
+            110deg,
+            transparent 25%,
+            rgba(111, 125, 95, .10) 37%,
+            rgba(160, 145, 90, .07) 50%,
+            transparent 62%
+        );
+    }
+
+    [data-bs-theme="dark"] .ai-chat-composer {
+        background: linear-gradient(0deg, #161514 0%, #1a1918 100%);
+    }
+
+    [data-bs-theme="dark"] .ai-chat-composer textarea {
+        border-color: rgba(111, 125, 95, .30);
+        background-color: #121110;
+        color: #f8f4ed;
+    }
+
+    [data-bs-theme="dark"] .ai-quick-fields .form-control,
+    [data-bs-theme="dark"] .ai-quick-fields .form-select {
+        border-color: rgba(255, 255, 255, .14);
+        background-color: #121110;
+        color: #f8f4ed;
+    }
+
+    @@media (max-width: 991.98px) {
+        .ai-stylist-hero {
+            padding: 3rem 0 2.25rem;
+        }
+
+        .ai-stylist-hero h1 {
+            font-size: 2.45rem;
+        }
+
+        .ai-chat-shell {
+            max-width: 100%;
+        }
+
+        .ai-chat-main {
+            height: var(--ai-chat-viewport-height, calc(100vh - 96px));
+        }
+    }
+
+    @@media (max-width: 575.98px) {
+        .ai-stylist-hero h1 {
+            font-size: 2.1rem;
+        }
+
+        .ai-mode-switcher,
+        .ai-quick-fields,
+        .ai-chat-composer {
+            grid-template-columns: 1fr;
+        }
+
+        .ai-chat-message,
+        .ai-chat-message-rich {
+            max-width: 100%;
+        }
+
+        .ai-result-head,
+        .ai-actions {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .ai-result-stats {
+            border-left: 0;
+            border-top: 1px solid rgba(31, 29, 26, .1);
+            padding: 1rem 0 0;
+            text-align: left;
+        }
+
+        .ai-actions form,
+        .ai-actions button,
+        .ai-total {
+            width: 100%;
+        }
+
+        .ai-total {
+            margin-left: 0;
+            text-align: left;
+        }
+    }
+
+    /* Sidebar (Left column) and Chat Area (Right column) Layout */
+    .ai-sidebar {
+        width: 360px;
+        flex-shrink: 0;
+        background: #fbfaf8;
+        border-right: 1px solid rgba(31, 29, 26, .08);
+        padding: 1.6rem 1.35rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .ai-sidebar-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .ai-sidebar-title {
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: #1a1714;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+    }
+
+    .ai-sidebar-title i {
+        color: #6f7d5f;
+    }
+
+    .ai-sidebar-desc {
+        font-size: 0.76rem;
+        color: #81786f;
+        margin: 0 0 0.25rem 0;
+        line-height: 1.4;
+    }
+
+    .ai-mode-switcher-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .ai-mode-switcher-vertical .ai-mode-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        width: 100%;
+        text-align: left;
+        padding: 0.65rem 0.85rem;
+        background: #fff;
+        border: 1px solid rgba(31, 29, 26, .08);
+        border-radius: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .ai-mode-switcher-vertical .ai-mode-chip i {
+        font-size: 1.15rem;
+        color: #81786f;
+        flex-shrink: 0;
+    }
+
+    .ai-mode-switcher-vertical .ai-mode-chip strong {
+        display: block;
+        font-size: 0.82rem;
+        color: #24221e;
+        font-weight: 800;
+    }
+
+    .ai-mode-switcher-vertical .ai-mode-chip small {
+        display: block;
+        font-size: 0.7rem;
+        color: #81786f;
+        font-weight: 600;
+    }
+
+    .ai-mode-switcher-vertical .ai-mode-chip.is-active {
+        border-color: rgba(111, 125, 95, .4);
+        background: linear-gradient(145deg, #eef2e8, #f4f7f0);
+    }
+
+    .ai-mode-switcher-vertical .ai-mode-chip.is-active i {
+        color: #4d5e3d;
+    }
+
+    .ai-mode-switcher-vertical .ai-mode-chip.is-active small {
+        color: #5d6d51;
+        font-weight: 800;
+    }
+
+    .ai-sidebar-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+
+    .ai-field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+    }
+
+    .ai-field-group label {
+        font-size: 0.78rem;
+        font-weight: 800;
+        color: #34302b;
+    }
+
+    .ai-field-group .form-control,
+    .ai-field-group .form-select {
+        font-size: 0.84rem;
+        padding: 0.45rem 0.65rem;
+        min-height: 38px;
+        border-radius: 0.4rem;
+        border-color: rgba(31, 29, 26, .12);
+        background-color: #fff;
+    }
+
+    .ai-chat-area {
+        flex: 1 1 0;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: #fff;
+    }
+
+    .ai-chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.4rem;
+        border-bottom: 1px solid rgba(31, 29, 26, .08);
+        background: #fff;
+        z-index: 2;
+    }
+
+    .ai-chat-title {
+        font-size: 1.15rem;
+        font-weight: 900;
+        color: #1a1714;
+        margin: 0;
+        letter-spacing: -0.01em;
+    }
+
+    .ai-chat-subtitle {
+        font-size: 0.74rem;
+        color: #81786f;
+        display: block;
+        margin-top: 0.05rem;
+    }
+
+    .ai-header-status-indicator {
+        width: 8px;
+        height: 8px;
+        background: #2ecc71;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.2);
+    }
+
+    /* Dark mode overrides */
+    [data-bs-theme="dark"] .ai-sidebar {
+        background: #1c1b19;
+        border-right-color: rgba(255, 255, 255, .08);
+    }
+
+    [data-bs-theme="dark"] .ai-sidebar-title {
+        color: #f4f0ea;
+    }
+
+    [data-bs-theme="dark"] .ai-sidebar-desc {
+        color: #a8a096;
+    }
+
+    [data-bs-theme="dark"] .ai-mode-switcher-vertical .ai-mode-chip {
+        background: #23211f;
+        border-color: rgba(255, 255, 255, .08);
+    }
+
+    [data-bs-theme="dark"] .ai-mode-switcher-vertical .ai-mode-chip strong {
+        color: #eee7dd;
+    }
+
+    [data-bs-theme="dark"] .ai-field-group label {
+        color: #c8c0b6;
+    }
+
+    [data-bs-theme="dark"] .ai-field-group .form-control,
+    [data-bs-theme="dark"] .ai-field-group .form-select {
+        background-color: #121110;
+        border-color: rgba(255, 255, 255, .12);
+        color: #f8f4ed;
+    }
+
+    [data-bs-theme="dark"] .ai-chat-area,
+    [data-bs-theme="dark"] .ai-chat-header {
+        background: #191816;
+        border-bottom-color: rgba(255, 255, 255, .08);
+    }
+
+    [data-bs-theme="dark"] .ai-chat-title {
+        color: #f8f4ed;
+    }
+
+    [data-bs-theme="dark"] .ai-chat-subtitle {
+        color: #a8a096;
+    }
+
+    /* Responsive grid styles */
+    @@media (min-width: 992px) {
+        .ai-chat-main {
+            flex-direction: row;
+        }
+    }
+
+    @@media (max-width: 991.98px) {
+        .ai-chat-main {
+            flex-direction: column;
+            height: var(--ai-chat-viewport-height, calc(100vh - 96px));
+        }
+
+        .ai-sidebar {
+            width: 340px;
+            max-width: 100%;
+            border-right: 1px solid rgba(31, 29, 26, .08);
+            border-bottom: none;
+            max-height: none;
+        }
+
+        [data-bs-theme="dark"] .ai-sidebar {
+            border-right-color: rgba(255, 255, 255, .08);
+        }
+    }
+
+    /* Floating scroll-to-chat wrapper (handles slide-in and entry transition) */
+    .ai-scroll-to-chat-wrapper {
+        position: fixed;
+        bottom: 2.2rem;
+        right: 2.2rem;
+        z-index: 1050;
+        transform: translateY(120px);
+        opacity: 0;
+        visibility: hidden;
+        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease, visibility 0.4s;
+        pointer-events: none;
+    }
+
+    .ai-scroll-to-chat-wrapper.is-visible {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    /* Inner button (handles high-end continuous floating and shadow-pulsing animations) */
+    .ai-scroll-to-chat {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.35rem;
+        border: none;
+        border-radius: 999px;
+        background: #191816 !important;
+        color: #fff !important;
+        font-size: 0.88rem;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 8px 24px rgba(25, 24, 22, 0.15), 0 4px 10px rgba(0, 0, 0, 0.08);
+        animation: floatPulse 3.8s ease-in-out infinite, shadowPulse 2.4s cubic-bezier(0.25, 0, 0.3, 1) infinite;
+        transition: background 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+        position: relative;
+    }
+
+    .ai-scroll-to-chat span {
+        color: #fff !important;
+    }
+
+    .ai-scroll-to-chat:hover {
+        background: #d47f31 !important;
+        transform: scale(1.05);
+        box-shadow: 0 12px 30px rgba(212, 127, 49, 0.25), 0 6px 14px rgba(0, 0, 0, 0.1);
+    }
+
+    .ai-scroll-to-chat:hover span {
+        color: #fff !important;
+    }
+
+    .ai-scroll-to-chat:active {
+        transform: scale(0.97);
+    }
+
+    .ai-scroll-to-chat i {
+        font-size: 1.15rem;
+        color: #d47f31 !important;
+        animation: chatBounce 2s ease-in-out infinite;
+        transition: color 0.3s ease;
+    }
+
+    .ai-scroll-to-chat:hover i {
+        color: #fff !important;
+    }
+
+    @@keyframes chatBounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-3px); }
+    }
+
+    @@keyframes floatPulse {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-7px); }
+    }
+
+    @@keyframes shadowPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(212, 127, 49, 0.5), 0 8px 24px rgba(25, 24, 22, 0.12);
+        }
+        70% {
+            box-shadow: 0 0 0 15px rgba(212, 127, 49, 0), 0 8px 24px rgba(25, 24, 22, 0.12);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(212, 127, 49, 0), 0 8px 24px rgba(25, 24, 22, 0.12);
+        }
+    }
+
+    /* Dark mode support */
+    [data-bs-theme="dark"] .ai-scroll-to-chat {
+        background: #f8f4ed !important;
+        color: #191816 !important;
+        animation: floatPulse 3.8s ease-in-out infinite, shadowPulseDark 2.4s cubic-bezier(0.25, 0, 0.3, 1) infinite;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .35), 0 4px 10px rgba(0, 0, 0, .2);
+    }
+
+    [data-bs-theme="dark"] .ai-scroll-to-chat span {
+        color: #191816 !important;
+    }
+
+    [data-bs-theme="dark"] .ai-scroll-to-chat i {
+        color: #d47f31 !important;
+    }
+
+    [data-bs-theme="dark"] .ai-scroll-to-chat:hover {
+        background: #d47f31 !important;
+        color: #fff !important;
+    }
+
+    [data-bs-theme="dark"] .ai-scroll-to-chat:hover span {
+        color: #fff !important;
+    }
+
+    [data-bs-theme="dark"] .ai-scroll-to-chat:hover i {
+        color: #fff !important;
+    }
+
+    @@keyframes shadowPulseDark {
+        0% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.25), 0 8px 24px rgba(0, 0, 0, .35);
+        }
+        70% {
+            box-shadow: 0 0 0 15px rgba(255, 255, 255, 0), 0 8px 24px rgba(0, 0, 0, .35);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(255, 255, 255, 0), 0 8px 24px rgba(0, 0, 0, .35);
+        }
+    }
+
+    /* Premium focus transition for the chat container */
+    .ai-chat-main {
+        transition: box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ai-chat-focus-pulse {
+        box-shadow: 
+            0 0 0 5px rgba(111, 125, 95, 0.35),
+            0 20px 40px rgba(0, 0, 0, 0.15) !important;
+        transform: scale(1.008);
+    }
+
+    [data-bs-theme="dark"] .ai-chat-focus-pulse {
+        box-shadow: 
+            0 0 0 5px rgba(111, 125, 95, 0.5),
+            0 20px 40px rgba(0, 0, 0, 0.35) !important;
+    }
+
+    /* ── Secret Cosmos Mode Support ── */
+    [data-scene-mode="cosmos"] .ai-stylist-page,
+    [data-scene-mode="cosmos"] [data-bs-theme="dark"] .ai-stylist-page,
+    [data-scene-mode="cosmos"] .ai-stylist-hero,
+    [data-scene-mode="cosmos"] [data-bs-theme="dark"] .ai-stylist-hero,
+    [data-scene-mode="cosmos"] .ai-how-section,
+    [data-scene-mode="cosmos"] [data-bs-theme="dark"] .ai-how-section {
+        background: transparent !important;
+        border-color: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Cosmos mode text colors */
+    [data-scene-mode="cosmos"] .ai-stylist-hero h1,
+    [data-scene-mode="cosmos"] .ai-how-header h2 {
+        color: #f5ece2 !important;
+    }
+    
+    [data-scene-mode="cosmos"] .ai-stylist-hero p,
+    [data-scene-mode="cosmos"] .ai-how-card p {
+        color: #c4bcae !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-section-kicker {
+        color: #8fa67e !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-hero-points span {
+        background: rgba(18, 22, 45, 0.6) !important;
+        border-color: rgba(154, 179, 255, 0.15) !important;
+        color: #eee7dd !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-hero-points i {
+        color: #a3b899 !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-how-card {
+        background: linear-gradient(145deg, rgba(18, 22, 45, 0.6), rgba(8, 10, 22, 0.55)) !important;
+        border-color: rgba(154, 179, 255, 0.15) !important;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3) !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-how-card h3 {
+        color: #f8f4ed !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-how-number {
+        background: rgba(212, 127, 49, 0.2) !important;
+        color: #d47f31 !important;
+        border-color: rgba(212, 127, 49, 0.4) !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-chat-main {
+        background: rgba(18, 16, 15, 0.82) !important;
+        backdrop-filter: blur(12px) !important;
+        border-color: rgba(154, 179, 255, 0.15) !important;
+    }
+    
+    [data-scene-mode="cosmos"] .ai-sidebar {
+        background: rgba(25, 24, 22, 0.4) !important;
+        border-right-color: rgba(154, 179, 255, 0.1) !important;
+    }
+
+    [data-scene-mode="cosmos"] .ai-chat-composer {
+        background: rgba(20, 18, 17, 0.6) !important;
+        border-top-color: rgba(154, 179, 255, 0.1) !important;
+    }
+</style>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/ai-stylist.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script>
+        (() => {
+            const l = {
+                clearConfirm: '@Html.Raw(localizer.Get("AiStylist:ClearConfirm"))',
+                clearError: '@Html.Raw(localizer.Get("AiStylist:ClearError"))',
+                clearConnectionError: '@Html.Raw(localizer.Get("AiStylist:ClearConnectionError"))',
+                success: '@Html.Raw(localizer.Get("Success"))',
+                warning: '@Html.Raw(localizer.Get("Warning"))',
+                error: '@Html.Raw(localizer.Get("Error"))',
+                adding: '@Html.Raw(localizer.Get("AiStylist:Adding"))',
+                added: '@Html.Raw(localizer.Get("AiStylist:Added"))',
+                addCartConnectionError: '@Html.Raw(localizer.Get("AiStylist:AddCartConnectionError"))',
+                preparing3D: '@Html.Raw(localizer.Get("AiStylist:Preparing3D"))',
+                try3DConnectionError: '@Html.Raw(localizer.Get("AiStylist:Try3DConnectionError"))',
+                sending: '@Html.Raw(localizer.Get("AiStylist:Sending"))',
+                send: '@Html.Raw(localizer.Get("AiStylist:Send"))',
+                connectionError: '@Html.Raw(localizer.Get("AiStylist:ConnectionError"))',
+                contChat: '@Html.Raw(localizer.Get("AiStylist:ContChatText"))',
+                contChatTitle: '@Html.Raw(localizer.Get("AiStylist:ContChatTitle"))',
+                startChat: '@Html.Raw(localizer.Get("AiStylist:StartChatText"))',
+                startChatTitle: '@Html.Raw(localizer.Get("AiStylist:StartChatTitle"))',
+                stockLeft: '@Html.Raw(localizer.Get("AiStylist:ProductStockLeft"))',
+                addSingleCart: '@Html.Raw(localizer.Get("AiStylist:AddSingleToCart"))',
+                trySingle3D: '@Html.Raw(localizer.Get("AiStylist:TrySingle3D"))',
+                conceptKicker: '@Html.Raw(localizer.Get("AiStylist:ResultConceptKicker"))',
+                itemsReviewed: '@Html.Raw(localizer.Get("AiStylist:ResultMonson"))',
+                fallbackSug: '@Html.Raw(localizer.Get("AiStylist:ResultFallback"))',
+                personalizedSug: '@Html.Raw(localizer.Get("AiStylist:ResultPersonalized"))',
+                addComboCart: '@Html.Raw(localizer.Get("AiStylist:AddComboToCart"))',
+                tryCombo3D: '@Html.Raw(localizer.Get("AiStylist:TryCombo3D"))',
+                totalEst: '@Html.Raw(localizer.Get("AiStylist:TotalEst"))',
+                welcomeStrong: '@Html.Raw(localizer.Get("AiStylist:WelcomeStrong"))',
+                welcomeP: '@Html.Raw(localizer.Get("AiStylist:WelcomeP"))',
+                try3DFailed: '@Html.Raw(localizer.Get("AiStylist:Try3DFailed"))'
+            };
+
+            const thread = document.querySelector('.ai-chat-thread');
+            const textarea = document.getElementById('UserDescription');
+            const btn = document.getElementById('btnSendChat');
+            const apiUrl = '@Url.Action("StylistApi", "Ai")';
+            const imageApiUrl = '@Url.Action("StylistImageApi", "Ai")';
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                       || document.querySelector('meta[name="csrf-token"]')?.content || '';
+            let sending = false;
+            let activeMode = 'text';
+            const btnClear = document.getElementById('btnClearChat');
+            const modeButtons = document.querySelectorAll('[data-ai-mode]');
+            const imagePanel = document.getElementById('aiImageSearchPanel');
+            const imageInput = document.getElementById('AiStylistImage');
+            const imagePreview = document.getElementById('AiStylistImagePreview');
+            const imagePreviewImg = imagePreview?.querySelector('img');
+            const imageName = document.getElementById('AiStylistImageName');
+            const btnClearImage = document.getElementById('btnClearStylistImage');
+            const imageSearchStorageKey = 'furnish.aiStylist.lastImageSearch.v1';
+            let restoredImageSearch = false;
+            let chatSnapTimer = null;
+            let programmaticChatScroll = false;
+            let threadStates = null;
+
+            if (btnClear) {
+                btnClear.addEventListener('click', async () => {
+                    if (confirm(l.clearConfirm)) {
+                        const originalText = btnClear.innerHTML;
+                        btnClear.disabled = true;
+                        btnClear.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>...';
+                        try {
+                            const res = await fetch('@Url.Action("ClearChatHistory", "Ai")', {
+                                method: 'POST',
+                                headers: {
+                                    'RequestVerificationToken': token
+                                }
+                            });
+                            const data = await res.json();
+                            if (data.ok) {
+                                localStorage.removeItem(imageSearchStorageKey);
+                                restoredImageSearch = false;
+                                threadStates.text = textWelcomeHtml();
+                                threadStates.similar = imageWelcomeHtml();
+                                thread.innerHTML = threadStates[activeMode] || threadStates.text;
+                                 showToast(data.message, 'success');
+                                 updateFloatingButtonText();
+                             } else {
+                                 showToast(data.message || l.clearError, 'warning');
+                             }
+                        } catch (e) {
+                            showToast(l.clearConnectionError, 'error');
+                        } finally {
+                            btnClear.disabled = false;
+                            btnClear.innerHTML = originalText;
+                        }
+                    }
+                });
+            }
+
+            function scrollToBottom() {
+                requestAnimationFrame(() => thread.scrollTop = thread.scrollHeight);
+            }
+            function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+            function fmt(n) { return Number(n).toLocaleString('vi-VN'); }
+
+            function textWelcomeHtml() {
+                return `
+                    <div class="ai-chat-message ai-chat-message-assistant">
+                        <div class="ai-avatar"><i class="bi bi-stars"></i></div>
+                        <div class="ai-bubble">
+                            <strong>${esc(l.welcomeStrong)}</strong>
+                            <p>${esc(l.welcomeP)}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function imageWelcomeHtml() {
+                return `
+                    <div class="ai-chat-message ai-chat-message-assistant">
+                        <div class="ai-avatar"><i class="bi bi-camera"></i></div>
+                        <div class="ai-bubble">
+                            <strong>Tìm món tương tự bằng ảnh</strong>
+                            <p>Tải ảnh món đồ bạn thích lên, mình sẽ soi dáng, màu, vibe rồi tìm sản phẩm gần nhất trong catalog.</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            threadStates = {
+                text: thread.innerHTML || textWelcomeHtml(),
+                similar: ''
+            };
+
+            function saveActiveThread() {
+                if (threadStates) {
+                    threadStates[activeMode] = thread.innerHTML;
+                }
+            }
+
+            function loadThreadForMode(mode) {
+                const isNewImageThread = mode === 'similar' && !threadStates.similar;
+                thread.innerHTML = threadStates[mode] || (mode === 'similar' ? imageWelcomeHtml() : textWelcomeHtml());
+                if (isNewImageThread) {
+                    restoreLastImageSearch();
+                    threadStates.similar = thread.innerHTML;
+                }
+                scrollToBottom();
+                updateFloatingButtonText();
+            }
+
+            function saveLastImageSearch(data, userMessage, imageFileName) {
+                try {
+                    localStorage.setItem(imageSearchStorageKey, JSON.stringify({
+                        savedAt: Date.now(),
+                        userMessage,
+                        imageFileName,
+                        data
+                    }));
+                } catch {
+                    // localStorage may be full or disabled; image search still works without persistence.
+                }
+            }
+
+            function restoreLastImageSearch() {
+                if (restoredImageSearch || thread.querySelector('.ai-chat-message-rich')) return;
+
+                try {
+                    const raw = localStorage.getItem(imageSearchStorageKey);
+                    if (!raw) return;
+
+                    const saved = JSON.parse(raw);
+                    const maxAge = 7 * 24 * 60 * 60 * 1000;
+                    if (!saved?.data || Date.now() - Number(saved.savedAt || 0) > maxAge) {
+                        localStorage.removeItem(imageSearchStorageKey);
+                        return;
+                    }
+
+                    restoredImageSearch = true;
+                    const label = saved.imageFileName ? ` (${saved.imageFileName})` : '';
+                    addBubble(`Mình khôi phục kết quả tìm bằng ảnh gần nhất${label}.`, 'clock-history', '');
+                    addBubble(saved.data.assistantMessage || 'Đây là kết quả tìm món tương tự lần trước.', 'camera', '');
+                    addResult(saved.data);
+                } catch {
+                    localStorage.removeItem(imageSearchStorageKey);
+                }
+            }
+
+            window.showToast = function(message, type = 'success') {
+                let container = document.querySelector('.toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.className = 'toast-container position-fixed top-0 end-0 p-3';
+                    container.style.zIndex = '9999';
+                    container.style.marginTop = '80px';
+                    container.style.pointerEvents = 'none';
+                    document.body.appendChild(container);
+                }
+                const toastEl = document.createElement('div');
+                toastEl.className = 'toast';
+                toastEl.role = 'alert';
+                toastEl.ariaLive = 'assertive';
+                toastEl.ariaAtomic = 'true';
+                toastEl.style.pointerEvents = 'auto';
+                toastEl.style.animation = 'slideInRight 0.3s ease-out';
+                toastEl.style.minWidth = '320px';
+                toastEl.style.maxWidth = '420px';
+                toastEl.style.border = 'none';
+                toastEl.style.boxShadow = '0 8px 32px rgba(0,0,0,0.12)';
+                toastEl.style.borderRadius = '0.5rem';
+                toastEl.style.overflow = 'hidden';
+
+                let bgHeader = 'linear-gradient(135deg, #2ecc71 0%, #27ae60 100%)';
+                let icon = 'bi-check-circle-fill';
+                let title = l.success;
+                let bgBody = '#f8f9fa';
+
+                if (type === 'warning' || type === 'info') {
+                    bgHeader = 'linear-gradient(135deg, #f39c12 0%, #e67e22 100%)';
+                    icon = 'bi-exclamation-triangle-fill';
+                    title = l.warning;
+                    bgBody = '#fef9f0';
+                } else if (type === 'error') {
+                    bgHeader = 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)';
+                    icon = 'bi-x-circle-fill';
+                    title = l.error;
+                    bgBody = '#fff5f5';
+                }
+
+                toastEl.innerHTML = `
+                    <div class="toast-header" style="background: ${bgHeader}; color: white; border: none; padding: 0.875rem 1rem; font-weight: 600;">
+                        <i class="bi ${icon} me-2" style="font-size: 1.1rem;"></i>
+                        <strong class="me-auto">${title}</strong>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body" style="background: ${bgBody}; padding: 1rem; font-size: 0.95rem; color: #333; border-radius: 0 0 0.5rem 0.5rem;">
+                        ${esc(message)}
+                    </div>
+                `;
+
+                container.appendChild(toastEl);
+                const bsToast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+                bsToast.show();
+                toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+            };
+
+            window.addSingleToCart = async function(productId, btn) {
+                if (btn.disabled) return;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${esc(l.adding)}`;
+                try {
+                    const res = await fetch('@Url.Action("AddSingleToCart", "Ai")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ productId: productId })
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                        btn.classList.remove('btn-outline-dark');
+                        btn.classList.add('btn-success');
+                        btn.innerHTML = `<i class="bi bi-check-circle-fill"></i> ${esc(l.added)}`;
+                        showToast(data.message, 'success');
+                    } else {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        showToast(data.message, 'warning');
+                    }
+                } catch(e) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    showToast(l.addCartConnectionError, 'error');
+                }
+            };
+
+            window.trySingleInRoom3D = async function(productId, btn) {
+                if (btn.disabled) return;
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>...';
+                try {
+                    const res = await fetch('@Url.Action("TrySingleInRoom3D", "Ai")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'RequestVerificationToken': token
+                        },
+                        body: JSON.stringify({ productId: productId })
+                    });
+                    const data = await res.json();
+                    if (data.ok && data.redirectUrl) {
+                        showToast(l.preparing3D, 'success');
+                        setTimeout(() => {
+                            window.location.href = data.redirectUrl;
+                        }, 800);
+                    } else {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        showToast(data.message || l.try3DFailed, 'warning');
+                    }
+                } catch(e) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                    showToast(l.try3DConnectionError, 'error');
+                }
+            };
+
+            function getDraftValues() {
+                const v = id => document.getElementById(id)?.value || '';
+                const b = v('BudgetDraft');
+                return {
+                    roomType: v('RoomTypeDraft'), style: v('StyleDraft'),
+                    budget: b ? parseFloat(b) : null, area: v('AreaDraft'),
+                    priority: v('PriorityDraft'), preferredColors: v('PreferredColorsDraft'),
+                    avoidColors: v('AvoidColorsDraft'), userDescription: textarea.value.trim()
+                };
+            }
+
+            function getSelectedImage() {
+                return imageInput?.files?.[0] || null;
+            }
+
+            function clearSelectedImage() {
+                if (imageInput) imageInput.value = '';
+                if (imagePreviewImg) imagePreviewImg.removeAttribute('src');
+                if (imageName) imageName.textContent = '';
+                if (imagePreview) imagePreview.hidden = true;
+            }
+
+            function setMode(mode) {
+                if (mode === activeMode) {
+                    textarea.focus();
+                    return;
+                }
+
+                saveActiveThread();
+                activeMode = mode;
+                modeButtons.forEach(button => {
+                    const isActive = button.dataset.aiMode === mode;
+                    button.classList.toggle('is-active', isActive);
+                    const status = button.querySelector('[data-mode-status]');
+                    if (status) {
+                        status.textContent = isActive ? '@Html.Raw(localizer.Get("AiStylist:ModeActive"))' : (button.dataset.modeLabel || '');
+                    }
+                });
+                if (imagePanel) imagePanel.hidden = mode !== 'similar';
+                textarea.placeholder = mode === 'similar'
+                    ? 'Gửi ảnh món đồ, rồi nói thêm gu/phòng/ngân sách nếu muốn...'
+                    : '@Html.Raw(localizer.Get("AiStylist:PlaceholderComposer"))';
+                if (mode !== 'similar') clearSelectedImage();
+                loadThreadForMode(mode);
+                textarea.focus();
+            }
+
+            modeButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    if (!button.disabled) setMode(button.dataset.aiMode || 'text');
+                });
+            });
+
+            imageInput?.addEventListener('change', () => {
+                const file = getSelectedImage();
+                if (!file || !imagePreview || !imagePreviewImg) {
+                    clearSelectedImage();
+                    return;
+                }
+
+                imagePreviewImg.src = URL.createObjectURL(file);
+                if (imageName) imageName.textContent = file.name;
+                imagePreview.hidden = false;
+            });
+
+            btnClearImage?.addEventListener('click', clearSelectedImage);
+
+            function addUserBubble(text) {
+                const d = document.createElement('div');
+                d.className = 'ai-chat-message ai-chat-message-user';
+                d.style.animation = 'floatIn .4s ease';
+                d.innerHTML = `<div class="ai-bubble"><p>${esc(text)}</p></div>`;
+                thread.appendChild(d); scrollToBottom();
+                updateFloatingButtonText();
+            }
+
+            function addTyping() {
+                const d = document.createElement('div');
+                d.className = 'ai-chat-message ai-chat-message-assistant'; d.id = 'typingIndicator';
+                d.style.animation = 'floatIn .3s ease';
+                d.innerHTML = `<div class="ai-avatar"><i class="bi bi-stars"></i></div>
+                    <div class="ai-bubble"><div class="ai-typing-indicator"><span></span><span></span><span></span></div></div>`;
+                thread.appendChild(d); scrollToBottom();
+            }
+
+            function removeTyping() { document.getElementById('typingIndicator')?.remove(); }
+
+            function addBubble(text, icon, cls) {
+                const d = document.createElement('div');
+                d.className = 'ai-chat-message ai-chat-message-assistant';
+                d.style.animation = 'floatIn .4s ease';
+                d.innerHTML = `<div class="ai-avatar"><i class="bi bi-${icon}"></i></div>
+                    <div class="ai-bubble ${cls || ''}"><p>${esc(text)}</p></div>`;
+                thread.appendChild(d); scrollToBottom();
+            }
+
+            function buildCard(p) {
+                const img = p.imageUrl ? `<img src="${esc(p.imageUrl)}" alt="${esc(p.productName)}"/>` : `<div class="ai-image-fallback"><i class="bi bi-box"></i></div>`;
+                const try3DButton = p.hasRoom3DModel ? `
+                            <button type="button" class="btn ai-btn-try-3d btn-sm btn-outline-primary flex-grow-1" onclick="trySingleInRoom3D(${p.productId}, this)">
+                                <i class="bi bi-badge-3d"></i> ${esc(l.trySingle3D)}
+                            </button>` : '';
+                return `<article class="ai-product-card">
+                    <a href="/Product/Details/${p.productId}" class="ai-product-image">${img}<span>${p.rank}</span></a>
+                    <div class="ai-product-body">
+                        <small>${esc(p.categoryName)}</small>
+                        <h3>${esc(p.productName)}</h3>
+                        <p>${esc(p.reason)}</p>
+                        <div class="ai-product-bottom">
+                            <strong>${fmt(p.unitPrice)} VND</strong>
+                            <span>${p.stockQuantity} ${esc(l.stockLeft)}</span>
+                        </div>
+                        <div class="d-flex gap-2 mt-2">
+                            <button type="button" class="btn ai-btn-add-cart btn-sm btn-outline-dark flex-grow-1" onclick="addSingleToCart(${p.productId}, this)">
+                                <i class="bi bi-cart-plus"></i> ${esc(l.addSingleCart)}
+                            </button>
+                            ${try3DButton}
+                        </div>
+                    </div>
+                </article>`;
+            }
+
+            function addResult(data) {
+                const r = data.result, ps = data.products || [];
+                if (!ps.length) return;
+                const palette = (r.palette||[]).map(c=>`<span>${esc(c)}</span>`).join('');
+                const cards = ps.map(buildCard).join('');
+                const room3DProducts = ps.filter(p => p.hasRoom3DModel);
+                const total = ps.reduce((s,p)=>s+p.unitPrice,0);
+                const d = document.createElement('div');
+                d.className = 'ai-chat-message ai-chat-message-assistant ai-chat-message-rich';
+                d.style.animation = 'floatIn .5s ease';
+                d.innerHTML = `<div class="ai-avatar"><i class="bi bi-house-heart"></i></div>
+                    <div class="ai-bubble ai-result-bubble">
+                        <div class="ai-result-head"><div><span class="ai-section-kicker">${esc(l.conceptKicker)}</span><h3>${esc(r.conceptName)}</h3><p>${esc(r.summary)}</p></div>
+                        <div class="ai-result-stats"><strong>${data.candidateCount}</strong><span>${esc(l.itemsReviewed)}</span><em>${r.usedFallback?esc(l.fallbackSug):esc(l.personalizedSug)}</em></div></div>
+                        ${palette?`<div class="ai-palette-strip">${palette}</div>`:''}
+                        <div class="ai-product-list">${cards}</div>
+                        <div class="ai-actions" style="margin-top:1rem">
+                            <form action="/Ai/AddComboToCart" method="post" style="display:inline;">
+                                <input type="hidden" name="__RequestVerificationToken" value="${token}" />
+                                <input type="hidden" name="returnUrl" value="${esc(window.location.pathname)}" />
+                                ${ps.map(p=>`<input type="hidden" name="productIds" value="${p.productId}"/>`).join('')}
+                                <button type="submit" class="btn ai-btn-add-combo">
+                                    <i class="bi bi-cart-plus me-2"></i>${esc(l.addComboCart)}
+                                </button>
+                            </form>
+                            ${room3DProducts.length ? `<form action="/Ai/TryInRoom3D" method="post" style="display:inline;">
+                                <input type="hidden" name="__RequestVerificationToken" value="${token}" />
+                                ${room3DProducts.map(p=>`<input type="hidden" name="productIds" value="${p.productId}"/>`).join('')}
+                                <button type="submit" class="btn ai-btn-try-combo">
+                                    <i class="bi bi-badge-3d me-2"></i>${esc(l.tryCombo3D)}
+                                </button>
+                            </form>` : ''}
+                            <div class="ai-total"><span>${esc(l.totalEst)}</span><strong>${fmt(total)} VND</strong></div>
+                        </div>
+                    </div>`;
+                thread.appendChild(d); scrollToBottom();
+            }
+
+            function setLoading(on) {
+                sending = on; btn.disabled = on;
+                btn.innerHTML = on ? `<i class="bi bi-arrow-repeat"></i> <span>${esc(l.sending)}</span>` : `<i class="bi bi-send"></i> <span>${esc(l.send)}</span>`;
+            }
+
+            async function sendMessage() {
+                const text = textarea.value.trim();
+                if (sending) return;
+                if (activeMode === 'similar') {
+                    await sendImageSearch();
+                    return;
+                }
+                if (!text) return;
+                const body = getDraftValues();
+                addUserBubble(text);
+                textarea.value = ''; textarea.style.height = 'auto';
+                setLoading(true); addTyping();
+                try {
+                    const res = await fetch(apiUrl, {
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/json',
+                            'RequestVerificationToken':token
+                        },
+                        body:JSON.stringify(body)
+                    });
+                    removeTyping();
+                    const data = await res.json();
+                    if (!data.ok) {
+                        addBubble(data.error||l.connectionError,'exclamation-triangle','ai-bubble-warning');
+                    } else {
+                        addBubble(data.assistantMessage,'stars','');
+                        if (data.type === 'recommend') {
+                            addResult(data);
+                        }
+                        threadStates.text = thread.innerHTML;
+                    }
+                } catch(e) {
+                    removeTyping();
+                    addBubble(l.connectionError,'exclamation-triangle','ai-bubble-warning');
+                }
+                finally {
+                    setLoading(false);
+                    textarea.focus();
+                }
+            }
+
+            async function sendImageSearch() {
+                const imageFile = getSelectedImage();
+                const text = textarea.value.trim();
+                if (!imageFile) {
+                    showToast('Bạn chọn ảnh món đồ trước đã nha.', 'warning');
+                    return;
+                }
+
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!allowedTypes.includes(imageFile.type) || imageFile.size > 5 * 1024 * 1024) {
+                    showToast('Ảnh nên là JPG, PNG hoặc WEBP và nhỏ hơn 5MB nha.', 'warning');
+                    return;
+                }
+
+                const draft = getDraftValues();
+                const form = new FormData();
+                form.append('userDescription', text);
+                form.append('roomType', draft.roomType);
+                form.append('style', draft.style);
+                if (draft.budget !== null) form.append('budget', draft.budget);
+                form.append('area', draft.area);
+                form.append('priority', draft.priority);
+                form.append('preferredColors', draft.preferredColors);
+                form.append('avoidColors', draft.avoidColors);
+                form.append('image', imageFile);
+
+                addUserBubble(text || `Đã gửi ảnh: ${imageFile.name}`);
+                textarea.value = '';
+                textarea.style.height = 'auto';
+                setLoading(true);
+                addTyping();
+
+                try {
+                    const res = await fetch(imageApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': token
+                        },
+                        body: form
+                    });
+                    removeTyping();
+                    const data = await res.json();
+                    if (!data.ok) {
+                        addBubble(data.error || l.connectionError, 'exclamation-triangle', 'ai-bubble-warning');
+                    } else {
+                        addBubble(data.assistantMessage, 'camera', '');
+                        if (data.type === 'recommend') {
+                            addResult(data);
+                            saveLastImageSearch(data, text, imageFile.name);
+                            threadStates.similar = thread.innerHTML;
+                        }
+                        clearSelectedImage();
+                    }
+                } catch(e) {
+                    removeTyping();
+                    addBubble(l.connectionError, 'exclamation-triangle', 'ai-bubble-warning');
+                } finally {
+                    setLoading(false);
+                    textarea.focus();
+                }
+            }
+
+            btn.addEventListener('click', sendMessage);
+            textarea.addEventListener('keydown', e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+            textarea.addEventListener('input', () => { textarea.style.height='auto'; textarea.style.height=Math.min(textarea.scrollHeight,120)+'px'; });
+            scrollToBottom();
+
+            // Floating scroll-to-chat and Hero CTA button logic
+            const chatShell = document.querySelector('.ai-chat-shell');
+            const btnScroll = document.getElementById('btnScrollToChat');
+            const btnHeroCta = document.getElementById('btnHeroCta');
+
+            function updateChatViewport() {
+                const navbar = document.querySelector('.navbar.sticky-top, .navbar');
+                const stickyOffset = Math.ceil(navbar?.getBoundingClientRect().height || 72);
+                document.documentElement.style.setProperty('--ai-sticky-offset', `${stickyOffset}px`);
+                document.documentElement.style.setProperty('--ai-chat-viewport-height', `calc(100vh - ${stickyOffset + 16}px)`);
+            }
+
+            function getStickyOffset() {
+                return parseInt(getComputedStyle(document.documentElement).getPropertyValue('--ai-sticky-offset'), 10) || 72;
+            }
+
+            function alignChatShell(behavior = 'smooth') {
+                if (!chatShell) return;
+
+                updateChatViewport();
+                const stickyOffset = getStickyOffset();
+                const targetTop = chatShell.getBoundingClientRect().top + window.scrollY - stickyOffset - 8;
+                programmaticChatScroll = true;
+                window.scrollTo({
+                    top: Math.max(targetTop, 0),
+                    behavior
+                });
+                window.setTimeout(() => {
+                    programmaticChatScroll = false;
+                }, behavior === 'smooth' ? 700 : 80);
+            }
+
+            function maybeSnapChatIntoFrame() {
+                if (!chatShell || programmaticChatScroll) return;
+
+                const rect = chatShell.getBoundingClientRect();
+                const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+                const stickyOffset = getStickyOffset();
+                const alignedTop = stickyOffset + 8;
+                const distanceFromAlignedTop = Math.abs(rect.top - alignedTop);
+                const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, stickyOffset);
+                const visibleRatio = visibleHeight / Math.min(rect.height, viewportHeight);
+                const isNearChat = rect.top < viewportHeight * 0.62 && rect.bottom > viewportHeight * 0.45;
+
+                if (isNearChat && visibleRatio > 0.42 && distanceFromAlignedTop > 18 && distanceFromAlignedTop < viewportHeight * 0.55) {
+                    alignChatShell('smooth');
+                }
+            }
+
+            // Dynamic text update logic for floating scroll button
+            function updateFloatingButtonText() {
+                const btnScrollText = document.querySelector('#btnScrollToChat .ai-scroll-to-chat-text');
+                const btnScrollTitle = document.getElementById('btnScrollToChat');
+                if (btnScrollText && btnScrollTitle) {
+                    const hasMessages = thread.querySelectorAll('.ai-chat-message-user').length > 0;
+                    if (hasMessages) {
+                        btnScrollText.textContent = l.contChat;
+                        btnScrollTitle.setAttribute('title', l.contChatTitle);
+                    } else {
+                        btnScrollText.textContent = l.startChat;
+                        btnScrollTitle.setAttribute('title', l.startChatTitle);
+                    }
+                }
+            }
+
+            // High-premium smooth scroll with glow focus flash
+            function scrollToAndFocusChat() {
+                if (!chatShell) return;
+
+                alignChatShell('smooth');
+                
+                const mainChat = document.querySelector('.ai-chat-main');
+                if (mainChat) {
+                    mainChat.classList.add('ai-chat-focus-pulse');
+                    setTimeout(() => {
+                        mainChat.classList.remove('ai-chat-focus-pulse');
+                    }, 1500);
+                }
+
+                setTimeout(() => {
+                    textarea.focus();
+                }, 450);
+            }
+
+            updateChatViewport();
+            window.addEventListener('resize', updateChatViewport);
+            window.addEventListener('scroll', () => {
+                window.clearTimeout(chatSnapTimer);
+                chatSnapTimer = window.setTimeout(maybeSnapChatIntoFrame, 130);
+            }, { passive: true });
+
+            // Setup listeners and Intersection Observer
+            const btnScrollWrapper = document.getElementById('btnScrollToChatWrapper');
+            if (chatShell && btnScroll && btnScrollWrapper) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            btnScrollWrapper.classList.remove('is-visible');
+                        } else {
+                            btnScrollWrapper.classList.add('is-visible');
+                        }
+                    });
+                }, { threshold: 0.15 });
+                observer.observe(chatShell);
+
+                btnScroll.addEventListener('click', scrollToAndFocusChat);
+            }
+
+            if (btnHeroCta) {
+                btnHeroCta.addEventListener('click', scrollToAndFocusChat);
+            }
+
+            // Run initial check on load
+            updateFloatingButtonText();
+        })();
+    </script>
+}

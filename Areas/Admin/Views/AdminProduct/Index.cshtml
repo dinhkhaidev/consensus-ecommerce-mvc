@@ -2,9 +2,9 @@
 @{
     ViewData["Title"] = "Products";
     var searchTerm = ViewData["SearchTerm"] as string;
-    var currentPage = ViewData["CurrentPage"] != null ? (int)ViewData["CurrentPage"] : 1;
-    var totalPages = ViewData["TotalPages"] != null ? (int)ViewData["TotalPages"] : 1;
-    var totalCount = ViewData["TotalCount"] != null ? (int)ViewData["TotalCount"] : 0;
+    var currentPage = ViewData["CurrentPage"] is int currentPageValue ? currentPageValue : 1;
+    var totalPages = ViewData["TotalPages"] is int totalPagesValue ? totalPagesValue : 1;
+    var totalCount = ViewData["TotalCount"] is int totalCountValue ? totalCountValue : 0;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">

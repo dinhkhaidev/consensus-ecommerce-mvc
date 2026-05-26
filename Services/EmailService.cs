@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Mail;
-using System.Web;
 using System.Text;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 
 namespace WebActionResults.Services;
@@ -20,11 +20,19 @@ public class EmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
     private readonly ILogger<EmailService> _logger;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly LinkGenerator _linkGenerator;
 
-    public EmailService(IConfiguration configuration, ILogger<EmailService> logger)
+    public EmailService(
+        IConfiguration configuration,
+        ILogger<EmailService> logger,
+        IHttpContextAccessor httpContextAccessor,
+        LinkGenerator linkGenerator)
     {
         _configuration = configuration;
         _logger = logger;
+        _httpContextAccessor = httpContextAccessor;
+        _linkGenerator = linkGenerator;
     }
 
     private string SmtpHost => Environment.GetEnvironmentVariable("EMAIL_SMTP_HOST") ?? _configuration["Email:SmtpHost"] ?? "smtp.gmail.com";
@@ -74,8 +82,7 @@ public class EmailService : IEmailService
         var subject = "Xác nhận tài khoản Furnish Shop";
 
         // 1. Tạo đường link chứa mã đã được mã hóa an toàn (Phương án 2)
-        var encodedToken = HttpUtility.UrlEncode(token);
-        var verifyUrl = $"http://localhost:5085/Account/VerifyEmailClick?email={email}&token={encodedToken}";
+        var verifyUrl = CreateVerificationUrl(email, token);
 
         // 2. Giao diện Email thiết kế chia làm 2 cách rõ ràng
         var htmlMessage = $@"
@@ -113,8 +120,7 @@ public class EmailService : IEmailService
     public async Task SendLinkOnlyEmailAsync(string email, string token)
     {
         var subject = "Liên kết kích hoạt tài khoản Furnish Shop";
-        var encodedToken = HttpUtility.UrlEncode(token);
-        var verifyUrl = $"http://localhost:5085/Account/VerifyEmailClick?email={email}&token={encodedToken}";
+        var verifyUrl = CreateVerificationUrl(email, token);
         
         var htmlMessage = $@"
             <div style='font-family: Arial, sans-serif; text-align: center; padding: 20px; border: 1px solid #ddd; border-radius: 10px; max-width: 500px; margin: auto;'>
@@ -130,6 +136,42 @@ public class EmailService : IEmailService
             </div>";
 
         await SendEmailAsync(email, subject, htmlMessage);
+    }
+
+    private string CreateVerificationUrl(string email, string token)
+    {
+        var values = new { email, token };
+        var configuredBaseUrl = Environment.GetEnvironmentVariable("APP_BASE_URL")
+            ?? _configuration["App:BaseUrl"];
+
+        if (!string.IsNullOrWhiteSpace(configuredBaseUrl)
+            && Uri.TryCreate(configuredBaseUrl.TrimEnd('/') + "/", UriKind.Absolute, out var baseUri))
+        {
+            var path = _linkGenerator.GetPathByAction("VerifyEmailClick", "Account", values);
+            if (!string.IsNullOrWhiteSpace(path))
+                return new Uri(baseUri, path.TrimStart('/')).ToString();
+        }
+
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            var url = _linkGenerator.GetUriByAction(
+                httpContext,
+                action: "VerifyEmailClick",
+                controller: "Account",
+                values: values);
+
+            if (!string.IsNullOrWhiteSpace(url))
+                return url;
+        }
+
+        _logger.LogWarning("APP_BASE_URL is not configured and no HTTP request is available. Falling back to localhost verification URL.");
+        return _linkGenerator.GetUriByAction(
+            action: "VerifyEmailClick",
+            controller: "Account",
+            values: values,
+            scheme: "http",
+            host: new HostString("localhost", 5085)) ?? string.Empty;
     }
 
     public async Task SendOrderConfirmationAsync(string email, string orderNumber, decimal totalAmount)

@@ -1,0 +1,513 @@
+/* ============================================
+   AI STYLIST - ENHANCED STYLES
+   Màu sắc hợp với brand: #d47f31 (cam ấm) + #000 (đen)
+   ============================================ */
+
+:root {
+    --ai-primary: #d47f31;
+    --ai-primary-light: #e89b5a;
+    --ai-primary-lighter: #f6e5d6;
+    --ai-primary-dark: #b86825;
+    --ai-accent: #1f2933;
+    --ai-glow: rgba(212, 127, 49, 0.5);
+    --ai-shadow: rgba(212, 127, 49, 0.25);
+    --ai-shadow-strong: rgba(212, 127, 49, 0.4);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* ============================================
+   AI STYLIST PAGE
+   ============================================ */
+
+.ai-stylist-page {
+    background: linear-gradient(135deg, #fff9f0 0%, #fff5e8 100%);
+}
+
+/* ============================================
+   AI AVATAR - Enhanced with glow
+   ============================================ */
+
+.ai-avatar {
+    background: linear-gradient(135deg, var(--ai-primary) 0%, var(--ai-primary-light) 100%);
+    box-shadow: 
+        0 10px 30px var(--ai-shadow-strong),
+        0 0 40px var(--ai-glow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    animation: pulse 3s ease-in-out infinite;
+    transition: all 0.3s ease;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.ai-avatar:hover {
+    transform: scale(1.15);
+    box-shadow: 
+        0 15px 40px var(--ai-shadow-strong),
+        0 0 50px var(--ai-glow);
+}
+
+.ai-avatar i {
+    color: #fff;
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* ============================================
+   AI CHAT MESSAGES - Fade in animation
+   ============================================ */
+
+.ai-chat-message {
+    animation: fadeInUp 0.4s ease-out;
+    transition: all 0.3s ease;
+}
+
+.ai-chat-message:hover {
+    transform: translateX(2px);
+}
+
+/* ============================================
+   AI BUBBLE - Enhanced styling
+   ============================================ */
+
+.ai-bubble {
+    box-shadow: 
+        0 8px 24px rgba(20, 18, 14, 0.12),
+        0 4px 12px var(--ai-shadow);
+    transition: all 0.3s ease;
+    font-weight: 500;
+    line-height: 1.7;
+    border-radius: 1rem;
+}
+
+.ai-chat-message-assistant .ai-bubble {
+    background: linear-gradient(135deg, #fff 0%, #fffaf5 100%);
+    border-left: 4px solid var(--ai-primary);
+    border: 2px solid var(--ai-primary-lighter);
+    border-left-width: 4px;
+    border-left-color: var(--ai-primary);
+}
+
+.ai-chat-message-assistant .ai-bubble:hover {
+    box-shadow: 
+        0 12px 32px rgba(20, 18, 14, 0.15),
+        0 6px 20px var(--ai-shadow-strong);
+    transform: translateY(-3px);
+    border-color: var(--ai-primary);
+}
+
+.ai-chat-message-user .ai-bubble {
+    background: linear-gradient(135deg, #1d1a16 0%, #2a2621 100%);
+    border-right: 4px solid var(--ai-primary);
+    border: 2px solid rgba(212, 127, 49, 0.3);
+    border-right-width: 4px;
+    border-right-color: var(--ai-primary);
+}
+
+/* ============================================
+   RESULT BUBBLE - Premium gradient
+   ============================================ */
+
+.ai-result-bubble {
+    background: linear-gradient(135deg, #fff 0%, #fffaf5 100%);
+    border: 3px solid var(--ai-primary);
+    box-shadow: 
+        0 20px 50px rgba(212, 127, 49, 0.2),
+        0 10px 30px var(--ai-shadow-strong),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    position: relative;
+}
+
+.ai-result-bubble::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    background: linear-gradient(135deg, var(--ai-primary) 0%, var(--ai-primary-light) 50%, var(--ai-primary) 100%);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.3;
+    filter: blur(8px);
+}
+
+/* ============================================
+   PALETTE STRIP - Shimmer effect
+   ============================================ */
+
+.ai-palette-strip span {
+    background: linear-gradient(
+        90deg,
+        var(--ai-primary) 0%,
+        var(--ai-primary-light) 50%,
+        var(--ai-primary) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 3s linear infinite;
+    border: 2px solid var(--ai-primary-dark);
+    color: #fff;
+    font-weight: 800;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px var(--ai-shadow);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ai-palette-strip span:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px var(--ai-shadow-strong);
+}
+
+/* ============================================
+   PRODUCT CARDS - Hover lift effect
+   ============================================ */
+
+.ai-product-card {
+    transition: all 0.3s ease;
+    border: 2px solid rgba(212, 127, 49, 0.15);
+    box-shadow: 0 4px 12px rgba(20, 18, 14, 0.08);
+}
+
+.ai-product-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 
+        0 25px 50px rgba(20, 18, 14, 0.2),
+        0 12px 30px var(--ai-shadow-strong);
+    border-color: var(--ai-primary);
+    border-width: 3px;
+}
+
+.ai-product-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-product-image::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.ai-product-card:hover .ai-product-image::after {
+    left: 100%;
+}
+
+.ai-product-image span {
+    background: linear-gradient(135deg, var(--ai-primary) 0%, var(--ai-primary-light) 100%);
+    box-shadow: 0 4px 12px var(--ai-shadow-strong);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    font-weight: 900;
+}
+
+/* ============================================
+   BUTTONS - Ripple effect
+   ============================================ */
+
+.ai-actions .btn {
+    position: relative;
+    overflow: hidden;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.ai-actions .btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.ai-actions .btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.ai-actions .btn-dark {
+    background: linear-gradient(135deg, var(--ai-primary) 0%, var(--ai-primary-light) 100%);
+    border: none;
+    font-weight: 800;
+    box-shadow: 0 4px 12px var(--ai-shadow);
+}
+
+.ai-actions .btn-dark:hover {
+    background: linear-gradient(135deg, var(--ai-primary-dark) 0%, var(--ai-primary) 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px var(--ai-shadow-strong);
+}
+
+.ai-actions .btn-outline-primary {
+    border: 3px solid var(--ai-primary);
+    color: var(--ai-primary);
+    font-weight: 800;
+    background: rgba(212, 127, 49, 0.05);
+}
+
+.ai-actions .btn-outline-primary:hover {
+    background: var(--ai-primary);
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px var(--ai-shadow-strong);
+    border-width: 3px;
+}
+
+/* ============================================
+   COMPOSER - Enhanced focus
+   ============================================ */
+
+.ai-chat-composer textarea {
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.ai-chat-composer textarea:focus {
+    border-color: var(--ai-primary);
+    box-shadow: 
+        0 0 0 0.2rem var(--ai-glow),
+        0 4px 12px var(--ai-shadow);
+    transform: translateY(-2px);
+}
+
+.ai-chat-composer .btn {
+    background: linear-gradient(135deg, var(--ai-primary) 0%, var(--ai-primary-light) 100%);
+    border: none;
+    font-weight: 800;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px var(--ai-shadow);
+    font-size: 1.05rem;
+}
+
+.ai-chat-composer .btn:hover {
+    background: linear-gradient(135deg, var(--ai-primary-dark) 0%, var(--ai-primary) 100%);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 12px 30px var(--ai-shadow-strong);
+}
+
+/* ============================================
+   MODE CHIPS - Enhanced active state
+   ============================================ */
+
+.ai-mode-chip {
+    transition: all 0.3s ease;
+}
+
+.ai-mode-chip.is-active {
+    border: 3px solid var(--ai-primary);
+    background: linear-gradient(135deg, var(--ai-primary-lighter) 0%, #fff 100%);
+    box-shadow: 0 6px 16px var(--ai-shadow-strong);
+    transform: scale(1.02);
+}
+
+.ai-mode-chip:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 18, 14, 0.1);
+}
+
+.ai-mode-chip i {
+    color: var(--ai-primary);
+}
+
+/* ============================================
+   QUICK FIELDS - Enhanced focus
+   ============================================ */
+
+.ai-quick-fields .form-control:focus,
+.ai-quick-fields .form-select:focus {
+    border-color: var(--ai-primary);
+    box-shadow: 0 0 0 0.2rem var(--ai-glow);
+}
+
+/* ============================================
+   SECTION KICKER - Brand color
+   ============================================ */
+
+.ai-section-kicker {
+    color: var(--ai-primary);
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    text-shadow: 0 2px 4px rgba(212, 127, 49, 0.2);
+}
+
+/* ============================================
+   HERO POINTS - Enhanced styling
+   ============================================ */
+
+.ai-hero-points span {
+    transition: all 0.3s ease;
+}
+
+.ai-hero-points span:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(20, 18, 14, 0.1);
+    border-color: var(--ai-primary);
+}
+
+.ai-hero-points i {
+    color: var(--ai-primary);
+}
+
+/* ============================================
+   VISUAL NOTE - Enhanced styling
+   ============================================ */
+
+.ai-visual-note {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 251, 247, 0.95) 100%);
+    border: 1px solid var(--ai-primary);
+    box-shadow: 
+        0 16px 40px rgba(20, 18, 14, 0.1),
+        0 4px 12px var(--ai-shadow);
+}
+
+.ai-visual-note span {
+    color: var(--ai-primary);
+}
+
+/* ============================================
+   TOTAL PRICE - Enhanced styling
+   ============================================ */
+
+.ai-total {
+    padding: 1rem 1.25rem;
+    background: linear-gradient(135deg, var(--ai-primary) 0%, var(--ai-primary-light) 100%);
+    border-radius: 0.75rem;
+    border: 3px solid var(--ai-primary-dark);
+    box-shadow: 0 6px 16px var(--ai-shadow-strong);
+}
+
+.ai-total span {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.ai-total strong {
+    color: #fff;
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   DARK MODE SUPPORT
+   ============================================ */
+
+[data-bs-theme="dark"] .ai-stylist-page {
+    background: linear-gradient(135deg, #11100f 0%, #191816 100%);
+}
+
+[data-bs-theme="dark"] .ai-chat-message-assistant .ai-bubble {
+    background: linear-gradient(135deg, #191816 0%, #23211f 100%);
+}
+
+[data-bs-theme="dark"] .ai-result-bubble {
+    background: linear-gradient(135deg, #191816 0%, #23211f 100%);
+}
+
+[data-bs-theme="dark"] .ai-palette-strip span {
+    background: linear-gradient(
+        90deg,
+        #2a190a 0%,
+        #433e38 50%,
+        #2a190a 100%
+    );
+    background-size: 200% 100%;
+}
+
+[data-bs-theme="dark"] .ai-total {
+    background: linear-gradient(135deg, #2a190a 0%, #23211f 100%);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 991.98px) {
+    .ai-avatar {
+        width: 34px;
+        height: 34px;
+    }
+    
+    .ai-avatar i {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .ai-product-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .ai-chat-message:hover {
+        transform: translateX(0);
+    }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

@@ -160,6 +160,16 @@ public class AdminAccountController : AdminControllerBase
         var account = await _context.Accounts.FindAsync(id);
         if (account != null)
         {
+            var hasOrders = await _context.Orders.AnyAsync(o => o.UserId == id);
+            if (hasOrders)
+            {
+                account.Status = 0;
+                account.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                TempData["ToastWarning"] = "Account has order history, so it was deactivated instead of deleted.";
+                return RedirectToAction(nameof(Index));
+            }
+
             _context.Accounts.Remove(account);
             await _context.SaveChangesAsync();
             TempData["ToastSuccess"] = "Account deleted successfully!";

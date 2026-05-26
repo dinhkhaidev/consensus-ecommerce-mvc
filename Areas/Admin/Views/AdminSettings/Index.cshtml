@@ -7,6 +7,13 @@
     string Value(string key, string fallback = "") => Model.GetValueOrDefault(key, fallback);
     string LocalFallback(string key) => L($"Fallbacks.{key}");
     bool Enabled(string key, string fallback = "false") => string.Equals(Value(key, fallback), "true", StringComparison.OrdinalIgnoreCase);
+    string DateTimeLocalValue(string key)
+    {
+        var raw = Value(key);
+        return DateTime.TryParse(raw, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out var parsed)
+            ? parsed.ToString("yyyy-MM-ddTHH:mm")
+            : raw;
+    }
 }
 
 <form method="post" action="@Url.Action("Update", "AdminSettings", new { area = "Admin" })" enctype="multipart/form-data">
@@ -31,6 +38,7 @@
     <div class="settings-shell">
         <aside class="settings-nav">
             <a href="#operations" class="settings-nav-link active"><i class="bi bi-toggles2"></i><span>@L("Sections.Operations")</span></a>
+            <a href="#page-access" class="settings-nav-link"><i class="bi bi-shield-lock"></i><span>Quyền truy cập</span></a>
             <a href="#identity" class="settings-nav-link"><i class="bi bi-shop"></i><span>@L("Sections.Identity")</span></a>
             <a href="#homepage" class="settings-nav-link"><i class="bi bi-house-heart"></i><span>@L("Sections.Homepage")</span></a>
             <a href="#contact" class="settings-nav-link"><i class="bi bi-headset"></i><span>@L("Sections.Contact")</span></a>
@@ -99,6 +107,98 @@
                         <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[EnableWishlist]" value="true" @(Enabled("EnableWishlist", "true") ? "checked" : "") /><label class="form-check-label">@localizer.Get("Wishlist")</label></div></div>
                         <div class="col-md-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="settings[RequireEmailVerification]" value="true" @(Enabled("RequireEmailVerification") ? "checked" : "") /><label class="form-check-label">@L("Fields.EmailVerification")</label></div></div>
                     </div>
+                </div>
+            </section>
+
+            <section id="page-access" class="settings-section">
+                <div class="section-title">
+                    <div>
+                        <h2><i class="bi bi-shield-lock me-2"></i>Quyền truy cập trang</h2>
+                        <p>Chọn trang nào được mở cho khách hàng. Trang đang khóa vẫn có thể hiện trên menu như một tính năng đặc biệt, trừ khi bạn bật chế độ ẩn khỏi menu.</p>
+                    </div>
+                </div>
+
+                <div class="setting-panel mb-3">
+                    <div class="row g-3 align-items-center">
+                        <div class="col-lg-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="settings[HideClosedPageLinks]" value="true" @(Enabled("HideClosedPageLinks") ? "checked" : "") />
+                                <label class="form-check-label">Ẩn link trang đang khóa trên menu</label>
+                            </div>
+                            <p class="text-muted small mb-0 mt-2">Tắt: người dùng vẫn thấy mục menu và bấm vào để khám phá trang bị khóa. Bật: trang đang khóa sẽ biến mất khỏi menu.</p>
+                        </div>
+                        <div class="col-lg-4 setting-field">
+                            <label>Nhãn trang khóa</label>
+                            <input name="settings[ClosedPageEyebrow]" class="form-control" value="@Value("ClosedPageEyebrow", "Khu vực đặc biệt")" />
+                        </div>
+                        <div class="col-lg-4 setting-field">
+                            <label>Nút quay lại</label>
+                            <input name="settings[ClosedPageButtonText]" class="form-control" value="@Value("ClosedPageButtonText", "Về trang chủ")" />
+                        </div>
+                        <div class="col-lg-5 setting-field">
+                            <label>Tiêu đề trang khóa</label>
+                            <input name="settings[ClosedPageTitle]" class="form-control" value="@Value("ClosedPageTitle", "Khu vực này đang tạm khóa")" />
+                        </div>
+                        <div class="col-lg-7 setting-field">
+                            <label>Thông điệp trang khóa</label>
+                            <input name="settings[ClosedPageMessage]" class="form-control" value="@Value("ClosedPageMessage", "Quản trị viên đang giữ tính năng này ở chế độ bí mật. Vui lòng quay lại sau.")" />
+                        </div>
+                        <div class="col-12 setting-field">
+                            <label>Ảnh nền trang khóa</label>
+                            <input name="settings[ClosedPageBackgroundImageUrl]" class="form-control" value="@Value("ClosedPageBackgroundImageUrl", "/assets/images/sontungmtpmv.png")" placeholder="/assets/images/sontungmtpmv.png" />
+                            <p class="text-muted small mb-0 mt-1">Dùng ảnh này để rải đều phía sau khung khóa. Có thể nhập đường dẫn asset hoặc URL ảnh khác.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    @{
+                        var pageAccessItems = new[]
+                        {
+                            new { Key = "PageHomeEnabled", Label = "Trang chủ", Hint = "Dashboard khách hàng và màn hình đầu tiên", Icon = "bi-house" },
+                            new { Key = "PageShopEnabled", Label = "Cửa hàng / Sản phẩm", Hint = "Danh mục sản phẩm và trang chi tiết", Icon = "bi-bag" },
+                            new { Key = "PageCategoriesEnabled", Label = "Danh mục", Hint = "Các trang nhóm sản phẩm theo phòng/loại", Icon = "bi-grid-3x3-gap" },
+                            new { Key = "PageRoom3DEnabled", Label = "Phòng 3D", Hint = "Không gian 3D tương tác và đặt thử nội thất", Icon = "bi-badge-3d" },
+                            new { Key = "PageAiStylistEnabled", Label = "Tư vấn AI", Hint = "Trang stylist AI, chat tư vấn và tìm sản phẩm qua ảnh", Icon = "bi-stars" },
+                            new { Key = "PageCartEnabled", Label = "Giỏ hàng", Hint = "Trang giỏ hàng và thao tác thêm/xóa sản phẩm", Icon = "bi-cart3" },
+                            new { Key = "PageCheckoutEnabled", Label = "Thanh toán", Hint = "Luồng đặt hàng và thanh toán", Icon = "bi-credit-card" },
+                            new { Key = "PageWishlistEnabled", Label = "Yêu thích", Hint = "Trang lưu sản phẩm yêu thích của khách hàng", Icon = "bi-heart" },
+                            new { Key = "PageOrdersEnabled", Label = "Đơn hàng", Hint = "Lịch sử đơn hàng và chi tiết đơn", Icon = "bi-box-seam" },
+                            new { Key = "PageAboutEnabled", Label = "Giới thiệu", Hint = "Trang giới thiệu thương hiệu và đội ngũ", Icon = "bi-info-circle" },
+                            new { Key = "PageContactEnabled", Label = "Liên hệ", Hint = "Trang thông tin liên hệ và hỗ trợ", Icon = "bi-headset" },
+                            new { Key = "PagePoliciesEnabled", Label = "Chính sách", Hint = "Chính sách riêng tư, điều khoản và giao hàng", Icon = "bi-file-earmark-text" }
+                        };
+                    }
+
+                    @foreach (var item in pageAccessItems)
+                    {
+                        var isOpen = Enabled(item.Key, "true");
+                        var openAtKey = item.Key.Replace("Enabled", "OpenAt");
+                        <div class="col-md-6 col-xl-4">
+                            <div class="setting-panel h-100">
+                                <div class="d-flex justify-content-between gap-3 align-items-start">
+                                    <div class="d-flex gap-3">
+                                        <div class="page-access-icon">
+                                            <i class="bi @item.Icon"></i>
+                                        </div>
+                                        <div>
+                                            <label class="form-label mb-1">@item.Label</label>
+                                            <p class="text-muted small mb-2">@item.Hint</p>
+                                            <span class="status-chip @(isOpen ? "success" : "danger")">@(isOpen ? "Đang mở" : "Đang khóa")</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-check form-switch fs-4 m-0">
+                                        <input class="form-check-input" type="checkbox" name="settings[@item.Key]" value="true" @(isOpen ? "checked" : "") />
+                                    </div>
+                                </div>
+                                <div class="setting-field mt-3 pt-3 border-top">
+                                    <label>Hẹn giờ mở lại</label>
+                                    <input name="settings[@openAtKey]" type="datetime-local" class="form-control" value="@DateTimeLocalValue(openAtKey)" />
+                                    <p class="text-muted small mb-0 mt-1">Khi trang đang khóa, khách sẽ thấy đồng hồ đếm ngược. Hết giờ thì trang tự mở.</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
                 </div>
             </section>
 

@@ -7,7 +7,11 @@
     var userAvatarUrl = Context.Session.GetString("USER_AVATAR") ?? "";
     var userInitial = Context.Session.GetString("USER_NAME")?.FirstOrDefault().ToString() ?? "";
     var currentPath = Context.Request.Path.Value ?? "/";
+    var currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var isHomeActive = currentPath == "/" || currentPath.Equals("/Home", StringComparison.OrdinalIgnoreCase) || currentPath.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase);
+    var hideClosedPageLinks = string.Equals(settings.GetValueOrDefault("HideClosedPageLinks", "false"), "true", StringComparison.OrdinalIgnoreCase);
+    bool PageEnabled(string key) => !string.Equals(settings.GetValueOrDefault(key, "true"), "false", StringComparison.OrdinalIgnoreCase);
+    bool ShowPageLink(string key) => !hideClosedPageLinks || PageEnabled(key);
 }
 <nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top px-4 py-2 navbar-custom">
     <div class="container-fluid">
@@ -32,63 +36,119 @@
 
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mx-auto">
+                @if (ShowPageLink("PageHomeEnabled"))
+                {
                 <li class="nav-item">
                     <a class="nav-link px-3 @(isHomeActive ? "active" : "")" asp-controller="Home" asp-action="Index">@localizer.Get("Home")</a>
                 </li>
+                }
+                @if (ShowPageLink("PageShopEnabled"))
+                {
                 <li class="nav-item">
                     <a class="nav-link px-3 @(currentPath.StartsWith("/Product", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Product" asp-action="Index">@localizer.Get("Shop")</a>
                 </li>
+                }
+                @if (ShowPageLink("PageRoom3DEnabled"))
+                {
                 <li class="nav-item">
                     <a class="nav-link px-3 @(currentPath.StartsWith("/Room3D", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Room3D" asp-action="Index">3D Room</a>
                 </li>
+                }
+                @if (ShowPageLink("PageAiStylistEnabled"))
+                {
+                <li class="nav-item">
+                    <a class="nav-link px-3 @(currentPath.StartsWith("/Ai", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Ai" asp-action="Stylist">@localizer.Get("AiStylist:MenuTitle")</a>
+                </li>
+                }
+                @if (ShowPageLink("PageCategoriesEnabled"))
+                {
                 <li class="nav-item">
                     <a class="nav-link px-3 @(currentPath.StartsWith("/Category", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Category" asp-action="Index">@localizer.Get("Categories")</a>
                 </li>
+                }
+                @if (ShowPageLink("PageAboutEnabled"))
+                {
                 <li class="nav-item">
                     <a class="nav-link px-3 @(currentPath.StartsWith("/Home/About", StringComparison.OrdinalIgnoreCase) ? "active" : "")" asp-controller="Home" asp-action="About">@localizer.Get("AboutUs")</a>
                 </li>
+                }
             </ul>
         </div>
 
         <div class="d-flex align-items-center gap-2">
             
-            <button id="darkModeToggle" class="nav-link p-2 border-0 bg-transparent" type="button" title="Toggle Dark Mode">
-                <i id="darkModeIcon" class="bi bi-moon-stars fs-5"></i>
-            </button>
+            <div class="theme-mode-shell">
+                <button id="darkModeToggle" class="nav-link p-2 border-0 bg-transparent" type="button" title="Toggle Dark Mode" aria-haspopup="true" aria-expanded="false">
+                    <i id="darkModeIcon" class="bi bi-moon-stars fs-5"></i>
+                </button>
+                <div id="themeModeMenu" class="theme-mode-secret-menu" role="menu" aria-label="Theme mode">
+                    <button class="theme-mode-choice" type="button" data-theme-choice="light" role="menuitem">
+                        <i class="bi bi-sun"></i>
+                        <span>Sáng</span>
+                    </button>
+                    <button class="theme-mode-choice" type="button" data-theme-choice="dark" role="menuitem">
+                        <i class="bi bi-moon-stars"></i>
+                        <span>Tối</span>
+                    </button>
+                    <button class="theme-mode-choice theme-mode-choice-cosmos" type="button" data-theme-choice="cosmos" role="menuitem">
+                        <i class="bi bi-stars"></i>
+                        <span>???</span>
+                    </button>
+                </div>
+            </div>
 
-            <div class="dropdown">
-                <a class="nav-link p-2 dropdown-toggle" href="#" data-bs-toggle="dropdown" title="@localizer.Get("Language")">
+            <div class="dropdown preferences-shell">
+                <button class="nav-link preference-toggle p-2 border-0 bg-transparent" type="button" data-bs-toggle="dropdown" title="Tùy chọn hiển thị">
                     <i class="bi bi-globe fs-5"></i>
-                    <span class="d-none d-lg-inline ms-1">@currentLang.ToUpper()</span>
-                </a>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2" style="min-width: 140px;">
+                    <span class="d-none d-lg-inline ms-1">@currentLang.ToUpper() / <span data-currency-label>VND</span></span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 py-2 preferences-menu">
+                    <li><h6 class="dropdown-header">Ngôn ngữ</h6></li>
                     <li>
-                        <a class="dropdown-item py-2 @(currentLang == "en" ? "active" : "")" asp-controller="Language" asp-action="Switch" asp-route-lang="en" asp-route-returnUrl="@Context.Request.Path">
-                            <i class="bi bi-check me-2 @(currentLang != "en" ? "invisible" : "")"></i>English
+                        <a class="dropdown-item preference-item @(currentLang == "en" ? "active" : "")" asp-controller="Language" asp-action="Switch" asp-route-lang="en" asp-route-returnUrl="@currentUrl">
+                            <i class="bi bi-check @(currentLang != "en" ? "invisible" : "")"></i><span>English</span>
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item py-2 @(currentLang == "vi" ? "active" : "")" asp-controller="Language" asp-action="Switch" asp-route-lang="vi" asp-route-returnUrl="@Context.Request.Path">
-                            <i class="bi bi-check me-2 @(currentLang != "vi" ? "invisible" : "")"></i>Tiếng Việt
+                        <a class="dropdown-item preference-item @(currentLang == "vi" ? "active" : "")" asp-controller="Language" asp-action="Switch" asp-route-lang="vi" asp-route-returnUrl="@currentUrl">
+                            <i class="bi bi-check @(currentLang != "vi" ? "invisible" : "")"></i><span>Tiếng Việt</span>
                         </a>
+                    </li>
+                    <li><hr class="dropdown-divider mx-3"></li>
+                    <li><h6 class="dropdown-header">Tiền tệ hiển thị</h6></li>
+                    <li>
+                        <button class="dropdown-item preference-item active" type="button" data-currency-choice="VND">
+                            <i class="bi bi-check"></i><span>VND</span>
+                        </button>
+                    </li>
+                    <li>
+                        <button class="dropdown-item preference-item" type="button" data-currency-choice="USD">
+                            <i class="bi bi-check"></i><span>USD tham khảo</span>
+                        </button>
                     </li>
                 </ul>
             </div>
 
-            <form method="get" asp-controller="Product" asp-action="Index" class="d-none d-md-flex">
-                <div class="input-group input-group-sm">
-                    <input type="text" name="search" class="form-control" placeholder="@localizer.Get("SearchPlaceholder")">
-                    <button type="submit" class="btn btn-outline-secondary">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-            </form>
+            @if (ShowPageLink("PageShopEnabled"))
+            {
+                <form method="get" asp-controller="Product" asp-action="Index" class="d-none d-md-flex">
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="search" class="form-control" placeholder="@localizer.Get("SearchPlaceholder")">
+                        <button type="submit" class="btn btn-outline-secondary">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+            }
 
             <!-- Cart Icon -->
+            @if (ShowPageLink("PageCartEnabled"))
+            {
             <a class="nav-link cart-link position-relative p-2" asp-controller="Cart" asp-action="Index" title="@localizer.Get("ShoppingCart")">
                 <i class="bi bi-cart3 fs-5"></i>
                 <span id="cartBadge" class="cart-badge badge rounded-pill bg-danger" style="display: none;">0</span>
             </a>
+            }
 
             @if (Context.Session.GetInt32("USER_ID").HasValue)
             {
@@ -112,8 +172,11 @@
                         </li>
                         <li><hr class="dropdown-divider mx-3"></li>
                         <li><a class="dropdown-item py-2" asp-controller="Account" asp-action="Profile"><i class="bi bi-person me-2"></i>@localizer.Get("Profile")</a></li>
-                        <li><a class="dropdown-item py-2" asp-controller="Order" asp-action="Index"><i class="bi bi-box-seam me-2"></i>@localizer.Get("Orders")</a></li>
-                        @if (string.Equals(settings.GetValueOrDefault("EnableWishlist", "true"), "true", StringComparison.OrdinalIgnoreCase))
+                        @if (ShowPageLink("PageOrdersEnabled"))
+                        {
+                            <li><a class="dropdown-item py-2" asp-controller="Order" asp-action="Index"><i class="bi bi-box-seam me-2"></i>@localizer.Get("Orders")</a></li>
+                        }
+                        @if (ShowPageLink("PageWishlistEnabled") && string.Equals(settings.GetValueOrDefault("EnableWishlist", "true"), "true", StringComparison.OrdinalIgnoreCase))
                         {
                             <li><a class="dropdown-item py-2" asp-controller="Wishlist" asp-action="Index"><i class="bi bi-heart me-2"></i>@localizer.Get("Wishlist")</a></li>
                         }
@@ -141,50 +204,6 @@
 </nav>
 
 <script>
-    // Initialize dark mode on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const isDarkMode = localStorage.getItem('darkMode') === 'true';
-        if (isDarkMode) {
-            document.documentElement.setAttribute('data-bs-theme', 'dark');
-            updateDarkModeIcon(true);
-        } else {
-            document.documentElement.removeAttribute('data-bs-theme');
-            updateDarkModeIcon(false);
-        }
-
-        // Dark Mode Toggle Handler
-        const darkModeToggle = document.getElementById('darkModeToggle');
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', function() {
-                const html = document.documentElement;
-                const isDark = html.getAttribute('data-bs-theme') === 'dark';
-
-                if (isDark) {
-                    html.removeAttribute('data-bs-theme');
-                    localStorage.setItem('darkMode', 'false');
-                    updateDarkModeIcon(false);
-                } else {
-                    html.setAttribute('data-bs-theme', 'dark');
-                    localStorage.setItem('darkMode', 'true');
-                    updateDarkModeIcon(true);
-                }
-            });
-        }
-    });
-
-    function updateDarkModeIcon(isDarkMode) {
-        const icon = document.getElementById('darkModeIcon');
-        if (icon) {
-            if (isDarkMode) {
-                icon.classList.remove('bi-moon-stars');
-                icon.classList.add('bi-sun-fill');
-            } else {
-                icon.classList.remove('bi-sun-fill');
-                icon.classList.add('bi-moon-stars');
-            }
-        }
-    }
-
     async function updateCartBadge() {
         try {
             const res = await fetch('/Cart/GetCartCount');
@@ -346,6 +365,12 @@
         font-size: 1.25rem;
     }
 
+    [data-bs-theme="dark"] .site-logo-fallback {
+        color: #f8efe4;
+        background: #2f2a24;
+        border: 1px solid rgba(248, 239, 228, 0.18);
+    }
+
     .dropdown-menu {
         border-radius: 0.75rem;
     }
@@ -359,6 +384,55 @@
     .dropdown-item:active {
         color: #fff;
         background-color: #211f1c;
+    }
+
+    .preference-toggle {
+        min-width: 2.25rem;
+    }
+
+    .preferences-menu {
+        min-width: 210px;
+    }
+
+    .preferences-menu .dropdown-header {
+        color: #8a8178;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    [data-bs-theme="dark"] .preferences-menu .dropdown-header {
+        color: #cfc2b3;
+    }
+
+    .preferences-menu .dropdown-item {
+        font-weight: 650;
+    }
+
+    .preferences-menu .preference-item {
+        align-items: center;
+        display: grid;
+        grid-template-columns: 1.25rem minmax(0, 1fr);
+        gap: 0.5rem;
+        min-height: 2.35rem;
+        padding: 0.45rem 0.9rem;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .preferences-menu .preference-item i {
+        display: inline-flex;
+        justify-content: center;
+        width: 1.25rem;
+    }
+
+    .preferences-menu .preference-item span {
+        min-width: 0;
+    }
+
+    .preferences-menu .dropdown-item:not(.active):not(.is-active) i {
+        visibility: hidden;
     }
 
     .nav-link.dropdown-toggle::after {
@@ -384,4 +458,5 @@
         text-align: center;
         box-shadow: 0 0 0 2px #fff;
     }
+
 </style>

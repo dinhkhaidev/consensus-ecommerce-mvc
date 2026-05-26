@@ -4,6 +4,7 @@ using WebActionResults.Data.Services;
 using WebActionResults.Data.Entities;
 using WebActionResults.ViewModels;
 using WebActionResults.Models;
+using WebActionResults.Utilities;
 
 namespace WebActionResults.Controllers;
 
@@ -20,10 +21,11 @@ public class ProductController : Controller
         _settingsService = settingsService;
     }
 
-    public async Task<IActionResult> Index(int? categoryId, string? search, int? minPrice, int? maxPrice, string? priceRange, string? sort, int page = 1, int pageSize = 12)
+    public async Task<IActionResult> Index(int? categoryId, string? search, int? minPrice, int? maxPrice, string? priceRange, int? minRating, string? sort, int page = 1, int pageSize = 12)
     {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 12;
+        if (minRating is < 1 or > 5) minRating = null;
 
         // Parse price range presets into min/max values
         int? filterMinPrice = minPrice;
@@ -55,18 +57,18 @@ public class ProductController : Controller
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            (products, totalCount) = await _catalogService.SearchProductsPaginatedAsync(search, page, pageSize, sort);
+            (products, totalCount) = await _catalogService.SearchProductsPaginatedAsync(search, page, pageSize, sort, minRating);
             ViewData["SearchTerm"] = search;
         }
         else if (categoryId.HasValue)
         {
             if (filterMinPrice.HasValue || filterMaxPrice.HasValue)
             {
-                (products, totalCount) = await _catalogService.GetProductsByCategoryAndPriceRangeAsync(categoryId.Value, filterMinPrice, filterMaxPrice, page, pageSize, sort);
+                (products, totalCount) = await _catalogService.GetProductsByCategoryAndPriceRangeAsync(categoryId.Value, filterMinPrice, filterMaxPrice, page, pageSize, sort, minRating);
             }
             else
             {
-                (products, totalCount) = await _catalogService.GetProductsByCategoryPaginatedAsync(categoryId.Value, page, pageSize, sort);
+                (products, totalCount) = await _catalogService.GetProductsByCategoryPaginatedAsync(categoryId.Value, page, pageSize, sort, minRating);
             }
             var category = await _catalogService.GetCategoryByIdAsync(categoryId.Value);
             ViewData["SelectedCategoryName"] = category?.CategoryName;
@@ -74,11 +76,11 @@ public class ProductController : Controller
         }
         else if (filterMinPrice.HasValue || filterMaxPrice.HasValue)
         {
-            (products, totalCount) = await _catalogService.GetProductsByPriceRangeAsync(filterMinPrice, filterMaxPrice, page, pageSize, sort);
+            (products, totalCount) = await _catalogService.GetProductsByPriceRangeAsync(filterMinPrice, filterMaxPrice, page, pageSize, sort, minRating);
         }
         else
         {
-            (products, totalCount) = await _catalogService.GetProductsPaginatedAsync(page, pageSize, sort);
+            (products, totalCount) = await _catalogService.GetProductsPaginatedAsync(page, pageSize, sort, minRating);
         }
 
         var viewModels = products.Select(p => new ProductListViewModel
@@ -89,7 +91,9 @@ public class ProductController : Controller
             CategoryName = p.Category?.CategoryName,
             MainImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl,
             HasVariants = p.Variants?.Any() ?? false,
-            MinPrice = p.Variants?.Any() == true ? p.Variants.Min(v => p.UnitPrice + (v.PriceAdjustment ?? 0)) : null
+            MinPrice = p.Variants?.Any() == true ? p.Variants.Min(v => p.UnitPrice + (v.PriceAdjustment ?? 0)) : null,
+            AverageRating = p.Reviews?.Any(r => r.IsApproved) == true ? p.Reviews.Where(r => r.IsApproved).Average(r => r.Rating) : 0,
+            ReviewCount = p.Reviews?.Count(r => r.IsApproved) ?? 0
         }).ToList();
 
         var categories = await _catalogService.GetAllCategoriesAsync();
@@ -100,6 +104,7 @@ public class ProductController : Controller
         ViewData["TotalCount"] = totalCount;
         ViewData["TotalPages"] = (int)Math.Ceiling(totalCount / (double)pageSize);
         ViewData["SortBy"] = sort;
+        ViewData["MinRating"] = minRating;
 
         return View(viewModels);
     }
@@ -127,8 +132,9 @@ public class ProductController : Controller
             ProductName = product.ProductName,
             Description = product.QuantityPerUnit,
             UnitPrice = product.UnitPrice,
+            CategoryId = product.CategoryID,
             CategoryName = product.Category?.CategoryName,
-            SupplierName = null,
+            SupplierName = product.Supplier?.CompanyName,
             Variants = product.Variants?.Select(v => new ProductVariantViewModel
             {
                 Id = v.Id,
@@ -163,7 +169,9 @@ public class ProductController : Controller
             }).ToList(),
             AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0,
             ReviewCount = reviews.Count,
-            IsInWishlist = isInWishlist
+            IsInWishlist = isInWishlist,
+            Room3DProductId = Room3DProductCatalog.TryGetRoomProductId(product, out var room3DProductId) ? room3DProductId : null,
+            RelatedProducts = await GetRelatedProductsAsync(product)
         };
 
         return View(viewModel);
@@ -184,8 +192,9 @@ public class ProductController : Controller
             ProductName = product.ProductName,
             Description = product.QuantityPerUnit,
             UnitPrice = product.UnitPrice,
+            CategoryId = product.CategoryID,
             CategoryName = product.Category?.CategoryName,
-            SupplierName = null,
+            SupplierName = product.Supplier?.CompanyName,
             Variants = product.Variants?.Select(v => new ProductVariantViewModel
             {
                 Id = v.Id,
@@ -221,6 +230,7 @@ public class ProductController : Controller
             AverageRating = reviews.Any() ? reviews.Average(r => r.Rating) : 0,
             ReviewCount = reviews.Count,
             IsInWishlist = false,
+            Room3DProductId = Room3DProductCatalog.TryGetRoomProductId(product, out var room3DProductId) ? room3DProductId : null,
             RelatedProducts = new List<ProductListViewModel>()
         };
 
@@ -240,8 +250,9 @@ public class ProductController : Controller
             ProductName = product.ProductName,
             Description = product.QuantityPerUnit,
             UnitPrice = product.UnitPrice,
+            CategoryId = product.CategoryID,
             CategoryName = product.Category?.CategoryName,
-            SupplierName = null,
+            SupplierName = product.Supplier?.CompanyName,
             Variants = product.Variants?.Select(v => new ProductVariantViewModel
             {
                 Id = v.Id,
@@ -269,10 +280,30 @@ public class ProductController : Controller
             AverageRating = 0,
             ReviewCount = 0,
             IsInWishlist = false,
+            Room3DProductId = Room3DProductCatalog.TryGetRoomProductId(product, out var room3DProductId) ? room3DProductId : null,
             RelatedProducts = new List<ProductListViewModel>()
         };
 
         return View("Details", viewModel);
+    }
+
+    private async Task<List<ProductListViewModel>> GetRelatedProductsAsync(Product product, int count = 8)
+    {
+        var related = await _catalogService.GetRecommendedProductsAsync(product, count);
+
+        return related
+            .Where(p => p.Id != product.Id)
+            .Select(p => new ProductListViewModel
+            {
+                ProductId = p.Id,
+                ProductName = p.ProductName,
+                UnitPrice = p.UnitPrice,
+                CategoryName = p.Category?.CategoryName,
+                MainImageUrl = p.Images?.FirstOrDefault(i => i.IsMain)?.ImageUrl ?? p.Images?.FirstOrDefault()?.ImageUrl,
+                HasVariants = p.Variants?.Any() ?? false,
+                MinPrice = p.Variants?.Any() == true ? p.Variants.Min(v => p.UnitPrice + (v.PriceAdjustment ?? 0)) : null
+            })
+            .ToList();
     }
 
     [HttpPost]

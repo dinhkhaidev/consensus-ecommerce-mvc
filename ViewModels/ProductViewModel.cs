@@ -11,6 +11,8 @@ public class ProductListViewModel
     public string? MainImageUrl { get; set; }
     public bool HasVariants { get; set; }
     public decimal? MinPrice { get; set; }
+    public double AverageRating { get; set; }
+    public int ReviewCount { get; set; }
 }
 
 public class ProductDetailViewModel
@@ -20,6 +22,7 @@ public class ProductDetailViewModel
     public string? Description { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal? OriginalPrice { get; set; }
+    public int CategoryId { get; set; }
     public string? CategoryName { get; set; }
     public string? SupplierName { get; set; }
     public List<ProductVariantViewModel> Variants { get; set; } = new();
@@ -29,6 +32,8 @@ public class ProductDetailViewModel
     public double AverageRating { get; set; }
     public int ReviewCount { get; set; }
     public bool IsInWishlist { get; set; }
+    public string? Room3DProductId { get; set; }
+    public bool HasRoom3DModel => !string.IsNullOrWhiteSpace(Room3DProductId);
 }
 
 public class ProductVariantViewModel

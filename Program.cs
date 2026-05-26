@@ -5,8 +5,10 @@ using WebActionResults.Mappings;
 using WebActionResults.Middleware;
 using WebActionResults.Models;
 using WebActionResults.Services;
+using WebActionResults.Services.Ai;
 using WebActionResults.Filters;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.StaticFiles;
 using VNPAY.Extensions;
 
@@ -20,6 +22,8 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<WebSettingsActionFilter>();
 });
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -76,6 +80,21 @@ builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IFulfillmentService, FulfillmentService>();
 builder.Services.AddScoped<IWebSettingsService, WebSettingsService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.Configure<ExchangeRateOptions>(builder.Configuration.GetSection("ExchangeRates"));
+builder.Services.AddHttpClient<ICurrencyExchangeService, CurrencyExchangeService>();
+
+// AI services
+var aiOptions = AiOptions.FromEnvironment(builder.Configuration);
+builder.Services.AddSingleton(aiOptions);
+builder.Services.AddHttpClient<IAiProvider, GeminiAiProvider>();
+builder.Services.AddScoped<IAiProductCandidateService, AiProductCandidateService>();
+builder.Services.AddScoped<IAiPromptBuilder, AiPromptBuilder>();
+builder.Services.AddScoped<IAiJsonParser, AiJsonParser>();
+builder.Services.AddScoped<IAiRecommendationValidator, AiRecommendationValidator>();
+builder.Services.AddScoped<IAiRecommendationService, AiRecommendationService>();
+
+// Activity Trace Log Service (Singleton - shared file lock)
+builder.Services.AddSingleton<ITraceLogService, TraceLogService>();
 
 // Background Services
 builder.Services.AddHostedService<TrackingBackgroundService>();
@@ -97,6 +116,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseStatusCodePagesWithReExecute("/404");
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost
+});
+
 app.UseHttpsRedirection();
 
 var staticFileContentTypes = new FileExtensionContentTypeProvider();
@@ -115,7 +143,11 @@ app.UseRouting();
 
 app.UseSession();
 
+app.UsePageAccessControl();
+
 app.UseSessionAuthentication();
+
+app.UseActivityTrace();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -19,11 +19,11 @@ public interface IProductRepository
     Task<bool> RestoreStockAsync(int variantId, int quantity);
 
     // Paginated methods
-    Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null);
 }
 
 public class ProductRepository : IProductRepository
@@ -142,56 +142,62 @@ public class ProductRepository : IProductRepository
         return true;
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize, string? sort = null)
+    public async Task<(List<Product> Items, int TotalCount)> GetAllPaginatedAsync(int page, int pageSize, string? sort = null, int? minRating = null)
     {
         var query = _context.Products.Where(p => !p.Discontinued);
+        query = ApplyRatingFilter(query, minRating);
         var totalCount = await query.CountAsync();
         var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
+            .Include(p => p.Reviews)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null)
+    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null, int? minRating = null)
     {
         var query = _context.Products.Where(p => p.Category.Id == categoryId && !p.Discontinued);
+        query = ApplyRatingFilter(query, minRating);
         var totalCount = await query.CountAsync();
         var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
+            .Include(p => p.Reviews)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize, string? sort = null)
+    public async Task<(List<Product> Items, int TotalCount)> SearchPaginatedAsync(string keyword, int page, int pageSize, string? sort = null, int? minRating = null)
     {
         var lowerKeyword = keyword.ToLower();
         var query = _context.Products
             .Where(p => !p.Discontinued &&
                 (p.ProductName.ToLower().Contains(lowerKeyword) ||
                  (p.Category != null && p.Category.CategoryName.ToLower().Contains(lowerKeyword))));
+        query = ApplyRatingFilter(query, minRating);
         var totalCount = await query.CountAsync();
         var items = await ApplySort(query, sort)
             .Include(p => p.Category)
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
+            .Include(p => p.Reviews)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
+    public async Task<(List<Product> Items, int TotalCount)> GetByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null)
     {
         var query = _context.Products.Where(p => !p.Discontinued);
 
@@ -199,6 +205,7 @@ public class ProductRepository : IProductRepository
             query = query.Where(p => p.UnitPrice >= minPrice.Value);
         if (maxPrice.HasValue)
             query = query.Where(p => p.UnitPrice <= maxPrice.Value);
+        query = ApplyRatingFilter(query, minRating);
 
         var totalCount = await query.CountAsync();
         var items = await ApplySort(query, sort)
@@ -206,13 +213,14 @@ public class ProductRepository : IProductRepository
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
+            .Include(p => p.Reviews)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
         return (items, totalCount);
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
+    public async Task<(List<Product> Items, int TotalCount)> GetByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null)
     {
         var query = _context.Products.Where(p => p.Category.Id == categoryId && !p.Discontinued);
 
@@ -220,6 +228,7 @@ public class ProductRepository : IProductRepository
             query = query.Where(p => p.UnitPrice >= minPrice.Value);
         if (maxPrice.HasValue)
             query = query.Where(p => p.UnitPrice <= maxPrice.Value);
+        query = ApplyRatingFilter(query, minRating);
 
         var totalCount = await query.CountAsync();
         var items = await ApplySort(query, sort)
@@ -227,6 +236,7 @@ public class ProductRepository : IProductRepository
             .Include(p => p.Supplier)
             .Include(p => p.Images)
             .Include(p => p.Variants)
+            .Include(p => p.Reviews)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();
@@ -236,10 +246,25 @@ public class ProductRepository : IProductRepository
     private static IQueryable<Product> ApplySort(IQueryable<Product> query, string? sort)
         => sort switch
         {
+            "rating_desc" => query
+                .OrderByDescending(p => p.Reviews.Where(r => r.IsApproved).Average(r => (double?)r.Rating) ?? 0)
+                .ThenByDescending(p => p.Reviews.Count(r => r.IsApproved))
+                .ThenBy(p => p.ProductName),
             "price_asc" => query.OrderBy(p => p.UnitPrice).ThenBy(p => p.ProductName),
             "price_desc" => query.OrderByDescending(p => p.UnitPrice).ThenBy(p => p.ProductName),
             "name_desc" => query.OrderByDescending(p => p.ProductName),
             "name_asc" => query.OrderBy(p => p.ProductName),
             _ => query.OrderByDescending(p => p.Id)
         };
+
+    private static IQueryable<Product> ApplyRatingFilter(IQueryable<Product> query, int? minRating)
+    {
+        if (!minRating.HasValue)
+            return query;
+
+        var rating = Math.Clamp(minRating.Value, 1, 5);
+        return query.Where(p =>
+            p.Reviews.Any(r => r.IsApproved) &&
+            p.Reviews.Where(r => r.IsApproved).Average(r => (double?)r.Rating) >= rating);
+    }
 }

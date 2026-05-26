@@ -1,0 +1,257 @@
+@model WebActionResults.Services.TraceSummary
+@{
+    ViewData["Title"] = "Nhật ký hoạt động";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+    var now = DateTimeOffset.Now;
+}
+
+@section Head {
+    <link rel="stylesheet" href="~/css/activity-trace.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+}
+
+<div class="at-shell">
+  <div class="at-header">
+    <div class="at-header-left">
+      <div>
+        <div class="at-header-title"><i class="bi bi-shield-check"></i> Nhật ký hoạt động</div>
+        <div class="at-header-subtitle">Cập nhật lúc <span id="at-last-update">@now.ToString("HH:mm:ss")</span></div>
+      </div>
+      <span class="at-status-badge"><span class="at-pulse"></span>Đang theo dõi</span>
+    </div>
+    <div class="at-header-controls">
+      <div class="at-search-box">
+        <i class="bi bi-search at-search-icon"></i>
+        <input type="text" id="at-search" placeholder="Tìm sự kiện, IP..." autocomplete="off">
+      </div>
+      <select class="at-select" id="at-filter-risk">
+        <option value="">Mọi rủi ro</option>
+        <option value="Low">Thấp</option>
+        <option value="Medium">Trung bình</option>
+        <option value="High">Cao</option>
+        <option value="Critical">Nghiêm trọng</option>
+      </select>
+      <select class="at-select" id="at-filter-actor">
+        <option value="">Mọi người</option>
+        <option value="User">Đã đăng nhập</option>
+        <option value="Anonymous">Ẩn danh</option>
+      </select>
+      <button class="at-btn at-btn-outline" onclick="location.reload()"><i class="bi bi-arrow-clockwise"></i> Tải lại</button>
+      <a href="/Admin/AdminActivity/Export" class="at-btn at-btn-export"><i class="bi bi-download"></i> Xuất</a>
+      <form method="post" action="/Admin/AdminActivity/Clear" onsubmit="return confirm('Xóa toàn bộ nhật ký?')" style="display:inline">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="at-btn at-btn-danger"><i class="bi bi-trash3"></i> Xóa</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="at-content" id="at-content">
+    <div>
+      <div class="at-section-heading"><i class="bi bi-speedometer2" style="color:var(--at-accent)"></i> Tổng quan nhanh</div>
+      <div class="at-summary-grid">
+        <div class="at-stat-card">
+          <div class="at-stat-emoji"><i class="bi bi-people-fill" style="color:var(--at-accent)"></i></div>
+          <div class="at-stat-value" style="color:var(--at-accent)">@(Model?.ActiveUsers ?? 0)</div>
+          <div class="at-stat-label">Đang hoạt động</div>
+        </div>
+        <div class="at-stat-card">
+          <div class="at-stat-emoji"><i class="bi bi-x-octagon-fill" style="color:var(--at-red)"></i></div>
+          <div class="at-stat-value" style="color:var(--at-red)">@(Model?.FailedLogins ?? 0)</div>
+          <div class="at-stat-label">Đăng nhập thất bại</div>
+        </div>
+        <div class="at-stat-card">
+          <div class="at-stat-emoji"><i class="bi bi-globe2" style="color:var(--at-purple)"></i></div>
+          <div class="at-stat-value" style="color:var(--at-purple)">@(Model?.NewIpsToday ?? 0)</div>
+          <div class="at-stat-label">IP mới hôm nay</div>
+        </div>
+        <div class="at-stat-card">
+          <div class="at-stat-emoji"><i class="bi bi-exclamation-triangle-fill" style="color:var(--at-orange)"></i></div>
+          <div class="at-stat-value" style="color:var(--at-orange)">@(Model?.CriticalEvents ?? 0)</div>
+          <div class="at-stat-label">Cảnh báo</div>
+        </div>
+        <div class="at-stat-card">
+          <div class="at-stat-emoji"><i class="bi bi-arrow-repeat" style="color:var(--at-green)"></i></div>
+          <div class="at-stat-value" style="color:var(--at-green)">@(Model?.TotalRequests ?? 0)</div>
+          <div class="at-stat-label">Tổng request</div>
+        </div>
+      </div>
+    </div>
+
+    @if (Model?.Alerts?.Any() == true)
+    {
+      <div>
+        <div class="at-section-heading"><i class="bi bi-bell-fill" style="color:var(--at-red)"></i> Cần chú ý</div>
+        <div class="at-alerts-grid">
+          @foreach (var alert in Model.Alerts)
+          {
+            var alertRc = alert.RiskLevel.ToLower();
+            <div class="at-alert-card risk-@alertRc" onclick="loadDetail('@alert.EventId')">
+              <div class="at-alert-header">
+                <span class="at-alert-title">@alert.Title</span>
+                <span class="at-alert-badge risk-@alertRc">@alert.RiskLevel</span>
+              </div>
+              <div class="at-alert-desc">@alert.Description</div>
+              <div class="at-alert-meta">
+                <span class="at-alert-ip">@alert.Ip</span>
+                <span class="at-alert-time">@alert.Timestamp.ToString("HH:mm")</span>
+                <button class="at-alert-btn">Xem chi tiết <i class="bi bi-arrow-right"></i></button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    else
+    {
+      <div style="background:#ecfdf5;border:1.5px solid #a7f3d0;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:10px">
+        <i class="bi bi-check-circle-fill" style="font-size:24px;color:#059669"></i>
+        <div>
+          <div style="font-weight:700;font-size:13px;color:#059669">Mọi thứ ổn!</div>
+          <div style="font-size:12px;color:#6ee7b7">Không phát hiện hoạt động bất thường nào.</div>
+        </div>
+      </div>
+    }
+
+    <div class="at-feed-detail">
+      <div class="at-feed-panel">
+        <div class="at-panel-header">
+          <div class="at-panel-title"><i class="bi bi-list-ul" style="color:var(--at-accent)"></i> Dòng hoạt động</div>
+          <button class="at-btn at-btn-outline" onclick="refreshFeed()"><i class="bi bi-arrow-clockwise"></i> Làm mới</button>
+        </div>
+        <div class="at-feed-filters">
+          <select class="at-select" id="ff-action" onchange="refreshFeed()">
+            <option value="">Mọi hành động</option>
+            <option value="LOGIN">Đăng nhập</option>
+            <option value="LOGIN_FAIL">Thất bại</option>
+            <option value="VIEW">Xem trang</option>
+            <option value="VIEW_ANON">Ẩn danh</option>
+            <option value="ROLE_CHANGE">Đổi quyền</option>
+            <option value="EXPORT">Xuất dữ liệu</option>
+          </select>
+        </div>
+        <div class="at-feed-list" id="at-feed-list">
+          <div class="at-loading"><div class="at-spinner"></div> Đang tải...</div>
+        </div>
+        <div class="at-pagination"><span id="at-page-info"></span><div class="at-page-btns" id="at-page-btns"></div></div>
+      </div>
+
+      <div class="at-detail-panel" id="at-detail-panel">
+        <div class="at-detail-empty" id="at-detail-empty">
+          <i class="bi bi-hand-index" style="font-size:36px;opacity:.3"></i>
+          <span>Chọn một sự kiện để xem chi tiết</span>
+        </div>
+        <div class="at-detail-content" id="at-detail-content">
+          <div class="at-detail-header">
+            <div class="at-detail-action-title" id="dd-action"></div>
+            <div class="at-detail-risk-row"><span id="dd-risk-badge"></span><span class="at-risk-score" id="dd-risk-score"></span></div>
+          </div>
+          <div class="at-detail-tabs">
+            <div class="at-detail-tab active" data-tab="overview">Tổng quan</div>
+            <div class="at-detail-tab" data-tab="changes">Thay đổi</div>
+            <div class="at-detail-tab" data-tab="raw">Raw JSON</div>
+          </div>
+          <div class="at-detail-body">
+            <div class="at-tab-pane active" id="tab-overview">
+              <div class="at-actor-block" id="dd-actor-block">
+                <div class="at-actor-avatar-lg" id="dd-actor-avatar"></div>
+                <div><div class="at-actor-name" id="dd-actor-name"></div><div class="at-actor-meta" id="dd-actor-meta"></div></div>
+              </div>
+              <div class="at-visitor-merge" id="dd-visitor-merge" style="display:none;margin-bottom:10px">
+                <i class="bi bi-link-45deg"></i><span id="dd-visitor-merge-text"></span>
+              </div>
+              <div class="at-detail-section">
+                <div class="at-detail-section-title"><i class="bi bi-geo-alt"></i> Truy cập</div>
+                <div class="at-detail-row"><span class="at-detail-key">IP</span><span class="at-detail-val mono" id="dd-ip"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Quốc gia</span><span class="at-detail-val" id="dd-country"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Trình duyệt</span><span class="at-detail-val" id="dd-browser"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Thiết bị</span><span class="at-detail-val" id="dd-device"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Session</span><span class="at-detail-val mono" id="dd-session" style="font-size:9px"></span></div>
+              </div>
+              <div class="at-detail-section">
+                <div class="at-detail-section-title"><i class="bi bi-cursor"></i> Hành vi</div>
+                <div class="at-detail-row"><span class="at-detail-key">Hành động</span><span class="at-detail-val" id="dd-action-type"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Đường dẫn</span><span class="at-detail-val mono link" id="dd-path"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Method</span><span class="at-detail-val" id="dd-method"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Status</span><span class="at-detail-val" id="dd-status"></span></div>
+                <div class="at-detail-row"><span class="at-detail-key">Thời gian</span><span class="at-detail-val" id="dd-duration"></span></div>
+              </div>
+              <div class="at-detail-section">
+                <div class="at-detail-section-title"><i class="bi bi-shield-exclamation" style="color:var(--at-orange)"></i> Rủi ro</div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Điểm</span><strong id="dd-score-text"></strong></div>
+                <div class="at-score-bar"><div class="at-score-fill" id="dd-score-bar" style="width:0%"></div></div>
+                <div id="dd-risk-reasons"></div>
+              </div>
+              <div class="at-detail-section" id="dd-journey-section" style="display:none">
+                <div class="at-detail-section-title"><i class="bi bi-signpost-split"></i> Hành trình</div>
+                <div class="at-journey" id="dd-journey"></div>
+              </div>
+            </div>
+            <div class="at-tab-pane" id="tab-changes">
+              <div id="dd-changes-content"><div class="at-empty"><i class="bi bi-file-diff"></i>Không có thay đổi dữ liệu</div></div>
+            </div>
+            <div class="at-tab-pane" id="tab-raw">
+              <pre class="at-raw-json" id="dd-raw-json"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="at-section-heading"><i class="bi bi-bar-chart-line" style="color:var(--at-accent)"></i> Biểu đồ</div>
+      <div class="at-charts-grid">
+        <div class="at-chart-card" style="grid-column:span 2">
+          <div class="at-chart-title"><i class="bi bi-graph-up" style="color:var(--at-accent)"></i> Lượt truy cập theo giờ</div>
+          <canvas id="chart-hourly" class="at-chart-canvas" style="max-height:150px"></canvas>
+        </div>
+        <div class="at-chart-card">
+          <div class="at-chart-title"><i class="bi bi-pie-chart-fill" style="color:var(--at-orange)"></i> Mức độ rủi ro</div>
+          <canvas id="chart-risk" class="at-chart-canvas"></canvas>
+        </div>
+        <div class="at-chart-card">
+          <div class="at-chart-title"><i class="bi bi-phone" style="color:var(--at-purple)"></i> Thiết bị</div>
+          <canvas id="chart-device" class="at-chart-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  let currentPage=1,debounceTimer=null,selectedEventId=null,chartInstances={};
+  const summaryData=@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model,new System.Text.Json.JsonSerializerOptions{PropertyNamingPolicy=System.Text.Json.JsonNamingPolicy.CamelCase,Converters={new System.Text.Json.Serialization.JsonStringEnumConverter()}}));
+  const $=id=>document.getElementById(id),set=(id,v)=>{const el=$(id);if(el)el.textContent=v??'—'},html=(id,v)=>{const el=$(id);if(el)el.innerHTML=v??''};
+  function rC(l){return{Low:'low',Medium:'medium',High:'high',Critical:'critical'}[l]||'low'}
+  function rL(l){return{Low:'Thấp',Medium:'Trung bình',High:'Cao',Critical:'Nghiêm trọng'}[l]||l}
+  function tA(ts){const d=(Date.now()-new Date(ts))/1000;if(d<60)return Math.floor(d)+'s';if(d<3600)return Math.floor(d/60)+'p';if(d<86400)return Math.floor(d/3600)+'h';return new Date(ts).toLocaleDateString('vi-VN')}
+  function sC(c){return c<300?'var(--at-green)':c<400?'var(--at-accent)':c<500?'var(--at-orange)':'var(--at-red)'}
+  function mC(m){return{GET:'var(--at-green)',POST:'var(--at-accent)',PUT:'var(--at-yellow)',DELETE:'var(--at-red)'}[m]||'var(--at-muted)'}
+  function bP(p){const u=new URLSearchParams(),s=$('at-search')?.value?.trim(),r=$('at-filter-risk')?.value,a=$('at-filter-actor')?.value,ac=$('ff-action')?.value;if(s)u.set('search',s);if(r)u.set('riskLevel',r);if(a)u.set('actorType',a);if(ac)u.set('actionType',ac);u.set('page',p);u.set('pageSize',15);return u.toString()}
+
+  async function refreshFeed(p){p=p||1;currentPage=p;const l=$('at-feed-list');l.innerHTML='<div class="at-loading"><div class="at-spinner"></div> Đang tải...</div>';try{const r=await fetch('/Admin/AdminActivity/Events?'+bP(p));renderFeed(await r.json())}catch(e){l.innerHTML='<div class="at-empty"><i class="bi bi-exclamation-circle"></i>Lỗi tải dữ liệu</div>'}set('at-last-update',new Date().toLocaleTimeString('vi-VN'))}
+
+  function renderFeed(d){const l=$('at-feed-list');if(!d.events||!d.events.length){l.innerHTML='<div class="at-empty"><i class="bi bi-inbox"></i>Chưa có sự kiện nào</div>';rP(0,1,1);return}l.innerHTML=d.events.map(e=>{const isA=e.actorType==='Anonymous',avC=isA?'at-avatar-anon':(e.actorRole==='Admin'?'at-avatar-admin':'at-avatar-user'),avL=isA?'<i class="bi bi-person-dash"></i>':(e.actorName||'?')[0].toUpperCase();return`<div class="at-event-card ${selectedEventId===e.id?'selected':''}" onclick="loadDetail('${e.id}')" id="card-${e.id}"><div class="at-event-avatar ${avC}">${avL}</div><div class="at-event-main"><div class="at-event-action">${e.action||'–'}</div><div class="at-event-meta"><span class="at-event-meta-item"><i class="bi bi-geo-alt"></i>${e.ipMasked||e.ip||'–'}</span><span class="at-event-meta-item"><i class="bi bi-display"></i>${e.device||'–'}</span><span class="risk-badge risk-${rC(e.riskLevel)}">${rL(e.riskLevel)}</span></div></div><div class="at-event-time">${tA(e.timestamp)}</div></div>`}).join('');rP(d.total,d.page,d.totalPages)}
+
+  function rP(t,p,tp){set('at-page-info',t+' sự kiện');const b=$('at-page-btns');let h='';if(p>1)h+=`<button class="at-page-btn" onclick="refreshFeed(${p-1})">‹</button>`;for(let i=Math.max(1,p-2);i<=Math.min(tp,p+2);i++)h+=`<button class="at-page-btn ${i===p?'active':''}" onclick="refreshFeed(${i})">${i}</button>`;if(p<tp)h+=`<button class="at-page-btn" onclick="refreshFeed(${p+1})">›</button>`;b.innerHTML=h}
+
+  async function loadDetail(id){selectedEventId=id;document.querySelectorAll('.at-event-card').forEach(c=>c.classList.remove('selected'));document.getElementById('card-'+id)?.classList.add('selected');try{const r=await fetch('/Admin/AdminActivity/Detail/'+id);if(!r.ok)return;renderDetail(await r.json())}catch(e){console.error(e)}}
+
+  function renderDetail(e){$('at-detail-empty').style.display='none';$('at-detail-content').classList.add('visible');set('dd-action',e.action);html('dd-risk-badge',`<span class="risk-badge risk-${rC(e.riskLevel)}">${rL(e.riskLevel)}</span>`);set('dd-risk-score',e.riskScore+'/100');const isA=e.actorType==='Anonymous',avC=isA?'at-avatar-anon':(e.actorRole==='Admin'?'at-avatar-admin':'at-avatar-user');$('dd-actor-avatar').className='at-actor-avatar-lg '+avC;$('dd-actor-avatar').innerHTML=isA?'<i class="bi bi-person-dash fs-5"></i>':(e.actorName||'?')[0].toUpperCase();set('dd-actor-name',isA?'Khách ẩn danh':e.actorName);set('dd-actor-meta',isA?'ID: '+(e.visitorId||'–'):(e.actorEmail||'')+' · '+(e.actorRole||''));if(e.actionType==='LOGIN'&&e.visitorId){$('dd-visitor-merge').style.display='flex';set('dd-visitor-merge-text','Khách #'+e.visitorId+' → '+(e.actorEmail||e.actorName))}else{$('dd-visitor-merge').style.display='none'}set('dd-ip',e.ip);set('dd-country',e.country);set('dd-browser',e.browser);set('dd-device',e.device);set('dd-session',e.sessionId);set('dd-action-type',e.actionType);set('dd-path',e.pagePath);html('dd-method',`<span style="color:${mC(e.method)};font-weight:700">${e.method}</span>`);html('dd-status',`<span style="color:${sC(e.statusCode)};font-weight:700">${e.statusCode}</span>`);set('dd-duration',e.durationMs+'ms');set('dd-score-text',e.riskScore+'/100');setTimeout(()=>{const b=$('dd-score-bar');if(b)b.style.width=e.riskScore+'%'},50);const rs=e.riskReasons||[];html('dd-risk-reasons',rs.length?rs.map(r=>'<div class="at-risk-reason"><i class="bi bi-exclamation-circle-fill"></i>'+r+'</div>').join(''):'<div style="color:var(--at-muted);font-size:11px">Không có rủi ro</div>');const j=e.journey||[];if(j.length){$('dd-journey-section').style.display='block';html('dd-journey',j.map((s,i)=>'<span class="at-journey-step">'+s+'</span>'+(i<j.length-1?'<span class="at-journey-arrow">→</span>':'')).join(''))}else{$('dd-journey-section').style.display='none'}const ch=$('dd-changes-content');if(e.dataChanges){const dc=e.dataChanges;ch.innerHTML='<div class="at-diff-block">'+(dc.before?'<div class="at-diff-row at-diff-before"><span class="at-diff-label">TRƯỚC</span>'+JSON.stringify(dc.before,null,2)+'</div>':'')+(dc.after?'<div class="at-diff-row at-diff-after"><span class="at-diff-label">SAU</span>'+JSON.stringify(dc.after,null,2)+'</div>':'')+'</div>'}else{ch.innerHTML='<div class="at-empty"><i class="bi bi-file-diff"></i>Không có thay đổi</div>'}$('dd-raw-json').textContent=JSON.stringify(e,null,2);document.querySelectorAll('.at-detail-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.at-tab-pane').forEach(p=>p.classList.remove('active'));document.querySelector('.at-detail-tab[data-tab="overview"]').classList.add('active');$('tab-overview').classList.add('active')}
+
+  document.querySelectorAll('.at-detail-tab').forEach(tab=>{tab.addEventListener('click',function(){document.querySelectorAll('.at-detail-tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.at-tab-pane').forEach(p=>p.classList.remove('active'));this.classList.add('active');document.getElementById('tab-'+this.dataset.tab)?.classList.add('active')})});
+  $('at-search')?.addEventListener('input',()=>{clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>refreshFeed(1),400)});
+  $('at-filter-risk')?.addEventListener('change',()=>refreshFeed(1));
+  $('at-filter-actor')?.addEventListener('change',()=>refreshFeed(1));
+
+  Chart.defaults.color='#718096';Chart.defaults.font.family='Inter,sans-serif';Chart.defaults.font.size=11;
+  function mk(id,type,labels,datasets,opts){const ctx=$(id);if(!ctx)return;if(chartInstances[id])chartInstances[id].destroy();chartInstances[id]=new Chart(ctx,{type,data:{labels,datasets},options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{boxWidth:10,padding:8}}},...opts}})}
+  function initCharts(s){if(!s)return;const h=s.hourlyCounts||[];mk('chart-hourly','bar',h.map(x=>x.hour+'h'),[{label:'Requests',data:h.map(x=>x.count),backgroundColor:'rgba(99,102,241,.4)',borderColor:'#6366f1',borderWidth:1,borderRadius:6}],{scales:{x:{grid:{color:'#f1f5f9'}},y:{grid:{color:'#f1f5f9'},ticks:{stepSize:1}}},plugins:{legend:{display:false}}});const r=s.riskDistribution||[];mk('chart-risk','doughnut',r.map(x=>({Low:'Thấp',Medium:'TB',High:'Cao',Critical:'Nguy'})[x.level]||x.level),[{data:r.map(x=>x.count),backgroundColor:['#6ee7b7','#fcd34d','#fdba74','#fca5a5'],borderWidth:0}],{cutout:'60%'});const d=s.deviceDistribution||[];mk('chart-device','pie',d.map(x=>x.device),[{data:d.map(x=>x.count),backgroundColor:['#c4b5fd','#93c5fd','#6ee7b7'],borderWidth:0}],{})}
+
+  window.refreshFeed=refreshFeed;window.loadDetail=loadDetail;
+  document.addEventListener('DOMContentLoaded',()=>{refreshFeed(1);initCharts(summaryData);setInterval(()=>refreshFeed(currentPage),30000)});
+})();
+</script>
+}

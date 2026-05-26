@@ -1,0 +1,19 @@
+[Unit]
+Description=Consensus ASP.NET Core MVC app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=/var/www/consensus
+ExecStart=/usr/bin/dotnet /var/www/consensus/WebActionResults.dll
+Restart=always
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=consensus
+User=www-data
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5000
+EnvironmentFile=-/etc/consensus/consensus.env
+
+[Install]
+WantedBy=multi-user.target

@@ -100,10 +100,13 @@
                                         </td>
                                         <td class="py-3">@(variant.Size ?? "-")</td>
                                         <td class="py-3">
-                                            @if (variant.PriceAdjustment != 0)
+                                            @{
+                                                var priceAdjustment = variant.PriceAdjustment ?? 0;
+                                            }
+                                            @if (priceAdjustment != 0)
                                             {
-                                                <span class="text-@(variant.PriceAdjustment > 0 ? "danger" : "success")">
-                                                    @(variant.PriceAdjustment > 0 ? "+" : "")@variant.PriceAdjustment.Value.ToString("N0") VND
+                                                <span class="text-@(priceAdjustment > 0 ? "danger" : "success")">
+                                                    @(priceAdjustment > 0 ? "+" : "")@priceAdjustment.ToString("N0") VND
                                                 </span>
                                             }
                                             else

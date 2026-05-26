@@ -1,0 +1,14 @@
+.git
+.github
+.vs
+bin
+obj
+dist
+node_modules
+*.user
+*.lscache
+*.log
+.env
+docker-compose.override.yml
+deploy/ubuntu/publish
+App_Data/

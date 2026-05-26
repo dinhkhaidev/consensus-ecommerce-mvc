@@ -1,0 +1,368 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = localizer.Get("NotFound:PageTitle");
+}
+
+<section class="notfound-section py-5 d-flex align-items-center">
+    <div class="container py-4">
+        <div class="row align-items-center justify-content-center g-5">
+            <!-- 3D Float Illustration -->
+            <div class="col-lg-5 text-center order-lg-2">
+                <div class="illustration-container position-relative mx-auto">
+                    <!-- Cosmic Portal Background -->
+                    <div class="portal-circle"></div>
+                    <div class="portal-glow"></div>
+                    
+                    <!-- Floating Chair SVG -->
+                    <div class="floating-item">
+                        <svg class="chair-svg" width="220" height="220" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Premium gold and carbon/wood textured modern armchair -->
+                            <defs>
+                                <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#f2c76e" />
+                                    <stop offset="100%" stop-color="#b8860b" />
+                                </linearGradient>
+                                <linearGradient id="chairBackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#343a40" />
+                                    <stop offset="100%" stop-color="#212529" />
+                                </linearGradient>
+                                <linearGradient id="cushionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#8a8178" />
+                                    <stop offset="100%" stop-color="#6c584c" />
+                                </linearGradient>
+                                <filter id="dropShadow" x="-10%" y="-10%" width="120%" height="120%">
+                                    <filterEffect>
+                                        <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000" flood-opacity="0.25"/>
+                                    </filterEffect>
+                                </filter>
+                            </defs>
+                            
+                            <!-- Legs (Golden wood look) -->
+                            <path d="M60 140 L45 175" stroke="url(#goldGrad)" stroke-width="6" stroke-linecap="round"/>
+                            <path d="M140 140 L155 175" stroke="url(#goldGrad)" stroke-width="6" stroke-linecap="round"/>
+                            <path d="M75 140 L68 170" stroke="url(#goldGrad)" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+                            <path d="M125 140 L132 170" stroke="url(#goldGrad)" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+                            
+                            <!-- Cushion Seat (Plump, comfortable, warm-neutral) -->
+                            <rect x="52" y="115" width="96" height="24" rx="10" fill="url(#cushionGrad)" stroke="#1a1a1a" stroke-width="2" filter="url(#dropShadow)"/>
+                            
+                            <!-- Backrest (Sleek minimalist wood outline with warm cushioning) -->
+                            <path d="M58 115 C58 60, 142 60, 142 115" fill="none" stroke="url(#goldGrad)" stroke-width="8" stroke-linecap="round"/>
+                            <path d="M66 115 C66 75, 134 75, 134 115" fill="url(#chairBackGrad)" stroke="#1a1a1a" stroke-width="2"/>
+                            
+                            <!-- Pillow/Lumbar Support (Pop color gold/sand) -->
+                            <rect x="75" y="102" width="50" height="15" rx="6" fill="url(#goldGrad)" opacity="0.95"/>
+                            
+                            <!-- Floating Sparkles around the chair -->
+                            <circle cx="30" cy="50" r="3" fill="#f2c76e" class="sparkle"/>
+                            <circle cx="170" cy="80" r="4" fill="#f2c76e" class="sparkle"/>
+                            <circle cx="50" cy="160" r="2" fill="#fff" class="sparkle"/>
+                        </svg>
+                    </div>
+
+                    <!-- Orbiting Ring -->
+                    <div class="orbit-ring"></div>
+                    <div class="orbit-item"></div>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="col-lg-7 text-center text-lg-start order-lg-1">
+                <div class="error-badge d-inline-flex align-items-center mb-3">
+                    <span class="badge bg-gold-soft text-gold px-3 py-2 fw-bold text-uppercase tracking-wider">
+                        @localizer.Get("NotFound:PageTitle")
+                    </span>
+                </div>
+                
+                <h1 class="display-2 fw-black text-gradient-gold mb-2">404</h1>
+                <h2 class="display-6 fw-bold mb-3">@localizer.Get("NotFound:Heading")</h2>
+                <p class="lead text-muted mb-4 max-w-md">
+                    @localizer.Get("NotFound:Desc")
+                </p>
+
+                <!-- Centered Search bar for products -->
+                <div class="search-box mb-4 max-w-lg">
+                    <form method="get" asp-controller="Product" asp-action="Index">
+                        <div class="input-group search-group">
+                            <span class="input-group-text bg-search border-0"><i class="bi bi-search text-muted"></i></span>
+                            <input type="text" name="search" class="form-control bg-search border-0 text-color shadow-none" placeholder="@localizer.Get("NotFound:SearchPlaceholder")">
+                            <button class="btn btn-gold-gradient px-4 py-2 text-dark font-semibold border-0 search-action-btn" type="submit">
+                                @localizer.Get("NotFound:SearchBtn")
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Action CTA Buttons -->
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+                    <a asp-controller="Home" asp-action="Index" class="btn btn-home-outline px-4 py-3 fw-bold d-inline-flex align-items-center justify-content-center">
+                        <i class="bi bi-arrow-left me-2"></i>@localizer.Get("NotFound:BackHome")
+                    </a>
+                    <a asp-controller="Ai" asp-action="Stylist" class="btn btn-stylist-glowing px-4 py-3 fw-bold d-inline-flex align-items-center justify-content-center">
+                        <i class="bi bi-sparkles me-2"></i>@localizer.Get("NotFound:AskStylist")
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    /* Scope design elements to .notfound-section */
+    .notfound-section {
+        min-height: 75vh;
+        position: relative;
+        overflow: hidden;
+        background: radial-gradient(circle at 80% 20%, rgba(242, 199, 110, 0.08), transparent 45%),
+                    radial-gradient(circle at 10% 80%, rgba(212, 127, 49, 0.04), transparent 35%);
+    }
+
+    [data-scene-mode="cosmos"] .notfound-section {
+        background: radial-gradient(circle at 80% 20%, rgba(242, 199, 110, 0.15), transparent 50%),
+                    radial-gradient(circle at 10% 80%, rgba(45, 108, 223, 0.1), transparent 40%);
+    }
+
+    /* Max widths for elegant layout */
+    .max-w-md {
+        max-width: 500px;
+    }
+    .max-w-lg {
+        max-width: 550px;
+    }
+
+    /* Text Gradient */
+    .text-gradient-gold {
+        background: linear-gradient(135deg, #f2c76e 0%, #cc7227 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: clamp(5rem, 12vw, 9rem);
+        line-height: 0.9;
+        letter-spacing: -2px;
+    }
+
+    /* Gold soft badge */
+    .bg-gold-soft {
+        background: rgba(242, 199, 110, 0.15);
+        color: #a16f1c !important;
+        border: 1px solid rgba(242, 199, 110, 0.3);
+        letter-spacing: 0.15em;
+    }
+
+    [data-bs-theme="dark"] .bg-gold-soft {
+        background: rgba(242, 199, 110, 0.1);
+        color: #f2c76e !important;
+    }
+
+    /* 3D Cosmic Portal Illustration */
+    .illustration-container {
+        width: 320px;
+        height: 320px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .portal-circle {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(242, 199, 110, 0.12) 0%, rgba(204, 114, 39, 0.04) 100%);
+        border: 1px solid rgba(242, 199, 110, 0.25);
+        backdrop-filter: blur(8px);
+        z-index: 1;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+    }
+
+    [data-bs-theme="dark"] .portal-circle {
+        background: linear-gradient(135deg, rgba(242, 199, 110, 0.15) 0%, rgba(45, 108, 223, 0.05) 100%);
+        border: 1px solid rgba(242, 199, 110, 0.3);
+    }
+
+    .portal-glow {
+        position: absolute;
+        width: 250px;
+        height: 250px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(242, 199, 110, 0.2) 0%, transparent 70%);
+        filter: blur(15px);
+        z-index: 0;
+        animation: pulsePortal 4s infinite alternate ease-in-out;
+    }
+
+    /* Orbit Ring styling */
+    .orbit-ring {
+        position: absolute;
+        width: 240px;
+        height: 80px;
+        border: 1.5px dashed rgba(242, 199, 110, 0.35);
+        border-radius: 50%;
+        transform: rotate(-15deg);
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    .orbit-item {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #f2c76e;
+        z-index: 3;
+        box-shadow: 0 0 10px #f2c76e;
+        offset-path: ray(15deg);
+        animation: orbit 12s linear infinite;
+    }
+
+    /* Floating Chair Animation */
+    .floating-item {
+        position: relative;
+        z-index: 4;
+        animation: floatAnimation 5s ease-in-out infinite;
+        will-change: transform;
+    }
+
+    .chair-svg {
+        filter: drop-shadow(0 15px 20px rgba(25, 30, 38, 0.18));
+        transition: transform 0.3s ease;
+    }
+
+    .illustration-container:hover .chair-svg {
+        transform: rotate(6deg) scale(1.08);
+    }
+
+    /* Sparkles animations */
+    .sparkle {
+        animation: sparkleAnimation 3s infinite alternate ease-in-out;
+    }
+    .sparkle:nth-child(2) {
+        animation-delay: 1s;
+    }
+    .sparkle:nth-child(3) {
+        animation-delay: 2s;
+    }
+
+    /* Search Box */
+    .bg-search {
+        background: rgba(33, 31, 28, 0.05) !important;
+    }
+
+    [data-bs-theme="dark"] .bg-search {
+        background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .search-group {
+        border: 1px solid rgba(33, 31, 28, 0.1);
+        border-radius: 30px;
+        overflow: hidden;
+        background: transparent;
+        transition: all 0.3s ease;
+        padding: 4px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    }
+
+    [data-bs-theme="dark"] .search-group {
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    }
+
+    .search-group:focus-within {
+        border-color: #f2c76e;
+        box-shadow: 0 8px 30px rgba(242, 199, 110, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .search-group .form-control {
+        border: none !important;
+        font-size: 1.05rem;
+        padding-left: 10px;
+    }
+
+    .search-group .input-group-text {
+        border: none !important;
+        padding-left: 18px;
+    }
+
+    .btn-gold-gradient {
+        background: linear-gradient(135deg, #f2c76e 0%, #d49f3f 100%);
+        border-radius: 25px !important;
+        box-shadow: 0 4px 15px rgba(242, 199, 110, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    .btn-gold-gradient:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(242, 199, 110, 0.45);
+        background: linear-gradient(135deg, #f5d38c 0%, #b8860b 100%);
+    }
+
+    /* Buttons styling */
+    .btn-home-outline {
+        border: 1px solid rgba(33, 31, 28, 0.2);
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        color: #2b2520;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-bs-theme="dark"] .btn-home-outline {
+        border-color: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.05);
+        color: #f5f4f2;
+    }
+
+    .btn-home-outline:hover {
+        background: rgba(33, 31, 28, 0.05);
+        border-color: rgba(33, 31, 28, 0.4);
+        transform: translateY(-3px);
+    }
+
+    [data-bs-theme="dark"] .btn-home-outline:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-stylist-glowing {
+        background: #212529;
+        color: #f2c76e;
+        border: 1px solid rgba(242, 199, 110, 0.4);
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(242, 199, 110, 0.1);
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-bs-theme="dark"] .btn-stylist-glowing {
+        background: rgba(242, 199, 110, 0.08);
+        color: #f2c76e;
+    }
+
+    .btn-stylist-glowing:hover {
+        background: #f2c76e;
+        color: #2b2520;
+        border-color: #f2c76e;
+        box-shadow: 0 8px 25px rgba(242, 199, 110, 0.35);
+        transform: translateY(-3px);
+    }
+
+    /* Keyframe Animations */
+    @@keyframes floatAnimation {
+        0% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-12px) rotate(2deg); }
+        100% { transform: translateY(0px) rotate(0deg); }
+    }
+
+    @@keyframes pulsePortal {
+        0% { transform: scale(0.95); opacity: 0.65; }
+        100% { transform: scale(1.05); opacity: 0.95; }
+    }
+
+    @@keyframes sparkleAnimation {
+        0% { transform: scale(0.5); opacity: 0.3; }
+        100% { transform: scale(1.2); opacity: 1; }
+    }
+
+    @@keyframes orbit {
+        from { transform: rotate(0deg) translateX(120px) rotate(0deg); }
+        to { transform: rotate(360deg) translateX(120px) rotate(-360deg); }
+    }
+</style>

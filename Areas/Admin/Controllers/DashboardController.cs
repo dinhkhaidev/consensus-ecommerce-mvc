@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebActionResults.Data.Entities;
 using WebActionResults.Models;
 
 namespace WebActionResults.Areas.Admin.Controllers;
@@ -16,9 +17,10 @@ public class DashboardController : AdminControllerBase
 
     public async Task<IActionResult> Index()
     {
+        var saleStatuses = OrderStatusRules.GetSalesCountingStatuses().ToArray();
         var totalProducts = await _context.Products.CountAsync();
         var totalOrders = await _context.Orders.CountAsync();
-        var totalRevenue = await _context.Orders.Where(o => o.PaymentStatus == Data.Entities.PaymentStatus.Paid).SumAsync(o => o.TotalAmount);
+        var totalRevenue = await _context.Orders.Where(o => saleStatuses.Contains(o.Status)).SumAsync(o => o.TotalAmount);
         var pendingOrders = await _context.Orders.CountAsync(o => o.Status == Data.Entities.OrderStatus.Pending);
         var totalCustomers = await _context.Accounts.CountAsync();
         var lowStockCount = await _context.ProductVariants.CountAsync(v => v.StockQuantity > 0 && v.StockQuantity <= 5);
@@ -38,8 +40,9 @@ public class DashboardController : AdminControllerBase
             .ToListAsync();
         ViewBag.RecentOrders = recentOrders;
 
-        // Top selling products (based on order items)
+        // Top selling products (based on active/completed sales only)
         var topProductsQuery = await _context.OrderItems
+            .Where(oi => saleStatuses.Contains(oi.Order.Status))
             .GroupBy(oi => oi.ProductId)
             .Select(g => new
             {

@@ -43,7 +43,7 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label asp-for="UnitPrice" class="form-label fw-semibold">Price (VND)</label>
-                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1000" min="0" />
+                            <input asp-for="UnitPrice" class="form-control form-control-lg" type="number" step="1" min="0" inputmode="numeric" />
                             <span asp-validation-for="UnitPrice" class="text-danger"></span>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -120,15 +120,15 @@
                                         </td>
                                         <td><input name="variants[@variantIndex].Size" class="form-control" value="@variant.Size" /></td>
                                         <td><input name="variants[@variantIndex].SKU" class="form-control" value="@variant.SKU" /></td>
-                                        <td><input name="variants[@variantIndex].PriceAdjustment" class="form-control" type="number" step="1000" value="@(variant.PriceAdjustment ?? 0)" /></td>
+                                        <td><input name="variants[@variantIndex].PriceAdjustment" class="form-control" type="number" step="1" value="@(variant.PriceAdjustment ?? 0)" /></td>
                                         <td><input name="variants[@variantIndex].StockQuantity" class="form-control" type="number" min="0" value="@variant.StockQuantity" /></td>
                                         <td>
-                                            <input type="hidden" name="variants[@variantIndex].IsActive" value="false" />
                                             <input name="variants[@variantIndex].IsActive" class="form-check-input" type="checkbox" value="true" checked="@variant.IsActive" />
+                                            <input type="hidden" name="variants[@variantIndex].IsActive" value="false" />
                                         </td>
                                         <td>
-                                            <input type="hidden" name="variants[@variantIndex].Remove" value="false" />
                                             <input name="variants[@variantIndex].Remove" class="form-check-input" type="checkbox" value="true" />
+                                            <input type="hidden" name="variants[@variantIndex].Remove" value="false" />
                                         </td>
                                     </tr>
                                     variantIndex++;
@@ -153,13 +153,21 @@
                             @foreach (var img in Model.Images.OrderBy(i => i.IsMain ? 0 : 1).ThenBy(i => i.DisplayOrder))
                             {
                                 <div class="col-6">
-                                    <div class="position-relative border rounded overflow-hidden">
+                                    <label class="position-relative border rounded overflow-hidden d-block product-image-choice @(img.IsMain ? "is-main" : "")">
                                         <img src="@img.ImageUrl" alt="@img.AltText" class="w-100" style="height: 110px; object-fit: cover;" />
+                                        <span class="position-absolute top-0 end-0 m-2 bg-white rounded-pill px-2 py-1 shadow-sm">
+                                            <input class="form-check-input m-0"
+                                                   type="radio"
+                                                   name="mainImageId"
+                                                   value="@img.Id"
+                                                   checked="@img.IsMain"
+                                                   aria-label="Set image as main" />
+                                        </span>
                                         @if (img.IsMain)
                                         {
                                             <span class="badge bg-primary position-absolute top-0 start-0 m-2">Main</span>
                                         }
-                                    </div>
+                                    </label>
                                 </div>
                             }
                         </div>
@@ -200,11 +208,11 @@
         </td>
         <td><input data-name="Size" class="form-control" placeholder="Large" /></td>
         <td><input data-name="SKU" class="form-control" placeholder="SOFA-BR-L" /></td>
-        <td><input data-name="PriceAdjustment" class="form-control" type="number" step="1000" value="0" /></td>
+        <td><input data-name="PriceAdjustment" class="form-control" type="number" step="1" value="0" /></td>
         <td><input data-name="StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
         <td>
-            <input data-name="IsActiveHidden" type="hidden" value="false" />
             <input data-name="IsActive" class="form-check-input" type="checkbox" value="true" checked />
+            <input data-name="IsActiveHidden" type="hidden" value="false" />
         </td>
         <td>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeNewVariantRow(this)">
@@ -252,5 +260,16 @@
 
     .validation-summary-valid {
         display: none;
+    }
+
+    .product-image-choice {
+        cursor: pointer;
+        transition: border-color .15s ease, box-shadow .15s ease;
+    }
+
+    .product-image-choice:hover,
+    .product-image-choice.is-main {
+        border-color: #0d6efd !important;
+        box-shadow: 0 0 0 .15rem rgba(13, 110, 253, .12);
     }
 </style>

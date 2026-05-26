@@ -222,7 +222,7 @@ public class PaymentController : Controller
                 return Ok();
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             // Log error
         }
@@ -232,12 +232,16 @@ public class PaymentController : Controller
 
     private async Task CompletePaidOrderAsync(int orderId)
     {
-        await _orderService.UpdatePaymentStatusAsync(orderId, PaymentStatus.Paid);
-        await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.Confirmed);
-
         var order = await _orderService.GetOrderByIdAsync(orderId);
-        if (order != null)
-            await _cartService.RemovePurchasedItemsAsync(order.UserId, order.OrderItems);
+        if (order == null)
+            return;
+
+        await _orderService.UpdatePaymentStatusAsync(orderId, PaymentStatus.Paid);
+
+        if (order.Status == OrderStatus.Pending)
+            await _orderService.UpdateOrderStatusAsync(orderId, OrderStatus.Confirmed);
+
+        await _cartService.RemovePurchasedItemsAsync(order.UserId, order.OrderItems);
 
         HttpContext.Session.Remove(CartController.CheckoutItemIdsSessionKey);
     }

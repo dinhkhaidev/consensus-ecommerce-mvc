@@ -130,12 +130,12 @@ public partial class ShopDbContext : DbContext
             entity.HasOne(e => e.Product)
                 .WithMany(p => p.Images)
                 .HasForeignKey(e => e.ProductId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             entity.HasOne(e => e.Variant)
                 .WithMany(v => v.Images)
                 .HasForeignKey(e => e.VariantId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<Review>(entity =>
@@ -161,7 +161,7 @@ public partial class ShopDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne(e => e.Product)
                 .WithMany(p => p.Wishlists)
@@ -193,7 +193,7 @@ public partial class ShopDbContext : DbContext
             entity.HasOne(e => e.User)
                 .WithMany()
                 .HasForeignKey(e => e.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             entity.HasOne(e => e.Address)
                 .WithMany()
@@ -292,6 +292,16 @@ public partial class ShopDbContext : DbContext
                 .WithMany(c => c.Items)
                 .HasForeignKey(e => e.CartId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<Product>()
+                .WithMany()
+                .HasForeignKey(e => e.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne<ProductVariant>()
+                .WithMany()
+                .HasForeignKey(e => e.VariantId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         OnModelCreatingPartial(modelBuilder);

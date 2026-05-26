@@ -75,9 +75,17 @@ public class AdminCategoryController : AdminControllerBase
     [HttpPost]
     public async Task<IActionResult> Delete(int id)
     {
-        var category = await _context.Categories.FindAsync(id);
+        var category = await _context.Categories
+            .Include(c => c.Products)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (category != null)
         {
+            if (category.Products.Any())
+            {
+                TempData["ToastWarning"] = "Category still has products. Move or edit those products before deleting this category.";
+                return RedirectToAction(nameof(Index));
+            }
+
             _context.Categories.Remove(category);
             await _context.SaveChangesAsync();
             TempData["ToastSuccess"] = "Category deleted successfully!";

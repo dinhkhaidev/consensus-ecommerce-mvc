@@ -192,6 +192,8 @@ window.selectVariant = function(card, variantId) {
     const priceEl = document.getElementById('productPrice');
     if (priceEl && price > 0) {
         priceEl.textContent = price.toLocaleString('vi-VN') + ' VND';
+        priceEl.dataset.moneyVnd = String(price);
+        document.dispatchEvent(new CustomEvent('furnish:money-updated'));
     }
 
     const imageUrl = card.dataset.image;

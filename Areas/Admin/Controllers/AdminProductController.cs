@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebActionResults.Data.Entities;
 using WebActionResults.Models;
+using WebActionResults.Services.Ai;
 
 namespace WebActionResults.Areas.Admin.Controllers;
 
@@ -10,11 +11,13 @@ public class AdminProductController : AdminControllerBase
 {
     private readonly ShopDbContext _context;
     private readonly IWebHostEnvironment _environment;
+    private readonly IAiProductCandidateService _aiProductCandidateService;
 
-    public AdminProductController(ShopDbContext context, IWebHostEnvironment environment)
+    public AdminProductController(ShopDbContext context, IWebHostEnvironment environment, IAiProductCandidateService aiProductCandidateService)
     {
         _context = context;
         _environment = environment;
+        _aiProductCandidateService = aiProductCandidateService;
     }
 
     public async Task<IActionResult> Index(int page = 1, int pageSize = 10, string search = "")
@@ -95,6 +98,7 @@ public class AdminProductController : AdminControllerBase
                 await _context.SaveChangesAsync();
             }
             await SaveProductImagesAsync(product.Id, product.ProductName, imageFiles, hasMainImage: false);
+            _aiProductCandidateService.Invalidate();
             TempData["ToastSuccess"] = "Product created successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -115,7 +119,7 @@ public class AdminProductController : AdminControllerBase
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(ProductFormInput product, List<IFormFile>? imageFiles, List<ProductVariantInput>? variants)
+    public async Task<IActionResult> Edit(ProductFormInput product, List<IFormFile>? imageFiles, List<ProductVariantInput>? variants, int? mainImageId)
     {
         ModelState.Clear();
         if (product.Id <= 0)
@@ -136,8 +140,10 @@ public class AdminProductController : AdminControllerBase
 
             await _context.SaveChangesAsync();
             await SaveProductVariantsAsync(product.Id, variants);
+            await SetMainProductImageAsync(product.Id, mainImageId);
             var hasMainImage = await _context.ProductImages.AnyAsync(i => i.ProductId == product.Id && i.IsMain);
             await SaveProductImagesAsync(product.Id, product.ProductName, imageFiles, hasMainImage);
+            _aiProductCandidateService.Invalidate();
             TempData["ToastSuccess"] = "Product updated successfully!";
             return RedirectToAction(nameof(Index));
         }
@@ -160,8 +166,19 @@ public class AdminProductController : AdminControllerBase
         var product = await _context.Products.FindAsync(id);
         if (product != null)
         {
+            var hasOrderHistory = await _context.OrderItems.AnyAsync(i => i.ProductId == id);
+            if (hasOrderHistory)
+            {
+                product.Discontinued = true;
+                await _context.SaveChangesAsync();
+                _aiProductCandidateService.Invalidate();
+                TempData["ToastWarning"] = "Product has order history, so it was marked as discontinued instead of deleted.";
+                return RedirectToAction(nameof(Index));
+            }
+
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
+            _aiProductCandidateService.Invalidate();
             TempData["ToastSuccess"] = "Product deleted successfully!";
         }
         return RedirectToAction(nameof(Index));
@@ -298,6 +315,26 @@ public class AdminProductController : AdminControllerBase
 
         await _context.SaveChangesAsync();
         return savedCount;
+    }
+
+    private async Task SetMainProductImageAsync(int productId, int? mainImageId)
+    {
+        if (!mainImageId.HasValue)
+            return;
+
+        var images = await _context.ProductImages
+            .Where(i => i.ProductId == productId)
+            .ToListAsync();
+
+        if (!images.Any(i => i.Id == mainImageId.Value))
+            return;
+
+        foreach (var image in images)
+        {
+            image.IsMain = image.Id == mainImageId.Value;
+        }
+
+        await _context.SaveChangesAsync();
     }
 
     private async Task SaveProductImagesAsync(int productId, string? productName, List<IFormFile>? imageFiles, bool hasMainImage)
