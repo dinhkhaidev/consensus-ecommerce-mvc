@@ -1,6 +1,8 @@
 @model WebActionResults.Data.Entities.Order
 @{
     ViewData["Title"] = $"Order #{Model.Id}";
+    var allowedStatusTransitions = (ViewBag.AllowedStatusTransitions as IEnumerable<WebActionResults.Data.Entities.OrderStatus>
+        ?? Enumerable.Empty<WebActionResults.Data.Entities.OrderStatus>()).ToList();
 }
 
 <div class="d-flex align-items-center gap-3 mb-4">
@@ -64,26 +66,35 @@
                 <h5 class="mb-0">Update Order Status</h5>
             </div>
             <div class="card-body">
-                <form asp-area="Admin" asp-controller="AdminOrder" asp-action="UpdateStatus" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@Model.Id" />
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-8">
-                            <label class="form-label">New Status</label>
-                            <select name="status" class="form-select form-select-lg">
-                                @foreach (WebActionResults.Data.Entities.OrderStatus status in Enum.GetValues(typeof(WebActionResults.Data.Entities.OrderStatus)))
-                                {
-                                    <option value="@status" selected="@(Model.Status == status)">@status</option>
-                                }
-                            </select>
+                @if (allowedStatusTransitions.Any())
+                {
+                    <form asp-area="Admin" asp-controller="AdminOrder" asp-action="UpdateStatus" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-8">
+                                <label class="form-label">New Status</label>
+                                <select name="status" class="form-select form-select-lg">
+                                    @foreach (var status in allowedStatusTransitions)
+                                    {
+                                        <option value="@status">@status</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="bi bi-check-lg me-2"></i>Update Status
+                                </button>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <button type="submit" class="btn btn-primary btn-lg w-100">
-                                <i class="bi bi-check-lg me-2"></i>Update Status
-                            </button>
-                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-secondary mb-0">
+                        This order cannot be changed through the quick status update. Use the review controls if a cancellation or return is waiting.
                     </div>
-                </form>
+                }
             </div>
         </div>
 

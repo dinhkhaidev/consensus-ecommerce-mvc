@@ -201,13 +201,25 @@
                             @foreach (var product in featuredProducts)
                             {
                                 var imgNum = (product.Id - 1) % 8 + 1;
-                                var imgUrl = $"/assets/images/product-img-{imgNum}.jpg";
+                                var fallbackImgUrl = $"/assets/images/product-img-{imgNum}.jpg";
+                                var imgUrl = product.Images?
+                                    .Where(i => !string.IsNullOrWhiteSpace(i.ImageUrl))
+                                    .OrderByDescending(i => i.IsMain)
+                                    .ThenBy(i => i.DisplayOrder)
+                                    .Select(i => i.ImageUrl)
+                                    .FirstOrDefault();
+
+                                if (string.IsNullOrWhiteSpace(imgUrl))
+                                {
+                                    imgUrl = fallbackImgUrl;
+                                }
 
                                 <div class="swiper-slide" data-reveal-item>
                                     <div class="featured-product-card">
-                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id">
-                                            <img src="@imgUrl" alt="@product.ProductName" class="img-fluid" loading="lazy"
-                                                 onerror="this.src='/assets/images/product-img-1.jpg'">
+                                        <a asp-controller="Product" asp-action="Details" asp-route-id="@product.Id"
+                                           class="featured-product-media" aria-label="@product.ProductName">
+                                            <img src="@imgUrl" alt="@product.ProductName" class="featured-product-img" loading="lazy"
+                                                 onerror="this.onerror=null;this.src='@fallbackImgUrl'">
                                         </a>
                                         <div class="text-center">
                                             <h3 class="mt-3 h5">
@@ -1092,15 +1104,38 @@
         position: relative;
         overflow: hidden;
         border-radius: 18px;
+        background: #fff;
     }
 
-    .featured-product-card img {
+    .featured-product-media {
+        position: relative;
+        display: flex;
+        width: 100%;
+        aspect-ratio: 31 / 35;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        border: 1px solid rgba(33, 31, 28, 0.08);
+        border-radius: 18px;
+        background:
+            radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.96), rgba(248, 246, 242, 0.76) 44%, rgba(231, 226, 217, 0.78) 100%),
+            #f7f4ee;
+        box-shadow: inset 0 -20px 42px rgba(33, 31, 28, 0.06);
+    }
+
+    .featured-product-img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        filter: saturate(0.98) contrast(1.02);
         transition: transform 0.36s ease, filter 0.36s ease;
     }
 
-    .featured-product-card:hover img {
+    .featured-product-card:hover .featured-product-img {
         transform: scale(1.035);
-        filter: saturate(1.04) contrast(1.02);
+        filter: saturate(1.04) contrast(1.03);
     }
 
     .hover-lift:hover {
@@ -1225,7 +1260,7 @@
         .dashboard-promo-bg,
         .dashboard-room-transition,
         .category-card,
-        .featured-product-card img {
+        .featured-product-img {
             animation: none !important;
             transition: none !important;
             transform: none !important;

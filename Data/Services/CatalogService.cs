@@ -20,11 +20,11 @@ public interface ICatalogService
     Task<List<Product>> GetRecommendedProductsAsync(Product product, int count = 8);
     Task<List<Product>> GetFeaturedProductsAsync(int count = 8);
     Task<List<Product>> SearchProductsAsync(string keyword);
-    Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
-    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null);
+    Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null);
+    Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null);
 
     // Variants & Images
     Task<List<ProductVariant>> GetProductVariantsAsync(int productId);
@@ -71,15 +71,18 @@ public class CatalogService : ICatalogService
 
     public async Task<List<Product>> GetRecommendedProductsAsync(Product product, int count = 8)
     {
+        var saleStatuses = OrderStatusRules.GetSalesCountingStatuses().ToArray();
         var orderIdsWithProduct = await _context.OrderItems
-            .Where(i => i.ProductId == product.Id)
+            .Where(i => i.ProductId == product.Id && saleStatuses.Contains(i.Order.Status))
             .Select(i => i.OrderId)
             .Distinct()
             .ToListAsync();
 
         var coPurchaseScores = orderIdsWithProduct.Any()
             ? await _context.OrderItems
-                .Where(i => orderIdsWithProduct.Contains(i.OrderId) && i.ProductId != product.Id)
+                .Where(i => orderIdsWithProduct.Contains(i.OrderId) &&
+                            i.ProductId != product.Id &&
+                            saleStatuses.Contains(i.Order.Status))
                 .GroupBy(i => i.ProductId)
                 .Select(g => new { ProductId = g.Key, Score = g.Sum(i => i.Quantity) })
                 .ToDictionaryAsync(i => i.ProductId, i => i.Score)
@@ -139,20 +142,20 @@ public class CatalogService : ICatalogService
         await _context.SaveChangesAsync();
     }
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize, string? sort = null)
-        => await _productRepository.GetAllPaginatedAsync(page, pageSize, sort);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsPaginatedAsync(int page, int pageSize, string? sort = null, int? minRating = null)
+        => await _productRepository.GetAllPaginatedAsync(page, pageSize, sort, minRating);
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null)
-        => await _productRepository.GetByCategoryPaginatedAsync(categoryId, page, pageSize, sort);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryPaginatedAsync(int categoryId, int page, int pageSize, string? sort = null, int? minRating = null)
+        => await _productRepository.GetByCategoryPaginatedAsync(categoryId, page, pageSize, sort, minRating);
 
-    public async Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize, string? sort = null)
-        => await _productRepository.SearchPaginatedAsync(keyword, page, pageSize, sort);
+    public async Task<(List<Product> Items, int TotalCount)> SearchProductsPaginatedAsync(string keyword, int page, int pageSize, string? sort = null, int? minRating = null)
+        => await _productRepository.SearchPaginatedAsync(keyword, page, pageSize, sort, minRating);
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
-        => await _productRepository.GetByPriceRangeAsync(minPrice, maxPrice, page, pageSize, sort);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsByPriceRangeAsync(int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null)
+        => await _productRepository.GetByPriceRangeAsync(minPrice, maxPrice, page, pageSize, sort, minRating);
 
-    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null)
-        => await _productRepository.GetByCategoryAndPriceRangeAsync(categoryId, minPrice, maxPrice, page, pageSize, sort);
+    public async Task<(List<Product> Items, int TotalCount)> GetProductsByCategoryAndPriceRangeAsync(int categoryId, int? minPrice, int? maxPrice, int page, int pageSize, string? sort = null, int? minRating = null)
+        => await _productRepository.GetByCategoryAndPriceRangeAsync(categoryId, minPrice, maxPrice, page, pageSize, sort, minRating);
 
     private static double GetCoPurchaseScore(int productId, IReadOnlyDictionary<int, int> coPurchaseScores)
         => coPurchaseScores.TryGetValue(productId, out var score) ? Math.Min(score, 6) * 12 : 0;

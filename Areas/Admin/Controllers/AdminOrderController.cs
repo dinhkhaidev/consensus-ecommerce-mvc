@@ -54,6 +54,8 @@ public class AdminOrderController : AdminControllerBase
             .FirstOrDefaultAsync(o => o.Id == id);
 
         if (order == null) return NotFound();
+
+        ViewBag.AllowedStatusTransitions = OrderStatusRules.GetAllowedAdminNextStatuses(order.Status);
         return View(order);
     }
 

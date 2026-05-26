@@ -11,6 +11,8 @@ public class ProductListViewModel
     public string? MainImageUrl { get; set; }
     public bool HasVariants { get; set; }
     public decimal? MinPrice { get; set; }
+    public double AverageRating { get; set; }
+    public int ReviewCount { get; set; }
 }
 
 public class ProductDetailViewModel

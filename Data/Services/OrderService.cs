@@ -118,6 +118,9 @@ public class OrderService : IOrderService
         if (order == null) return;
 
         var previousStatus = order.Status;
+        if (!OrderStatusRules.CanAdminTransition(previousStatus, status))
+            throw new InvalidOperationException($"Cannot change order status from {previousStatus} to {status}.");
+
         var shouldFinalizeOrder = status == OrderStatus.Confirmed && previousStatus == OrderStatus.Pending;
         var shouldReverseOrder = status == OrderStatus.Cancelled && previousStatus != OrderStatus.Cancelled && HasDeductedStock(order, previousStatus);
         var shouldApproveReturn = status == OrderStatus.ReturnApproved && previousStatus == OrderStatus.ReturnRequested;
@@ -381,8 +384,7 @@ public class OrderService : IOrderService
     private static bool HasDeductedStock(Order order, OrderStatus status)
         => status switch
         {
-            OrderStatus.Confirmed or OrderStatus.Processing or OrderStatus.Shipped or OrderStatus.Delivered or
-                OrderStatus.ReturnRequested or OrderStatus.ReturnRejected or OrderStatus.ReturnApproved => true,
+            _ when OrderStatusRules.HasDeductedStock(status) => true,
             OrderStatus.CancellationRequested => order.CancelRequestedFromStatus.HasValue &&
                                                  HasDeductedStock(order, order.CancelRequestedFromStatus.Value),
             _ => false

@@ -103,8 +103,8 @@
                                     <td><input name="variants[0].PriceAdjustment" class="form-control" type="number" step="1" value="0" /></td>
                                     <td><input name="variants[0].StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
                                     <td>
-                                        <input type="hidden" name="variants[0].IsActive" value="false" />
                                         <input name="variants[0].IsActive" class="form-check-input" type="checkbox" value="true" checked />
+                                        <input type="hidden" name="variants[0].IsActive" value="false" />
                                     </td>
                                     <td class="text-end pe-3">
                                         <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">
@@ -159,8 +159,8 @@
         <td><input data-name="PriceAdjustment" class="form-control" type="number" step="1" value="0" /></td>
         <td><input data-name="StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
         <td>
-            <input data-name="IsActiveHidden" type="hidden" value="false" />
             <input data-name="IsActive" class="form-check-input" type="checkbox" value="true" checked />
+            <input data-name="IsActiveHidden" type="hidden" value="false" />
         </td>
         <td class="text-end pe-3">
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeVariantRow(this)">

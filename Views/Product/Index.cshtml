@@ -12,8 +12,10 @@
     var priceRange = Context.Request.Query["priceRange"].ToString();
     var minPriceStr = Context.Request.Query["minPrice"].ToString();
     var maxPriceStr = Context.Request.Query["maxPrice"].ToString();
+    var minRatingStr = Context.Request.Query["minRating"].ToString();
     int? minPrice = int.TryParse(minPriceStr, out var mp) ? mp : (int?)null;
     int? maxPrice = int.TryParse(maxPriceStr, out var xp) ? xp : (int?)null;
+    int? minRating = int.TryParse(minRatingStr, out var rt) && rt is >= 1 and <= 5 ? rt : (int?)null;
 }
 
 <!-- Page Header -->
@@ -53,7 +55,7 @@
                             <h5 class="fw-bold mb-0">
                                 <i class="bi bi-funnel me-2"></i>@localizer.Get("Filters")
                             </h5>
-                            @if (selectedCategory.HasValue || !string.IsNullOrEmpty(searchTerm))
+                            @if (selectedCategory.HasValue || !string.IsNullOrEmpty(searchTerm) || minPrice.HasValue || maxPrice.HasValue || !string.IsNullOrEmpty(priceRange) || minRating.HasValue)
                             {
                                 <a asp-action="Index" class="btn btn-sm btn-outline-danger">@localizer.Get("ClearAll")</a>
                             }
@@ -111,6 +113,10 @@
                                 {
                                     <input type="hidden" name="search" value="@searchTerm" />
                                 }
+                                @if (minRating.HasValue)
+                                {
+                                    <input type="hidden" name="minRating" value="@minRating" />
+                                }
                                 <div class="row g-2">
                                     <div class="col-6">
                                         <input type="number" name="minPrice" class="form-control form-control-sm" placeholder="@localizer.Get("MinVND")" min="0">
@@ -134,24 +140,47 @@
                                     <input type="hidden" name="search" value="@searchTerm" />
                                 }
                                 <div class="d-grid gap-2">
-                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "under-2000000" })"
-                                       class="btn btn-outline-secondary btn-sm text-start @(sortBy == "under-2000000" ? "active" : "")">
+                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "under-2000000", minRating })"
+                                       class="btn btn-outline-secondary btn-sm text-start @(priceRange == "under-2000000" ? "active" : "")">
                                         @localizer.Get("Under2Million")
                                     </a>
-                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "2000000-5000000" })"
-                                       class="btn btn-outline-secondary btn-sm text-start">
+                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "2000000-5000000", minRating })"
+                                       class="btn btn-outline-secondary btn-sm text-start @(priceRange == "2000000-5000000" ? "active" : "")">
                                         @localizer.Get("Between2And5Million")
                                     </a>
-                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "5000000-10000000" })"
-                                       class="btn btn-outline-secondary btn-sm text-start">
+                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "5000000-10000000", minRating })"
+                                       class="btn btn-outline-secondary btn-sm text-start @(priceRange == "5000000-10000000" ? "active" : "")">
                                         @localizer.Get("Between5And10Million")
                                     </a>
-                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "above-10000000" })"
-                                       class="btn btn-outline-secondary btn-sm text-start">
+                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange = "above-10000000", minRating })"
+                                       class="btn btn-outline-secondary btn-sm text-start @(priceRange == "above-10000000" ? "active" : "")">
                                         @localizer.Get("Above10Million")
                                     </a>
                                 </div>
                             </form>
+                        </div>
+
+                        <!-- Rating Filter -->
+                        <div class="mb-4">
+                            <h6 class="fw-semibold text-uppercase text-xs mb-3 text-muted">
+                                <i class="bi bi-star-fill me-1"></i> @localizer.Get("Rating")
+                            </h6>
+                            <div class="rating-filter-grid" role="group" aria-label="Rating filter">
+                                <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange, minPrice, maxPrice, sort = sortBy })"
+                                   class="rating-filter-option @(minRating.HasValue ? "" : "active")">
+                                    <span>All</span>
+                                </a>
+                                @for (var rating = 5; rating >= 1; rating--)
+                                {
+                                    var ratingLabel = rating == 5 ? "5" : $"{rating}+";
+                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, priceRange, minPrice, maxPrice, minRating = rating, sort = sortBy })"
+                                       class="rating-filter-option @(minRating == rating ? "active" : "")"
+                                       title="@(rating == 5 ? "5 stars" : $"{rating}+ stars")">
+                                        <i class="bi bi-star-fill"></i>
+                                        <span>@ratingLabel</span>
+                                    </a>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -176,23 +205,27 @@
                         <select class="form-select form-select-sm" style="width: auto;"
                                 onchange="window.location.href=this.value">
                             @{
-                                var sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "", priceRange, minPrice, maxPrice });
+                                var sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "", priceRange, minPrice, maxPrice, minRating });
                             }
                             <option value="@sortUrl" selected="@(string.IsNullOrEmpty(sortBy))">@localizer.Get("Featured")</option>
                             @{
-                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "price_asc", priceRange, minPrice, maxPrice });
+                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "rating_desc", priceRange, minPrice, maxPrice, minRating });
+                            }
+                            <option value="@sortUrl" selected="@(sortBy == "rating_desc")">@localizer.Get("Rating")</option>
+                            @{
+                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "price_asc", priceRange, minPrice, maxPrice, minRating });
                             }
                             <option value="@sortUrl" selected="@(sortBy == "price_asc")">@localizer.Get("PriceLowHigh")</option>
                             @{
-                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "price_desc", priceRange, minPrice, maxPrice });
+                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "price_desc", priceRange, minPrice, maxPrice, minRating });
                             }
                             <option value="@sortUrl" selected="@(sortBy == "price_desc")">@localizer.Get("PriceHighLow")</option>
                             @{
-                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "name_asc", priceRange, minPrice, maxPrice });
+                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "name_asc", priceRange, minPrice, maxPrice, minRating });
                             }
                             <option value="@sortUrl" selected="@(sortBy == "name_asc")">@localizer.Get("NameAZ")</option>
                             @{
-                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "name_desc", priceRange, minPrice, maxPrice });
+                                sortUrl = Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = "name_desc", priceRange, minPrice, maxPrice, minRating });
                             }
                             <option value="@sortUrl" selected="@(sortBy == "name_desc")">@localizer.Get("NameZA")</option>
                         </select>
@@ -200,7 +233,7 @@
                 </div>
 
                 <!-- Active Filters -->
-                @if (selectedCategory.HasValue || !string.IsNullOrEmpty(searchTerm))
+                @if (selectedCategory.HasValue || !string.IsNullOrEmpty(searchTerm) || minRating.HasValue)
                 {
                     <div class="mb-4">
                         <div class="d-flex flex-wrap gap-2 align-items-center">
@@ -222,6 +255,16 @@
                                     "@searchTerm"
                                     <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory })"
                                        class="text-white text-decoration-none">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                            }
+                            @if (minRating.HasValue)
+                            {
+                                <span class="badge bg-warning text-dark d-flex align-items-center gap-1">
+                                    @(minRating == 5 ? "5 stars" : $"{minRating}+ stars")
+                                    <a href="@Url.Action("Index", "Product", new { categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice })"
+                                       class="text-dark text-decoration-none">
                                         <i class="bi bi-x"></i>
                                     </a>
                                 </span>
@@ -275,6 +318,20 @@
                                             <a asp-action="Details" asp-route-id="@item.ProductId"
                                                class="text-decoration-none text-dark product-name">@item.ProductName</a>
                                         </h3>
+                                        <div class="small mb-2 product-rating">
+                                            @if (item.ReviewCount > 0)
+                                            {
+                                                @for (var star = 1; star <= 5; star++)
+                                                {
+                                                    <i class="bi @(star <= Math.Round(item.AverageRating) ? "bi-star-fill text-warning" : "bi-star text-muted")"></i>
+                                                }
+                                                <span class="text-muted ms-1">@item.AverageRating.ToString("0.0") (@item.ReviewCount)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No reviews</span>
+                                            }
+                                        </div>
                                         <div class="price-wrapper mb-3">
                                             <span class="fw-bold text-primary fs-5 money-vnd" data-money-vnd="@item.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.UnitPrice.ToString("N0") VND</span>
                                         </div>
@@ -312,7 +369,7 @@
                             <ul class="pagination justify-content-center">
                                 <li class="page-item @(currentPage == 1 ? "disabled" : "")">
                                     <a class="page-link"
-                                       href="@Url.Action("Index", "Product", new { page = currentPage - 1, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice })">
+                                       href="@Url.Action("Index", "Product", new { page = currentPage - 1, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice, minRating })">
                                         <i class="bi bi-chevron-left"></i>
                                     </a>
                                 </li>
@@ -330,7 +387,7 @@
                                 @if (startPage > 1)
                                 {
                                     <li class="page-item">
-                                        <a class="page-link" href="@Url.Action("Index", "Product", new { page = 1, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice })">1</a>
+                                        <a class="page-link" href="@Url.Action("Index", "Product", new { page = 1, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice, minRating })">1</a>
                                     </li>
                                     @if (startPage > 2)
                                     {
@@ -342,7 +399,7 @@
                                 {
                                     <li class="page-item @(i == currentPage ? "active" : "")">
                                         <a class="page-link"
-                                           href="@Url.Action("Index", "Product", new { page = i, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice })">
+                                           href="@Url.Action("Index", "Product", new { page = i, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice, minRating })">
                                             @i
                                         </a>
                                     </li>
@@ -356,7 +413,7 @@
                                     }
                                     <li class="page-item">
                                         <a class="page-link"
-                                           href="@Url.Action("Index", "Product", new { page = totalPages, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice })">
+                                           href="@Url.Action("Index", "Product", new { page = totalPages, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice, minRating })">
                                             @totalPages
                                         </a>
                                     </li>
@@ -364,7 +421,7 @@
 
                                 <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
                                     <a class="page-link"
-                                       href="@Url.Action("Index", "Product", new { page = currentPage + 1, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice })">
+                                       href="@Url.Action("Index", "Product", new { page = currentPage + 1, categoryId = selectedCategory, search = searchTerm, sort = sortBy, priceRange, minPrice, maxPrice, minRating })">
                                         <i class="bi bi-chevron-right"></i>
                                     </a>
                                 </li>
@@ -424,5 +481,41 @@
     .form-select:focus {
         border-color: #d47f31;
         box-shadow: 0 0 0 0.2rem rgba(212, 127, 49, 0.25);
+    }
+
+    .rating-filter-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.45rem;
+    }
+
+    .rating-filter-option {
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.28rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #495057;
+        background: #fff;
+        font-size: 0.82rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: border-color .15s ease, background-color .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+
+    .rating-filter-option i {
+        color: #f59f00;
+        font-size: 0.78rem;
+        line-height: 1;
+    }
+
+    .rating-filter-option:hover,
+    .rating-filter-option.active {
+        border-color: #d47f31;
+        color: #211f1c;
+        background: rgba(212, 127, 49, 0.1);
+        box-shadow: 0 0 0 0.12rem rgba(212, 127, 49, 0.12);
     }
 </style>
